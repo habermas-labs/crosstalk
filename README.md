@@ -19,6 +19,12 @@ The premise is epistemic: no single model's output should be taken at face value
 
 Early development. Current version is a single-file browser application — no server required, no data stored, API calls go directly to their respective providers.
 
+## Deployment
+
+Currently hosted on Cloudflare Pages at yourcrosstalklab.com.
+
+Access during development is managed via Cloudflare Access — a zero-trust authentication layer that gates entry to the site without requiring changes to the application code. Selective access can be granted via email-based one-time passcodes.
+
 ## Roadmap
 
 - Conductor mode: sequential responses where each model sees the prior ones
