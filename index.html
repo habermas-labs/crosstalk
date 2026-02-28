@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Triangulation — Multi-Model Interface</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap');
+
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #161f30;
+      --bg-input: #1a2332;
+      --border-subtle: #1e2d42;
+      --border-hover: #2a3f5f;
+      --text-primary: #e2e8f0;
+      --text-secondary: #8899b0;
+      --text-muted: #4a5a72;
+      --claude-accent: #d4a574;
+      --claude-bg: #1a1610;
+      --claude-border: #3d2e1a;
+      --chatgpt-accent: #6bcf8e;
+      --chatgpt-bg: #101a14;
+      --chatgpt-border: #1a3d24;
+      --gemini-accent: #7ba4f4;
+      --gemini-bg: #10141f;
+      --gemini-border: #1a2a4d;
+      --radius: 8px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    #root { min-height: 100vh; }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useRef, useEffect, useCallback } = React;
+
+    // ─────────────────────────────────────────────
+    // Encryption Utilities (Web Crypto API)
+    // ─────────────────────────────────────────────
+
+    const cryptoUtils = {
+      // Derive an AES-GCM key from a passphrase
+      async deriveKey(passphrase, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']
+        );
+        return crypto.subtle.deriveKey(
+          { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+          keyMaterial,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        );
+      },
+
+      // Encrypt an object to a base64 string
+      async encrypt(data, passphrase) {
+        const enc = new TextEncoder();
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await this.deriveKey(passphrase, salt);
+        const encrypted = await crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv },
+          key,
+          enc.encode(JSON.stringify(data))
+        );
+        // Pack salt + iv + ciphertext into one blob
+        const packed = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+        packed.set(salt, 0);
+        packed.set(iv, salt.length);
+        packed.set(new Uint8Array(encrypted), salt.length + iv.length);
+        return btoa(String.fromCharCode(...packed));
+      },
+
+      // Decrypt a base64 string back to an object
+      async decrypt(base64, passphrase) {
+        const packed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const salt = packed.slice(0, 16);
+        const iv = packed.slice(16, 28);
+        const ciphertext = packed.slice(28);
+        const key = await this.deriveKey(passphrase, salt);
+        const decrypted = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv },
+          key,
+          ciphertext
+        );
+        return JSON.parse(new TextDecoder().decode(decrypted));
+      }
+    };
+
+    // ─────────────────────────────────────────────
+    // API Adapters
+    // ─────────────────────────────────────────────
+
+    const apiAdapters = {
+      claude: async (messages, systemPrompt, apiKey) => {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 4096,
+            system: systemPrompt || 'You are a helpful assistant participating in a multi-model triangulation discussion.',
+            messages: messages.map(m => ({ role: m.role, content: m.content }))
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.content.map(b => b.text).join('\n');
+      },
+
+      chatgpt: async (messages, systemPrompt, apiKey) => {
+        const msgs = [];
+        if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
+        msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            max_tokens: 4096,
+            messages: msgs
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.choices[0].message.content;
+      },
+
+      gemini: async (messages, systemPrompt, apiKey) => {
+        const contents = messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        }));
+        const body = { contents };
+        if (systemPrompt) {
+          body.systemInstruction = { parts: [{ text: systemPrompt }] };
+        }
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          }
+        );
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.candidates[0].content.parts.map(p => p.text).join('\n');
+      }
+    };
+
+    // ─────────────────────────────────────────────
+    // Markdown renderer
+    // ─────────────────────────────────────────────
+
+    function RenderedMarkdown({ text }) {
+      const html = marked.parse(text || '', { breaks: true, gfm: true });
+      return <div dangerouslySetInnerHTML={{ __html: html }} className="prose" />;
+    }
+
+    // ─────────────────────────────────────────────
+    // Settings Panel
+    // ─────────────────────────────────────────────
+
+    function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, onClose }) {
+      const [exportPassphrase, setExportPassphrase] = useState('');
+      const [importPassphrase, setImportPassphrase] = useState('');
+      const [cryptoStatus, setCryptoStatus] = useState(null);
+      const fileInputRef = useRef(null);
+
+      const models = [
+        { id: 'claude', label: 'Claude', accent: 'var(--claude-accent)' },
+        { id: 'chatgpt', label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
+        { id: 'gemini', label: 'Gemini', accent: 'var(--gemini-accent)' }
+      ];
+
+      // Export keys to encrypted file
+      const handleExport = async () => {
+        if (!exportPassphrase.trim()) {
+          setCryptoStatus({ type: 'error', msg: 'Enter a passphrase to encrypt your keys.' });
+          return;
+        }
+        try {
+          setCryptoStatus({ type: 'info', msg: 'Encrypting...' });
+          const data = { keys, systemPrompts, exportedAt: new Date().toISOString() };
+          const encrypted = await cryptoUtils.encrypt(data, exportPassphrase);
+          // Download as .ctk file
+          const blob = new Blob([encrypted], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'crosstalk-keys.ctk';
+          a.click();
+          URL.revokeObjectURL(url);
+          setExportPassphrase('');
+          setCryptoStatus({ type: 'success', msg: 'Keys exported and encrypted.' });
+        } catch (err) {
+          setCryptoStatus({ type: 'error', msg: 'Export failed: ' + err.message });
+        }
+      };
+
+      // Import keys from encrypted file
+      const handleImport = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!importPassphrase.trim()) {
+          setCryptoStatus({ type: 'error', msg: 'Enter your passphrase before importing.' });
+          fileInputRef.current.value = '';
+          return;
+        }
+        try {
+          setCryptoStatus({ type: 'info', msg: 'Decrypting...' });
+          const base64 = await file.text();
+          const data = await cryptoUtils.decrypt(base64.trim(), importPassphrase);
+          if (data.keys) setKeys(data.keys);
+          if (data.systemPrompts) setSystemPrompts(data.systemPrompts);
+          setImportPassphrase('');
+          setCryptoStatus({ type: 'success', msg: 'Keys imported successfully.' });
+        } catch (err) {
+          setCryptoStatus({ type: 'error', msg: 'Decryption failed — wrong passphrase or corrupted file.' });
+        }
+        fileInputRef.current.value = '';
+      };
+
+      const statusColors = { error: '#f47068', success: '#6bcf8e', info: 'var(--gemini-accent)' };
+
+      return (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
+        }} onClick={onClose}>
+          <div style={{
+            background: 'var(--bg-secondary)', borderRadius: '12px', padding: '32px',
+            width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto',
+            border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontFamily: 'JetBrains Mono', fontSize: '18px', fontWeight: 700 }}>Configuration</h2>
+              <button onClick={onClose} style={{
+                background: 'none', border: 'none', color: 'var(--text-secondary)',
+                fontSize: '20px', cursor: 'pointer'
+              }}>✕</button>
+            </div>
+
+            {models.map(m => (
+              <div key={m.id} style={{ marginBottom: '24px' }}>
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
+                  color: m.accent, display: 'block', marginBottom: '6px'
+                }}>{m.label} API Key</label>
+                <input
+                  type="password"
+                  value={keys[m.id] || ''}
+                  onChange={e => setKeys(prev => ({ ...prev, [m.id]: e.target.value }))}
+                  placeholder={`Enter ${m.label} API key...`}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: 'var(--bg-input)',
+                    border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                    color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
+                    outline: 'none'
+                  }}
+                />
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
+                  color: 'var(--text-secondary)', display: 'block', marginBottom: '6px', marginTop: '12px'
+                }}>{m.label} System Prompt (optional)</label>
+                <textarea
+                  value={systemPrompts[m.id] || ''}
+                  onChange={e => setSystemPrompts(prev => ({ ...prev, [m.id]: e.target.value }))}
+                  placeholder={`Custom instructions for ${m.label}...`}
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '10px 14px', background: 'var(--bg-input)',
+                    border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                    color: 'var(--text-primary)', fontFamily: 'Source Serif 4', fontSize: '14px',
+                    outline: 'none', resize: 'vertical'
+                  }}
+                />
+              </div>
+            ))}
+
+            {/* Key File Management */}
+            <div style={{
+              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
+              border: '1px solid var(--border-subtle)', marginBottom: '16px'
+            }}>
+              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
+                Key File (Encrypted)
+              </h3>
+
+              {/* Export */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
+                  display: 'block', marginBottom: '6px'
+                }}>Export — save your keys to an encrypted file</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="password"
+                    value={exportPassphrase}
+                    onChange={e => setExportPassphrase(e.target.value)}
+                    placeholder="Choose a passphrase..."
+                    style={{
+                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button onClick={handleExport} style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                    background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
+                    cursor: 'pointer', color: 'var(--claude-accent)', whiteSpace: 'nowrap'
+                  }}>
+                    Export .ctk
+                  </button>
+                </div>
+              </div>
+
+              {/* Import */}
+              <div>
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
+                  display: 'block', marginBottom: '6px'
+                }}>Import — load keys from an encrypted file</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="password"
+                    value={importPassphrase}
+                    onChange={e => setImportPassphrase(e.target.value)}
+                    placeholder="Enter your passphrase..."
+                    style={{
+                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button onClick={() => fileInputRef.current?.click()} style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                    background: 'var(--gemini-border)', border: 'none', borderRadius: 'var(--radius)',
+                    cursor: 'pointer', color: 'var(--gemini-accent)', whiteSpace: 'nowrap'
+                  }}>
+                    Import .ctk
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".ctk"
+                    onChange={handleImport}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+              </div>
+
+              {/* Status message */}
+              {cryptoStatus && (
+                <div style={{
+                  marginTop: '12px', fontSize: '12px', fontFamily: 'JetBrains Mono',
+                  color: statusColors[cryptoStatus.type] || 'var(--text-secondary)'
+                }}>
+                  {cryptoStatus.msg}
+                </div>
+              )}
+            </div>
+
+            <div style={{
+              padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
+              border: '1px solid var(--border-subtle)', fontSize: '13px', color: 'var(--text-secondary)',
+              lineHeight: 1.5
+            }}>
+              <strong style={{ color: 'var(--text-primary)' }}>Security:</strong> API keys exist only in browser
+              session memory and are never stored on disk unless you explicitly export them. Exported .ctk files
+              are encrypted with AES-256-GCM — without your passphrase, the contents are unrecoverable. Keep the
+              .ctk file on your USB drive alongside the app.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // Model Response Card
+    // ─────────────────────────────────────────────
+
+    function ModelCard({ model, response, isLoading, error, enabled, onToggle, onSendTo }) {
+      const config = {
+        claude: { label: 'Claude', accent: 'var(--claude-accent)', bg: 'var(--claude-bg)', border: 'var(--claude-border)', icon: '◈' },
+        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
+        gemini: { label: 'Gemini', accent: 'var(--gemini-accent)', bg: 'var(--gemini-bg)', border: 'var(--gemini-border)', icon: '△' }
+      }[model];
+
+      return (
+        <div style={{
+          background: enabled ? config.bg : 'var(--bg-secondary)',
+          border: `1px solid ${enabled ? config.border : 'var(--border-subtle)'}`,
+          borderRadius: '12px', padding: '20px', minHeight: '200px',
+          opacity: enabled ? 1 : 0.4, transition: 'all 0.3s ease',
+          display: 'flex', flexDirection: 'column', position: 'relative'
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: config.accent, fontSize: '18px' }}>{config.icon}</span>
+              <span style={{
+                fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 700, color: config.accent
+              }}>{config.label}</span>
+              {isLoading && (
+                <span style={{
+                  display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
+                  background: config.accent, animation: 'pulse 1s infinite'
+                }} />
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={onToggle}
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '4px 10px',
+                  background: enabled ? config.border : 'var(--border-subtle)',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer',
+                  color: enabled ? config.accent : 'var(--text-muted)'
+                }}
+              >
+                {enabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', fontSize: '14px', lineHeight: 1.7 }}>
+            {error && (
+              <div style={{ color: '#f47068', fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px', background: 'rgba(244,112,104,0.1)', borderRadius: '4px' }}>
+                {error}
+              </div>
+            )}
+            {isLoading && !response && (
+              <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Thinking...</div>
+            )}
+            {response && <RenderedMarkdown text={response} />}
+            {!response && !isLoading && !error && (
+              <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>
+                Waiting for prompt...
+              </div>
+            )}
+          </div>
+
+          {/* Send-to buttons */}
+          {response && (
+            <div style={{ marginTop: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['claude', 'chatgpt', 'gemini'].filter(m => m !== model).map(target => {
+                const targetConfig = {
+                  claude: { label: 'Claude', accent: 'var(--claude-accent)' },
+                  chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
+                  gemini: { label: 'Gemini', accent: 'var(--gemini-accent)' }
+                }[target];
+                return (
+                  <button key={target} onClick={() => onSendTo(target, model, response)}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
+                      background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                      borderRadius: '4px', cursor: 'pointer', color: targetConfig.accent
+                    }}
+                  >
+                    → Send to {targetConfig.label}
+                  </button>
+                );
+              })}
+              <button onClick={() => navigator.clipboard.writeText(response)}
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)'
+                }}
+              >
+                Copy
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // Conversation History
+    // ─────────────────────────────────────────────
+
+    function HistoryPanel({ history, onLoadTurn }) {
+      if (history.length === 0) return null;
+      return (
+        <div style={{
+          borderTop: '1px solid var(--border-subtle)', marginTop: '24px', paddingTop: '20px'
+        }}>
+          <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>
+            CONVERSATION HISTORY
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {history.map((turn, i) => (
+              <div key={i} style={{
+                padding: '12px 16px', background: 'var(--bg-secondary)',
+                borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)',
+                cursor: 'pointer'
+              }} onClick={() => onLoadTurn(turn)}>
+                <div style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px'
+                }}>
+                  Turn {i + 1} — {turn.mode === 'parallel' ? 'Parallel' : 'Directed'}
+                </div>
+                <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  {turn.prompt.slice(0, 120)}{turn.prompt.length > 120 ? '…' : ''}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // Main App
+    // ─────────────────────────────────────────────
+
+    function App() {
+      const [keys, setKeys] = useState({ claude: '', chatgpt: '', gemini: '' });
+      const [systemPrompts, setSystemPrompts] = useState({ claude: '', chatgpt: '', gemini: '' });
+      const [showSettings, setShowSettings] = useState(false);
+      const [prompt, setPrompt] = useState('');
+      const [responses, setResponses] = useState({ claude: null, chatgpt: null, gemini: null });
+      const [loading, setLoading] = useState({ claude: false, chatgpt: false, gemini: false });
+      const [errors, setErrors] = useState({ claude: null, chatgpt: null, gemini: null });
+      const [enabled, setEnabled] = useState({ claude: true, chatgpt: true, gemini: true });
+      const [conversationHistory, setConversationHistory] = useState({
+        claude: [], chatgpt: [], gemini: []
+      });
+      const [turnHistory, setTurnHistory] = useState([]);
+      const textareaRef = useRef(null);
+
+      // Auto-resize textarea
+      useEffect(() => {
+        const ta = textareaRef.current;
+        if (ta) {
+          ta.style.height = 'auto';
+          ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
+        }
+      }, [prompt]);
+
+      // Check if any keys are configured
+      const hasAnyKey = Object.values(keys).some(k => k.trim());
+
+      // Send to all enabled models in parallel
+      const sendParallel = useCallback(async () => {
+        if (!prompt.trim()) return;
+
+        const currentPrompt = prompt.trim();
+        setPrompt('');
+
+        const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
+
+        // Clear previous responses
+        setResponses({ claude: null, chatgpt: null, gemini: null });
+        setErrors({ claude: null, chatgpt: null, gemini: null });
+
+        // Set loading for active models
+        const loadingState = { claude: false, chatgpt: false, gemini: false };
+        models.forEach(m => loadingState[m] = true);
+        setLoading(loadingState);
+
+        // Update conversation histories
+        const newHistories = { ...conversationHistory };
+        models.forEach(m => {
+          newHistories[m] = [...newHistories[m], { role: 'user', content: currentPrompt }];
+        });
+        setConversationHistory(newHistories);
+
+        // Send to all in parallel
+        const results = {};
+        await Promise.allSettled(models.map(async (model) => {
+          try {
+            const response = await apiAdapters[model](
+              newHistories[model],
+              systemPrompts[model],
+              keys[model]
+            );
+            results[model] = { response };
+            setResponses(prev => ({ ...prev, [model]: response }));
+            setConversationHistory(prev => ({
+              ...prev,
+              [model]: [...prev[model], { role: 'assistant', content: response }]
+            }));
+          } catch (err) {
+            results[model] = { error: err.message };
+            setErrors(prev => ({ ...prev, [model]: err.message }));
+          } finally {
+            setLoading(prev => ({ ...prev, [model]: false }));
+          }
+        }));
+
+        // Save to turn history
+        setTurnHistory(prev => [...prev, {
+          mode: 'parallel',
+          prompt: currentPrompt,
+          results
+        }]);
+      }, [prompt, enabled, keys, systemPrompts, conversationHistory]);
+
+      // Send one model's response to another model
+      const sendToModel = useCallback(async (targetModel, sourceModel, sourceResponse) => {
+        if (!keys[targetModel]?.trim()) {
+          setErrors(prev => ({ ...prev, [targetModel]: `No API key configured for ${targetModel}` }));
+          return;
+        }
+
+        const sourceLabel = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[sourceModel];
+        const directedPrompt = `Here is ${sourceLabel}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${sourceResponse}\n---`;
+
+        setLoading(prev => ({ ...prev, [targetModel]: true }));
+        setResponses(prev => ({ ...prev, [targetModel]: null }));
+        setErrors(prev => ({ ...prev, [targetModel]: null }));
+
+        const newHistory = [...conversationHistory[targetModel], { role: 'user', content: directedPrompt }];
+        setConversationHistory(prev => ({ ...prev, [targetModel]: newHistory }));
+
+        try {
+          const response = await apiAdapters[targetModel](
+            newHistory,
+            systemPrompts[targetModel],
+            keys[targetModel]
+          );
+          setResponses(prev => ({ ...prev, [targetModel]: response }));
+          setConversationHistory(prev => ({
+            ...prev,
+            [targetModel]: [...prev[targetModel], { role: 'assistant', content: response }]
+          }));
+        } catch (err) {
+          setErrors(prev => ({ ...prev, [targetModel]: err.message }));
+        } finally {
+          setLoading(prev => ({ ...prev, [targetModel]: false }));
+        }
+      }, [keys, systemPrompts, conversationHistory]);
+
+      // Clear conversation
+      const clearConversation = () => {
+        setResponses({ claude: null, chatgpt: null, gemini: null });
+        setErrors({ claude: null, chatgpt: null, gemini: null });
+        setConversationHistory({ claude: [], chatgpt: [], gemini: [] });
+        setTurnHistory([]);
+      };
+
+      // Handle keyboard
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendParallel();
+        }
+      };
+
+      return (
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+          {/* Header */}
+          <header style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: '32px', paddingBottom: '20px', borderBottom: '1px solid var(--border-subtle)'
+          }}>
+            <div>
+              <h1 style={{
+                fontFamily: 'JetBrains Mono', fontSize: '24px', fontWeight: 700,
+                letterSpacing: '-0.5px'
+              }}>
+                <span style={{ color: 'var(--claude-accent)' }}>◈</span>
+                <span style={{ color: 'var(--chatgpt-accent)' }}>◇</span>
+                <span style={{ color: 'var(--gemini-accent)' }}>△</span>
+                {' '}Triangulation
+              </h1>
+              <p style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Multi-model dialogue interface
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={clearConversation} style={{
+                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)'
+              }}>
+                Clear
+              </button>
+              <button onClick={() => setShowSettings(true)} style={{
+                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-primary)'
+              }}>
+                ⚙ Settings
+              </button>
+            </div>
+          </header>
+
+          {/* Getting started notice */}
+          {!hasAnyKey && (
+            <div style={{
+              padding: '24px', background: 'var(--bg-secondary)', borderRadius: '12px',
+              border: '1px solid var(--border-subtle)', textAlign: 'center', marginBottom: '24px'
+            }}>
+              <p style={{ fontSize: '16px', marginBottom: '12px' }}>Welcome to Triangulation</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
+                Add your API keys in Settings to start querying models.
+              </p>
+              <button onClick={() => setShowSettings(true)} style={{
+                fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '10px 24px',
+                background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
+                cursor: 'pointer', color: 'var(--claude-accent)'
+              }}>
+                Open Settings
+              </button>
+            </div>
+          )}
+
+          {/* Input Area */}
+          <div style={{
+            background: 'var(--bg-secondary)', borderRadius: '12px',
+            border: '1px solid var(--border-subtle)', padding: '16px', marginBottom: '24px'
+          }}>
+            <textarea
+              ref={textareaRef}
+              value={prompt}
+              onChange={e => setPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Enter your prompt — Shift+Enter for newline, Enter to send to all active models..."
+              rows={2}
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                color: 'var(--text-primary)', fontSize: '15px', fontFamily: 'Source Serif 4',
+                lineHeight: 1.6, resize: 'none'
+              }}
+            />
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px'
+            }}>
+              <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)' }}>
+                Active: {['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim()).map(m =>
+                  ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m])
+                ).join(', ') || 'None'}
+              </div>
+              <button onClick={sendParallel} disabled={!prompt.trim()} style={{
+                fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
+                background: prompt.trim() ? 'var(--claude-accent)' : 'var(--border-subtle)',
+                border: 'none', borderRadius: 'var(--radius)', cursor: prompt.trim() ? 'pointer' : 'default',
+                color: prompt.trim() ? 'var(--bg-primary)' : 'var(--text-muted)', fontWeight: 600
+              }}>
+                Send ↵
+              </button>
+            </div>
+          </div>
+
+          {/* Model Response Grid */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px',
+            marginBottom: '24px'
+          }}>
+            {['claude', 'chatgpt', 'gemini'].map(model => (
+              <ModelCard
+                key={model}
+                model={model}
+                response={responses[model]}
+                isLoading={loading[model]}
+                error={errors[model]}
+                enabled={enabled[model]}
+                onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
+                onSendTo={sendToModel}
+              />
+            ))}
+          </div>
+
+          {/* History */}
+          <HistoryPanel history={turnHistory} onLoadTurn={() => {}} />
+
+          {/* Settings Modal */}
+          {showSettings && (
+            <SettingsPanel
+              keys={keys} setKeys={setKeys}
+              systemPrompts={systemPrompts} setSystemPrompts={setSystemPrompts}
+              onClose={() => setShowSettings(false)}
+            />
+          )}
+
+          {/* Pulse animation */}
+          <style>{`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.3; }
+            }
+            .prose { color: var(--text-primary); }
+            .prose h1, .prose h2, .prose h3 { font-family: 'JetBrains Mono'; margin: 16px 0 8px; }
+            .prose h1 { font-size: 18px; }
+            .prose h2 { font-size: 16px; }
+            .prose h3 { font-size: 14px; }
+            .prose p { margin-bottom: 12px; }
+            .prose ul, .prose ol { margin: 8px 0 12px 20px; }
+            .prose li { margin-bottom: 4px; }
+            .prose code {
+              background: var(--bg-input); padding: 2px 6px; border-radius: 3px;
+              font-family: 'JetBrains Mono'; font-size: 13px;
+            }
+            .prose pre {
+              background: var(--bg-input); padding: 12px; border-radius: 6px;
+              overflow-x: auto; margin: 12px 0;
+            }
+            .prose pre code { background: none; padding: 0; }
+            .prose blockquote {
+              border-left: 3px solid var(--border-hover); padding-left: 12px;
+              color: var(--text-secondary); margin: 12px 0;
+            }
+            .prose strong { color: var(--text-primary); }
+            .prose a { color: var(--gemini-accent); }
+
+            @media (max-width: 900px) {
+              div[style*="grid-template-columns: repeat(3"] {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
