@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Triangulation — Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #161f30;
+      --bg-input: #1a2332;
+      --border-subtle: #1e2d42;
+      --border-hover: #2a3f5f;
+      --text-primary: #e2e8f0;
+      --text-secondary: #8899b0;
+      --text-muted: #4a5a72;
+      --claude-accent: #d4a574;
+      --claude-bg: #1a1610;
+      --claude-border: #3d2e1a;
+      --chatgpt-accent: #6bcf8e;
+      --chatgpt-bg: #101a14;
+      --chatgpt-border: #1a3d24;
+      --gemini-accent: #7ba4f4;
+      --gemini-bg: #10141f;
+      --gemini-border: #1a2a4d;
+      --radius: 10px;
+      --input-height: 120px;
+      --header-height: 56px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      line-height: 1.6;
+      overscroll-behavior: none;
+    }
+
+    /* ─── Layout ─── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ─── Header ─── */
+    header {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .header-icons span {
+      font-size: 15px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* ─── Scrollable content area ─── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 16px;
+    }
+
+    /* ─── Accordion cards ─── */
+    .model-card {
+      border-radius: var(--radius);
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .model-card.claude  { background: var(--claude-bg);  border-color: var(--claude-border); }
+    .model-card.chatgpt { background: var(--chatgpt-bg); border-color: var(--chatgpt-border); }
+    .model-card.gemini  { background: var(--gemini-bg);  border-color: var(--gemini-border); }
+
+    /* Card header / toggle row */
+    .card-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      gap: 10px;
+    }
+
+    .card-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .claude  .card-icon { color: var(--claude-accent); }
+    .chatgpt .card-icon { color: var(--chatgpt-accent); }
+    .gemini  .card-icon { color: var(--gemini-accent); }
+
+    .card-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .claude  .card-label { color: var(--claude-accent); }
+    .chatgpt .card-label { color: var(--chatgpt-accent); }
+    .gemini  .card-label { color: var(--gemini-accent); }
+
+    /* Status badge */
+    .card-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      color: var(--text-muted);
+      background: var(--bg-input);
+    }
+
+    .card-status.responded {
+      color: var(--chatgpt-accent);
+      background: rgba(107, 207, 142, 0.1);
+    }
+
+    .claude  .card-status.responded { color: var(--claude-accent);  background: rgba(212, 165, 116, 0.1); }
+    .chatgpt .card-status.responded { color: var(--chatgpt-accent); background: rgba(107, 207, 142, 0.1); }
+    .gemini  .card-status.responded { color: var(--gemini-accent);  background: rgba(123, 164, 244, 0.1); }
+
+    /* Thinking dot */
+    .thinking-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      animation: pulse 1s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    .claude  .thinking-dot { background: var(--claude-accent); }
+    .chatgpt .thinking-dot { background: var(--chatgpt-accent); }
+    .gemini  .thinking-dot { background: var(--gemini-accent); }
+
+    /* Chevron */
+    .chevron {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .model-card.open .chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Card body (collapsible) */
+    .card-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .model-card.open .card-body {
+      max-height: 1200px;
+    }
+
+    .card-body-inner {
+      padding: 0 16px 16px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Response text */
+    .response-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text-primary);
+      padding-top: 14px;
+    }
+
+    .response-text.muted {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    /* Action row below response */
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .action-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 5px 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    .action-btn.send-claude  { color: var(--claude-accent); }
+    .action-btn.send-chatgpt { color: var(--chatgpt-accent); }
+    .action-btn.send-gemini  { color: var(--gemini-accent); }
+
+    /* ─── Input area ─── */
+    #input-area {
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-subtle);
+      padding: 10px 12px 20px; /* extra bottom for home indicator */
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #prompt-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      color: var(--text-primary);
+      font-family: 'Source Serif 4', serif;
+      font-size: 15px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      min-height: 52px;
+      max-height: 140px;
+    }
+
+    #prompt-input::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .input-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .active-models {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    #send-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 20px;
+      background: var(--claude-accent);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg-primary);
+      cursor: pointer;
+      letter-spacing: 0.3px;
+    }
+
+    #send-btn:disabled {
+      background: var(--border-subtle);
+      color: var(--text-muted);
+      cursor: default;
+    }
+
+    /* ─── Mode indicator strip ─── */
+    .mode-strip {
+      display: flex;
+      gap: 6px;
+      padding: 0 12px;
+      margin-bottom: 4px;
+    }
+
+    .mode-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      background: var(--bg-input);
+    }
+
+    .mode-pill.active {
+      background: var(--bg-card);
+      color: var(--gemini-accent);
+      border-color: var(--gemini-border);
+    }
+
+    /* ─── Animations ─── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="header-title">
+      <div class="header-icons">
+        <span style="color:var(--claude-accent)">◈</span>
+        <span style="color:var(--chatgpt-accent)">◇</span>
+        <span style="color:var(--gemini-accent)">△</span>
+      </div>
+      Triangulation
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="Clear">↺</button>
+      <button class="icon-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- Mode strip -->
+  <div class="mode-strip" style="padding-top:10px;">
+    <div class="mode-pill active">Parallel</div>
+    <div class="mode-pill">Directed</div>
+    <div class="mode-pill">Synthesis</div>
+  </div>
+
+  <!-- Scrollable content -->
+  <div id="content">
+
+    <!-- Claude card -->
+    <div class="model-card claude open" id="card-claude">
+      <div class="card-header" onclick="toggleCard('claude')">
+        <span class="card-icon">◈</span>
+        <span class="card-label">Claude</span>
+        <span class="card-status responded">Responded</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          <div class="response-text">
+            The question of emergence in complex systems is genuinely fascinating. What strikes me most is how the vocabulary we reach for — "emergent," "irreducible," "self-organizing" — are all essentially admissions of explanatory defeat dressed up as insight. We're saying: the parts don't contain what the whole exhibits, and we don't fully understand why.<br><br>
+            There's a philosophical tradition, going back at least to Mill, of trying to distinguish "homeopathic" from "heteropathic" causes — where some combinations just sum their effects and others generate something genuinely new. The problem is that "genuinely new" tends to dissolve when you look closely enough at the right level of description.
+          </div>
+          <div class="card-actions">
+            <button class="action-btn send-chatgpt">→ ChatGPT</button>
+            <button class="action-btn send-gemini">→ Gemini</button>
+            <button class="action-btn">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ChatGPT card -->
+    <div class="model-card chatgpt" id="card-chatgpt">
+      <div class="card-header" onclick="toggleCard('chatgpt')">
+        <span class="card-icon">◇</span>
+        <span class="card-label">ChatGPT</span>
+        <span class="card-status responded">Responded</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          <div class="response-text">
+            I'd frame emergence differently — less as an epistemic failure and more as a genuine feature of how certain kinds of complexity organize themselves. The classic example is consciousness, but even simpler cases like wetness (which no single water molecule has) suggest that some properties are constitutively relational.<br><br>
+            The interesting methodological question is whether our reductionist tools are even the right instrument for detecting emergence, or whether they systematically miss it by design. You can't see a murmuration if you're studying one starling.
+          </div>
+          <div class="card-actions">
+            <button class="action-btn send-claude">→ Claude</button>
+            <button class="action-btn send-gemini">→ Gemini</button>
+            <button class="action-btn">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gemini card -->
+    <div class="model-card gemini" id="card-gemini">
+      <div class="card-header" onclick="toggleCard('gemini')">
+        <span class="card-icon">△</span>
+        <span class="card-label">Gemini</span>
+        <div class="thinking-dot"></div>
+        <span class="card-status">Thinking...</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          <div class="response-text muted">Still generating a response...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- Input area -->
+  <div id="input-area">
+    <textarea id="prompt-input" rows="2" placeholder="Ask all three models..."></textarea>
+    <div class="input-footer">
+      <span class="active-models">Active: Claude · ChatGPT · Gemini</span>
+      <button id="send-btn">Send ↵</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+  // Simple toggle logic
+  function toggleCard(model) {
+    const card = document.getElementById('card-' + model);
+    card.classList.toggle('open');
+  }
+
+  // Send button state
+  const textarea = document.getElementById('prompt-input');
+  const sendBtn = document.getElementById('send-btn');
+
+  textarea.addEventListener('input', () => {
+    sendBtn.disabled = !textarea.value.trim();
+    // auto-resize
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 140) + 'px';
+  });
+
+  sendBtn.disabled = true;
+
+  // Mode pills
+  document.querySelectorAll('.mode-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
