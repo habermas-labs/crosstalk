@@ -44,6 +44,10 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 023 | `[CT]` | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
 | 024 | `[CT]` | Ko-fi funding integration | Crowdfunding support for ongoing development | `idea` | User insight | 2026-03 |
 | 025 | `[CT]` | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
+| 026 | `[INFRA]` | Static site generator decision | Select and document SSG for CT; decision should be consistent with CK choice as both repos share infrastructure philosophy | `planned` | Cross-project coordination | 2026-03 |
+| 027 | `[INFRA]` | Frontmatter schema v1 | Canonical required/optional fields for content entries; to be decided in coordination with CK to maintain cross-project consistency | `planned` | Cross-project coordination | 2026-03 |
+| 028 | `[INFRA]` | CI validation | Markdown lint + frontmatter schema enforcement on PRs; tooling depends on SSG decision | `idea` | Cross-project coordination | 2026-03 |
+| 029 | `[INFRA]` | Obsidian / Zettelkasten flow direction | Single vault is decided; flow direction (Obsidian→repo, repo→Obsidian, or bidirectional) must be resolved in coordination with CK before tooling is selected | `idea` | Cross-project coordination | 2026-03 |
 
 ---
 
@@ -63,6 +67,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Mobile interface (011) and PWA (023) deferred until desktop feature set is complete
 - Handoff summaries (015) coined by Skooter as "compressed local heteroglossia" — captures the idea of context compression that preserves the multi-voice character of the triangulation session
 - Codex Kitchen is tracked separately in its own repo; INFRA entries appear in both trackers
+- Entries 026–029 are cross-project infrastructure decisions being coordinated with CK-TRACKER; SSG (026) and frontmatter schema (027) must be resolved jointly before CI validation (028) and Zettelkasten flow direction (029) can move forward
 
 ---
 *Last updated: 2026-03-02*
