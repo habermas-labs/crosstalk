@@ -1,6 +1,6 @@
-# Crosstalk Lab / Codex Kitchen — Feature Tracker
+# Crosstalk Lab — Feature Tracker
 
-A living document tracking features, ideas, infrastructure decisions, and rejected paths across both projects.
+A living document tracking features, ideas, and infrastructure decisions for Crosstalk Lab.
 Low barrier to entry — if it crossed our minds, it belongs here.
 
 **Status legend:**
@@ -11,7 +11,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Project tags:** `[CT]` Crosstalk Lab · `[CK]` Codex Kitchen · `[INFRA]` shared infrastructure
+**Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
 ---
 
@@ -33,7 +33,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 012 | `[CT]` | Conductor mode | Queue models to respond in sequence, each seeing prior responses before answering | `idea` | Claude suggestion | 2026-03 |
 | 013 | `[CT]` | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
 | 014 | `[CT]` | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
-| 015 | `[CT]` | Handoff summaries | Compressed context summaries enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
+| 015 | `[CT]` | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
 | 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | `idea` | Claude suggestion | 2026-03 |
 | 017 | `[CT]` | Cost tracking | Estimate token usage and API cost per turn | `idea` | Claude suggestion | 2026-03 |
 | 018 | `[CT]` | Model version selection | Choose specific model versions per provider in Settings | `idea` | Claude suggestion | 2026-03 |
@@ -41,6 +41,9 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 020 | `[INFRA]` | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 021 | `[CT]` | Mockups index page | `/mockups/` directory index listing design prototypes with descriptions | `implemented` | User insight | 2026-03 |
 | 022 | `[INFRA]` | Cloudflare email/password login | Switched from Google OAuth to direct login for multi-network reliability | `implemented` | Environmental constraint | 2026-03 |
+| 023 | `[CT]` | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
+| 024 | `[CT]` | Ko-fi funding integration | Crowdfunding support for ongoing development | `idea` | User insight | 2026-03 |
+| 025 | `[CT]` | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
 
 ---
 
@@ -50,14 +53,16 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 |---|---------|---------------|----------------------|--------|------|
 | R001 | `[INFRA]` | Server-side key handling | Would break the browser-only architecture — keys should never touch a server in transit | Claude suggestion | 2026-03 |
 | R002 | `[INFRA]` | Project-specific Obsidian vaults | Single vault aligns with Luhmann's methodology; project silos would fragment the knowledge graph | User insight | 2026-03 |
+| R003 | `[CT]` | Separate per-project feature trackers as one master doc | Gets unwieldy as both projects mature; cross-pollination handled by duplicating relevant entries with origin notes | User insight | 2026-03 |
 
 ---
 
 ## Notes
 
 - Worker + URL-load feature (009, 010) to be built from home network — school environment blocked Cloudflare Access setup
-- Mobile interface (011) deferred until desktop feature set is complete; restructuring of existing React components, not a rewrite
-- Codex Kitchen shares all infrastructure patterns with Crosstalk and serves as its primary test case
+- Mobile interface (011) and PWA (023) deferred until desktop feature set is complete
+- Handoff summaries (015) coined by Skooter as "compressed local heteroglossia" — captures the idea of context compression that preserves the multi-voice character of the triangulation session
+- Codex Kitchen is tracked separately in its own repo; INFRA entries appear in both trackers
 
 ---
 *Last updated: 2026-03-02*
