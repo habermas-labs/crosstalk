@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockups — Crosstalk Lab</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:wght@400;600&display=swap');
+    :root {
+      --bg-primary: #0a0e17;
+      --border-subtle: #1e2d42;
+      --text-primary: #e2e8f0;
+      --text-secondary: #8899b0;
+      --text-muted: #4a5a72;
+      --claude-accent: #d4a574;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Source Serif 4', Georgia, serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 48px 32px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    header {
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    h1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    h1 span { color: var(--claude-accent); }
+    .subtitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--border-subtle); }
+    th {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: left;
+      padding: 0 16px 12px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    td {
+      padding: 16px 16px 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: top;
+    }
+    .filename a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--claude-accent);
+      text-decoration: none;
+    }
+    .filename a:hover { text-decoration: underline; }
+    .description { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+    .date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><span>◈</span> Crosstalk Lab — Mockups</h1>
+      <p class="subtitle">Design prototypes and interface experiments</p>
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Description</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="filename"><a href="ct-mobile.html">ct-mobile.html</a></td>
+          <td class="description">Mobile interface prototype — vertical accordion layout optimized for thumb navigation</td>
+          <td class="date">2026-03</td>
+        </tr>
+        <!-- Add new mockups below this line -->
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
