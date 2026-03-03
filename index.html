@@ -639,6 +639,9 @@
         claude: [], chatgpt: [], gemini: []
       });
       const [turnHistory, setTurnHistory] = useState([]);
+      const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
+      const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
+      const [conductorActive, setConductorActive] = useState(false); // true while cycle is running
       const textareaRef = useRef(null);
 
       // Auto-resize textarea
@@ -708,6 +711,84 @@
           results
         }]);
       }, [prompt, enabled, keys, systemPrompts, conversationHistory]);
+
+      // Send opening cycle in conductor mode — sequential, each model sees prior responses
+      const sendConductor = useCallback(async () => {
+        if (!prompt.trim()) return;
+
+        const currentPrompt = prompt.trim();
+        setPrompt('');
+
+        const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
+        if (models.length === 0) return;
+
+        setResponses({ claude: null, chatgpt: null, gemini: null });
+        setErrors({ claude: null, chatgpt: null, gemini: null });
+        setConductorActive(true);
+
+        const results = {};
+        const priorResponses = []; // accumulates as each model responds
+
+        for (const model of models) {
+          setLoading(prev => ({ ...prev, [model]: true }));
+
+          // Build this model's prompt: original prompt + all prior responses so far
+          let contextualPrompt = currentPrompt;
+          if (priorResponses.length > 0) {
+            const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+            const priorText = priorResponses
+              .map(p => `### ${modelLabels[p.model]}
+${p.response}`)
+              .join('
+
+');
+            contextualPrompt = `${currentPrompt}
+
+---
+The following models have already responded to this prompt. Please read their responses before giving your own:
+
+${priorText}
+
+---
+Now give your own response, engaging with what has been said where relevant.`;
+          }
+
+          const newHistory = [
+            ...conversationHistory[model],
+            { role: 'user', content: contextualPrompt }
+          ];
+
+          try {
+            const response = await apiAdapters[model](
+              newHistory,
+              systemPrompts[model],
+              keys[model]
+            );
+            results[model] = { response };
+            priorResponses.push({ model, response });
+            setResponses(prev => ({ ...prev, [model]: response }));
+            setConversationHistory(prev => ({
+              ...prev,
+              [model]: [...prev[model], { role: 'assistant', content: response }]
+            }));
+          } catch (err) {
+            results[model] = { error: err.message };
+            setErrors(prev => ({ ...prev, [model]: err.message }));
+            priorResponses.push({ model, response: `[Error: ${err.message}]` });
+          } finally {
+            setLoading(prev => ({ ...prev, [model]: false }));
+          }
+        }
+
+        setConductorActive(false);
+
+        setTurnHistory(prev => [...prev, {
+          mode: 'conductor',
+          order: models,
+          prompt: currentPrompt,
+          results
+        }]);
+      }, [prompt, enabled, keys, systemPrompts, conversationHistory, conductorOrder]);
 
       // Send one model's response to another model
       const sendToModel = useCallback(async (targetModel, sourceModel, sourceResponse) => {
@@ -783,6 +864,8 @@
         turnHistory.forEach((turn, i) => {
           const turnLabel = turn.mode === 'parallel'
             ? 'Parallel'
+            : turn.mode === 'conductor'
+            ? `Conductor — ${turn.order.map(m => modelIcons[m]).join(' → ')}`
             : `Directed — ${modelLabels[turn.source]} → ${modelLabels[turn.target]}`;
 
           md += `## Turn ${i + 1} — ${turnLabel}\n\n`;
@@ -817,7 +900,11 @@
       const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          sendParallel();
+          if (sendMode === 'conductor') {
+            sendConductor();
+          } else {
+            sendParallel();
+          }
         }
       };
 
@@ -910,18 +997,49 @@
               display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px'
             }}>
               <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Active: {['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim()).map(m =>
-                  ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m])
-                ).join(', ') || 'None'}
+                {conductorActive
+                  ? <span style={{ color: 'var(--gemini-accent)' }}>◈ Conducting…</span>
+                  : <>Active: {['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim()).map(m =>
+                      ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m])
+                    ).join(', ') || 'None'}</>
+                }
               </div>
-              <button onClick={sendParallel} disabled={!prompt.trim()} style={{
-                fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
-                background: prompt.trim() ? 'var(--claude-accent)' : 'var(--border-subtle)',
-                border: 'none', borderRadius: 'var(--radius)', cursor: prompt.trim() ? 'pointer' : 'default',
-                color: prompt.trim() ? 'var(--bg-primary)' : 'var(--text-muted)', fontWeight: 600
-              }}>
-                Send ↵
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  disabled={!prompt.trim() || conductorActive}
+                  onClick={() => { setSendMode('parallel'); if (prompt.trim() && !conductorActive) sendParallel(); }}
+                  style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
+                    background: sendMode === 'parallel' && prompt.trim() && !conductorActive
+                      ? 'var(--claude-accent)' : 'var(--border-subtle)',
+                    border: sendMode === 'parallel' ? '2px solid var(--claude-accent)' : '2px solid transparent',
+                    borderRadius: 'var(--radius)',
+                    cursor: prompt.trim() && !conductorActive ? 'pointer' : 'default',
+                    color: sendMode === 'parallel' && prompt.trim() && !conductorActive
+                      ? 'var(--bg-primary)' : 'var(--text-muted)',
+                    fontWeight: 600
+                  }}
+                >
+                  Parallel ↵
+                </button>
+                <button
+                  disabled={!prompt.trim() || conductorActive}
+                  onClick={() => { setSendMode('conductor'); if (prompt.trim() && !conductorActive) sendConductor(); }}
+                  style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
+                    background: sendMode === 'conductor' && prompt.trim() && !conductorActive
+                      ? 'var(--gemini-accent)' : 'var(--border-subtle)',
+                    border: sendMode === 'conductor' ? '2px solid var(--gemini-accent)' : '2px solid transparent',
+                    borderRadius: 'var(--radius)',
+                    cursor: prompt.trim() && !conductorActive ? 'pointer' : 'default',
+                    color: sendMode === 'conductor' && prompt.trim() && !conductorActive
+                      ? 'var(--bg-primary)' : 'var(--text-muted)',
+                    fontWeight: 600
+                  }}
+                >
+                  Conductor ↵
+                </button>
+              </div>
             </div>
           </div>
 
