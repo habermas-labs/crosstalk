@@ -30,7 +30,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | `implemented` | Claude suggestion | 2026-03 |
 | 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | `implemented` | Claude suggestion | 2026-03 |
 | 011 | `[CT]` | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
-| 012 | `[CT]` | Conductor mode | Queue models to respond in sequence, each seeing prior responses before answering | `idea` | Claude suggestion | 2026-03 |
+| 012 | `[CT]` | Conductor mode | Queue models to respond in sequence, each seeing prior responses before answering | `implemented` | Claude suggestion | 2026-03 |
 | 013 | `[CT]` | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
 | 014 | `[CT]` | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
 | 015 | `[CT]` | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
@@ -52,6 +52,9 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 031 | `[CT]` | Summary export | Send full session to a designated model to synthesize key points of convergence and divergence; closely related to Synthesis mode (013) | `idea` | Session discussion | 2026-03 |
 | 032 | `[CT]` | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios and more sophisticated orchestration; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
 | 033 | `[CT]` | Password manager for credential workflow | Recommend and document a credential management approach in onboarding documentation for the key setup workflow | `idea` | Session discussion | 2026-03 |
+| 034 | `[CT]` | Conductor order selection | Allow user to set the sequence order for Conductor mode in Settings; currently hardcoded Claude → ChatGPT → Gemini | `planned` | Session discussion | 2026-03 |
+| 035 | `[CT]` | Drag-and-drop conductor ordering | Reorder model cards dynamically to set Conductor sequence; always conducts left to right | `idea` | Session discussion | 2026-03 |
+| 036 | `[CT]` | Conductor mid-conversation reordering | Ability to change the Conductor sequence order dynamically mid-session | `idea` | Session discussion | 2026-03 |
 
 ---
 
@@ -72,6 +75,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Handoff summaries (015) coined by Skooter as "compressed local heteroglossia" — captures the idea of context compression that preserves the multi-voice character of the triangulation session
 - Codex Kitchen is tracked separately in its own repo; INFRA entries appear in both trackers
 - Entries 026–029 are cross-project infrastructure decisions being coordinated with CK-TRACKER; SSG (026) and frontmatter schema (027) must be resolved jointly before CI validation (028) and Zettelkasten flow direction (029) can move forward
+- Cloudflare Access requires credentials:include in fetch calls and Access-Control-Allow-Credentials: true in Worker CORS headers for cross-origin authenticated requests
+- Conductor mode covers the opening cycle only; post-cycle dialogue uses existing directed routing — the mode distinction intentionally collapses after the first round
 
 ---
 *Last updated: 2026-03-02*
