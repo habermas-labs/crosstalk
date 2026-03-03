@@ -48,6 +48,10 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 027 | `[INFRA]` | Frontmatter schema v1 | Canonical required/optional fields for content entries; to be decided in coordination with CK to maintain cross-project consistency | `planned` | Cross-project coordination | 2026-03 |
 | 028 | `[INFRA]` | CI validation | Markdown lint + frontmatter schema enforcement on PRs; tooling depends on SSG decision | `idea` | Cross-project coordination | 2026-03 |
 | 029 | `[INFRA]` | Obsidian / Zettelkasten flow direction | Single vault is decided; flow direction (Obsidian→repo, repo→Obsidian, or bidirectional) must be resolved in coordination with CK before tooling is selected | `idea` | Cross-project coordination | 2026-03 |
+| 030 | `[CT]` | Export options in Settings | Dedicated Settings section for export preferences: format, scope (full session vs current turn), metadata toggle | `idea` | User insight | 2026-03 |
+| 031 | `[CT]` | Summary export | Send full session to a designated model to synthesize key points of convergence and divergence; closely related to Synthesis mode (013) | `idea` | Session discussion | 2026-03 |
+| 032 | `[CT]` | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios and more sophisticated orchestration; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
+| 033 | `[CT]` | Password manager for credential workflow | Recommend and document a credential management approach in onboarding documentation for the key setup workflow | `idea` | Session discussion | 2026-03 |
 
 ---
 
