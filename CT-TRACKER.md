@@ -38,9 +38,12 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 031 | `[CT]` | Summary export | Send full session to a designated model to synthesize key points of convergence and divergence; closely related to Synthesis mode (013) | `idea` | Session discussion | 2026-03 |
 | 032 | `[CT]` | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios and more sophisticated orchestration; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
 | 033 | `[CT]` | Password manager for credential workflow | Recommend and document a credential management approach in onboarding documentation for the key setup workflow | `idea` | Session discussion | 2026-03 |
-| 034 | `[CT]` | Conductor order selection | Allow user to set the sequence order for Conductor mode in Settings; currently hardcoded Claude → ChatGPT → Gemini | `planned` | Session discussion | 2026-03 |
+| 034 | `[CT]` | Conductor order selection | Allow user to set the sequence order for Conductor mode in Settings; currently hardcoded Claude → ChatGPT → Gemini; gate for 038 — Conductor order must be configurable before file handling triangulation session can be run as intended | `planned` | Session discussion | 2026-03 |
 | 035 | `[CT]` | Drag-and-drop conductor ordering | Reorder model cards dynamically to set Conductor sequence; always conducts left to right | `idea` | Session discussion | 2026-03 |
 | 036 | `[CT]` | Conductor mid-conversation reordering | Ability to change the Conductor sequence order dynamically mid-session | `idea` | Session discussion | 2026-03 |
+| 037 | `[CT]` | File/attachment support | Per-model file dispatch (Claude base64, OpenAI Files API, Gemini File API); IndexedDB as local staging layer; design question around when files are dispatched in Parallel vs Conductor modes | `idea` | Session discussion | 2026-03-03 |
+| 038 | `[CT]` | Triangulation as design methodology | Use CT itself to deliberate on CT feature design; file handling (037) as inaugural test case; establishes precedent for resolving ambiguous feature decisions via multi-model architectural deliberation | `idea` | Session discussion | 2026-03-03 |
+| 039 | `[CT]` | Replay / simulation mode | Reconstruct session state turn by turn from a full export; makes dialogical structure visible and navigable rather than collapsed into linear transcript; inverse operation of handoff summaries (015); requires export format to carry structural metadata (mode, routing decisions, turn order, enabled models); full exports only | `idea` | Session discussion | 2026-03-03 |
 
 ---
 
@@ -86,6 +89,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Cloudflare Access requires credentials:include in fetch calls and Access-Control-Allow-Credentials: true in Worker CORS headers for cross-origin authenticated requests
 - Conductor mode covers the opening cycle only; post-cycle dialogue uses existing directed routing — the mode distinction intentionally collapses after the first round
 - Tracker reorganized 2026-03-02: Implemented entries moved to separate section in chronological order of implementation; entry numbers preserved for reference. Entries 001–016 predate the reorganization and are ordered by entry number as a proxy for implementation order; 021 and 022 are the first entries placed in true implementation order
+- - Architectural deliberation is a valid and underexplored use case for multi-model triangulation — distinct from parallel task execution. CT's own feature design is the natural test bed for this, but the principle extends to any sufficiently complex design problem where model asymmetries are likely to surface meaningfully different perspectives. (038)
+- Linear export formats structurally suppress the dialogical architecture of a triangulation session — the routing decisions, sequencing, and inter-model reactions that constitute the actual epistemic work. The structure of a triangulation session carries meaning independent of its content. Replay mode is the specific solution; the broader principle should inform all future export and documentation design decisions. (039)
 
 ---
 *Last updated: 2026-03-02*
