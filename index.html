@@ -202,6 +202,7 @@
       const [exportPassphrase, setExportPassphrase] = useState('');
       const [importPassphrase, setImportPassphrase] = useState('');
       const [urlKeySource, setUrlKeySource] = useState('https://keys.yourcrosstalklab.com');
+      const [urlPassphrase, setUrlPassphrase] = useState('');
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const fileInputRef = useRef(null);
 
@@ -211,20 +212,20 @@
           setCryptoStatus({ type: 'error', msg: 'Enter a URL to load from.' });
           return;
         }
-        if (!importPassphrase.trim()) {
+        if (!urlPassphrase.trim()) {
           setCryptoStatus({ type: 'error', msg: 'Enter your passphrase before loading.' });
           return;
         }
         try {
           setCryptoStatus({ type: 'info', msg: 'Fetching key file...' });
-          const res = await fetch(urlKeySource.trim());
+          const res = await fetch(urlKeySource.trim(), { credentials: 'include' });
           if (!res.ok) throw new Error(`Server returned ${res.status}`);
           const base64 = (await res.text()).trim();
           setCryptoStatus({ type: 'info', msg: 'Decrypting...' });
-          const data = await cryptoUtils.decrypt(base64, importPassphrase);
+          const data = await cryptoUtils.decrypt(base64, urlPassphrase);
           if (data.keys) setKeys(data.keys);
           if (data.systemPrompts) setSystemPrompts(data.systemPrompts);
-          setImportPassphrase('');
+          setUrlPassphrase('');
           setCryptoStatus({ type: 'success', msg: 'Keys loaded from URL successfully.' });
         } catch (err) {
           setCryptoStatus({ type: 'error', msg: 'Load failed — ' + err.message });
@@ -439,8 +440,8 @@
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="password"
-                    value={importPassphrase}
-                    onChange={e => setImportPassphrase(e.target.value)}
+                    value={urlPassphrase}
+                    onChange={e => setUrlPassphrase(e.target.value)}
                     placeholder="Enter your passphrase..."
                     style={{
                       flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
