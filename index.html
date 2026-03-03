@@ -737,6 +737,13 @@
             ...prev,
             [targetModel]: [...prev[targetModel], { role: 'assistant', content: response }]
           }));
+          setTurnHistory(prev => [...prev, {
+            mode: 'directed',
+            source: sourceModel,
+            target: targetModel,
+            prompt: directedPrompt,
+            results: { [targetModel]: { response } }
+          }]);
         } catch (err) {
           setErrors(prev => ({ ...prev, [targetModel]: err.message }));
         } finally {
@@ -750,6 +757,60 @@
         setErrors({ claude: null, chatgpt: null, gemini: null });
         setConversationHistory({ claude: [], chatgpt: [], gemini: [] });
         setTurnHistory([]);
+      };
+
+      // Export session as markdown transcript
+      const exportTranscript = () => {
+        if (turnHistory.length === 0) return;
+
+        const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+        const modelIcons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-CA');
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const activeModels = ['claude', 'chatgpt', 'gemini']
+          .filter(m => keys[m]?.trim())
+          .map(m => `${modelIcons[m]} ${modelLabels[m]}`)
+          .join(' · ');
+
+        let md = `# Triangulation Session\n`;
+        md += `*Exported: ${dateStr} at ${timeStr}*  \n`;
+        md += `*Models: ${activeModels}*  \n`;
+        md += `*Turns: ${turnHistory.length}*\n\n`;
+        md += `---\n\n`;
+
+        turnHistory.forEach((turn, i) => {
+          const turnLabel = turn.mode === 'parallel'
+            ? 'Parallel'
+            : `Directed — ${modelLabels[turn.source]} → ${modelLabels[turn.target]}`;
+
+          md += `## Turn ${i + 1} — ${turnLabel}\n\n`;
+
+          if (turn.prompt) {
+            md += `**Prompt:** ${turn.prompt}\n\n`;
+          }
+
+          Object.keys(turn.results).forEach(model => {
+            const result = turn.results[model];
+            md += `### ${modelIcons[model]} ${modelLabels[model]}\n\n`;
+            if (result.response) {
+              md += `${result.response}\n\n`;
+            } else if (result.error) {
+              md += `*Error: ${result.error}*\n\n`;
+            }
+          });
+
+          md += `---\n\n`;
+        });
+
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `triangulation-${dateStr}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
       };
 
       // Handle keyboard
@@ -788,6 +849,14 @@
                 borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)'
               }}>
                 Clear
+              </button>
+              <button onClick={exportTranscript} disabled={turnHistory.length === 0} style={{
+                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius)', cursor: turnHistory.length > 0 ? 'pointer' : 'default',
+                color: turnHistory.length > 0 ? 'var(--chatgpt-accent)' : 'var(--text-muted)'
+              }}>
+                Export ↓
               </button>
               <button onClick={() => setShowSettings(true)} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
