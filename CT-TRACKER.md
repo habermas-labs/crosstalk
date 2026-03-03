@@ -7,7 +7,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `idea` — raw, unevaluated
 - `planned` — decided to do it, not started
 - `in-progress` — actively being built
-- `implemented` — done and deployed
+- `implemented` — done and deployed (see Implemented section)
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
@@ -15,32 +15,18 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 ---
 
-## Tracker
+## Backlog
 
 | # | Project | Feature / Idea | Description | Status | Origin | Date |
 |---|---------|---------------|-------------|--------|--------|------|
-| 001 | `[CT]` | Parallel mode | Send prompt to all active models simultaneously, responses displayed side by side | `implemented` | Core concept | 2026-03 |
-| 002 | `[CT]` | Directed routing | Send one model's response to another model with a structured reaction prompt | `implemented` | Core concept | 2026-03 |
-| 003 | `[CT]` | Per-model system prompts | Custom instructions for each model set in Settings | `implemented` | Core concept | 2026-03 |
-| 004 | `[CT]` | AES-256-GCM encrypted key storage | API keys encrypted to portable `.ctk` files via PBKDF2 passphrase derivation | `implemented` | Claude suggestion | 2026-03 |
-| 005 | `[CT]` | Conversation history panel | Turn-by-turn log displayed below response grid | `implemented` | Core concept | 2026-03 |
-| 006 | `[INFRA]` | Cloudflare Pages deployment | Static hosting with GitHub integration for both projects | `implemented` | Infrastructure decision | 2026-03 |
-| 007 | `[INFRA]` | Cloudflare Access authentication | Email OTP gating during development phase | `implemented` | Infrastructure decision | 2026-03 |
-| 008 | `[INFRA]` | R2 bucket for .ctk storage | `crosstalk-keys` bucket created for secure remote key file hosting | `implemented` | Claude suggestion | 2026-03 |
-| 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | `implemented` | Claude suggestion | 2026-03 |
-| 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | `implemented` | Claude suggestion | 2026-03 |
 | 011 | `[CT]` | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
-| 012 | `[CT]` | Conductor mode | Queue models to respond in sequence, each seeing prior responses before answering | `implemented` | Claude suggestion | 2026-03 |
 | 013 | `[CT]` | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
 | 014 | `[CT]` | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
 | 015 | `[CT]` | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
-| 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | `implemented` | Claude suggestion | 2026-03 |
 | 017 | `[CT]` | Cost tracking | Estimate token usage and API cost per turn | `idea` | Claude suggestion | 2026-03 |
 | 018 | `[CT]` | Model version selection | Choose specific model versions per provider in Settings | `idea` | Claude suggestion | 2026-03 |
 | 019 | `[INFRA]` | IndexedDB local storage | Persist conversation history locally across sessions | `planned` | Infrastructure decision | 2026-03 |
 | 020 | `[INFRA]` | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
-| 021 | `[CT]` | Mockups index page | `/mockups/` directory index listing design prototypes with descriptions | `implemented` | User insight | 2026-03 |
-| 022 | `[INFRA]` | Cloudflare email/password login | Switched from Google OAuth to direct login for multi-network reliability | `implemented` | Environmental constraint | 2026-03 |
 | 023 | `[CT]` | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
 | 024 | `[CT]` | Ko-fi funding integration | Crowdfunding support for ongoing development | `idea` | User insight | 2026-03 |
 | 025 | `[CT]` | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
@@ -58,6 +44,29 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 ---
 
+## Implemented
+
+*Entries appear in approximate order of implementation. Numbers are preserved for reference.*
+
+| # | Project | Feature / Idea | Description | Origin | Date |
+|---|---------|---------------|-------------|--------|------|
+| 001 | `[CT]` | Parallel mode | Send prompt to all active models simultaneously, responses displayed side by side | Core concept | 2026-03 |
+| 002 | `[CT]` | Directed routing | Send one model's response to another model with a structured reaction prompt | Core concept | 2026-03 |
+| 003 | `[CT]` | Per-model system prompts | Custom instructions for each model set in Settings | Core concept | 2026-03 |
+| 004 | `[CT]` | AES-256-GCM encrypted key storage | API keys encrypted to portable `.ctk` files via PBKDF2 passphrase derivation | Claude suggestion | 2026-03 |
+| 005 | `[CT]` | Conversation history panel | Turn-by-turn log displayed below response grid | Core concept | 2026-03 |
+| 006 | `[INFRA]` | Cloudflare Pages deployment | Static hosting with GitHub integration for both projects | Infrastructure decision | 2026-03 |
+| 007 | `[INFRA]` | Cloudflare Access authentication | Email OTP gating during development phase | Infrastructure decision | 2026-03 |
+| 008 | `[INFRA]` | R2 bucket for .ctk storage | `crosstalk-keys` bucket created for secure remote key file hosting | Claude suggestion | 2026-03 |
+| 021 | `[CT]` | Mockups index page | `/mockups/` directory index listing design prototypes with descriptions | User insight | 2026-03 |
+| 022 | `[INFRA]` | Cloudflare email/password login | Switched from Google OAuth to direct login for multi-network reliability | Environmental constraint | 2026-03 |
+| 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | Claude suggestion | 2026-03 |
+| 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | Claude suggestion | 2026-03 |
+| 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | Claude suggestion | 2026-03 |
+| 012 | `[CT]` | Conductor mode | Sequential opening cycle — each model sees prior responses before answering; post-cycle dialogue uses directed routing | Claude suggestion | 2026-03 |
+
+---
+
 ## Rejected
 
 | # | Project | Feature / Idea | Reason for rejection | Origin | Date |
@@ -70,13 +79,13 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 ## Notes
 
-- Worker + URL-load feature (009, 010) to be built from home network — school environment blocked Cloudflare Access setup
 - Mobile interface (011) and PWA (023) deferred until desktop feature set is complete
 - Handoff summaries (015) coined by Skooter as "compressed local heteroglossia" — captures the idea of context compression that preserves the multi-voice character of the triangulation session
 - Codex Kitchen is tracked separately in its own repo; INFRA entries appear in both trackers
 - Entries 026–029 are cross-project infrastructure decisions being coordinated with CK-TRACKER; SSG (026) and frontmatter schema (027) must be resolved jointly before CI validation (028) and Zettelkasten flow direction (029) can move forward
 - Cloudflare Access requires credentials:include in fetch calls and Access-Control-Allow-Credentials: true in Worker CORS headers for cross-origin authenticated requests
 - Conductor mode covers the opening cycle only; post-cycle dialogue uses existing directed routing — the mode distinction intentionally collapses after the first round
+- Tracker reorganized 2026-03-02: Implemented entries moved to separate section in chronological order of implementation; entry numbers preserved for reference. Entries 001–016 predate the reorganization and are ordered by entry number as a proxy for implementation order; 021 and 022 are the first entries placed in true implementation order
 
 ---
 *Last updated: 2026-03-02*
