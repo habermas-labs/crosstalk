@@ -737,20 +737,13 @@
           if (priorResponses.length > 0) {
             const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
             const priorText = priorResponses
-              .map(p => `### ${modelLabels[p.model]}
-${p.response}`)
-              .join('
-
-');
-            contextualPrompt = `${currentPrompt}
-
----
-The following models have already responded to this prompt. Please read their responses before giving your own:
-
-${priorText}
-
----
-Now give your own response, engaging with what has been said where relevant.`;
+              .map(p => '### ' + modelLabels[p.model] + '\n' + p.response)
+              .join('\n\n');
+            contextualPrompt = currentPrompt
+              + '\n\n---\nThe following models have already responded to this prompt.'
+              + ' Please read their responses before giving your own:\n\n'
+              + priorText
+              + '\n\n---\nNow give your own response, engaging with what has been said where relevant.';
           }
 
           const newHistory = [
