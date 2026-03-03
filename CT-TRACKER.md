@@ -34,7 +34,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 013 | `[CT]` | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
 | 014 | `[CT]` | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
 | 015 | `[CT]` | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
-| 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | `idea` | Claude suggestion | 2026-03 |
+| 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | `implemented` | Claude suggestion | 2026-03 |
 | 017 | `[CT]` | Cost tracking | Estimate token usage and API cost per turn | `idea` | Claude suggestion | 2026-03 |
 | 018 | `[CT]` | Model version selection | Choose specific model versions per provider in Settings | `idea` | Claude suggestion | 2026-03 |
 | 019 | `[INFRA]` | IndexedDB local storage | Persist conversation history locally across sessions | `planned` | Infrastructure decision | 2026-03 |
