@@ -201,8 +201,35 @@
     function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, onClose }) {
       const [exportPassphrase, setExportPassphrase] = useState('');
       const [importPassphrase, setImportPassphrase] = useState('');
+      const [urlKeySource, setUrlKeySource] = useState('https://keys.yourcrosstalklab.com');
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const fileInputRef = useRef(null);
+
+      // Load keys from a remote URL (Cloudflare Worker → R2)
+      const handleLoadFromUrl = async () => {
+        if (!urlKeySource.trim()) {
+          setCryptoStatus({ type: 'error', msg: 'Enter a URL to load from.' });
+          return;
+        }
+        if (!importPassphrase.trim()) {
+          setCryptoStatus({ type: 'error', msg: 'Enter your passphrase before loading.' });
+          return;
+        }
+        try {
+          setCryptoStatus({ type: 'info', msg: 'Fetching key file...' });
+          const res = await fetch(urlKeySource.trim());
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          const base64 = (await res.text()).trim();
+          setCryptoStatus({ type: 'info', msg: 'Decrypting...' });
+          const data = await cryptoUtils.decrypt(base64, importPassphrase);
+          if (data.keys) setKeys(data.keys);
+          if (data.systemPrompts) setSystemPrompts(data.systemPrompts);
+          setImportPassphrase('');
+          setCryptoStatus({ type: 'success', msg: 'Keys loaded from URL successfully.' });
+        } catch (err) {
+          setCryptoStatus({ type: 'error', msg: 'Load failed — ' + err.message });
+        }
+      };
 
       const models = [
         { id: 'claude', label: 'Claude', accent: 'var(--claude-accent)' },
@@ -386,6 +413,49 @@
                     onChange={handleImport}
                     style={{ display: 'none' }}
                   />
+                </div>
+              </div>
+
+              {/* Load from URL */}
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
+                  display: 'block', marginBottom: '6px'
+                }}>Load from URL — fetch encrypted key file from your Worker</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="text"
+                    value={urlKeySource}
+                    onChange={e => setUrlKeySource(e.target.value)}
+                    placeholder="https://keys.yourcrosstalklab.com"
+                    style={{
+                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="password"
+                    value={importPassphrase}
+                    onChange={e => setImportPassphrase(e.target.value)}
+                    placeholder="Enter your passphrase..."
+                    style={{
+                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button onClick={handleLoadFromUrl} style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                    background: 'var(--chatgpt-border)', border: 'none', borderRadius: 'var(--radius)',
+                    cursor: 'pointer', color: 'var(--chatgpt-accent)', whiteSpace: 'nowrap'
+                  }}>
+                    Load ↓
+                  </button>
                 </div>
               </div>
 
