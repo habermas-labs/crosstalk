@@ -21,7 +21,7 @@ Cloudflare Pages is a static site hosting platform with a direct GitHub integrat
 ---
 
 ## 3. Serverless Compute (Workers)
-→ `devstack-workers-serverless.md`
+→ `devstack-workers.md`
 
 A Cloudflare Worker is a small JavaScript function that runs at the edge — on Cloudflare's servers, not yours — in response to an HTTP request. "Serverless" means you write the function without managing or thinking about the server it runs on; Cloudflare handles scaling, uptime, and routing automatically. In this project, Workers serve as the bridge between the static frontend and resources that require server-side logic: the R2 key file retrieval endpoint is a Worker, and any future backend API layer would also live here. Workers run in a constrained environment (no filesystem, limited APIs, short execution time) which shapes what you can and can't do with them — and understanding those constraints explains several architectural decisions in this project.
 
@@ -49,7 +49,7 @@ This layer concerns what happens to sensitive data — specifically API keys —
 ---
 
 ## 7. API & Protocol Layer
-→ `devstack-api-protocol.md`
+→ `devstack-api.md`
 
 This layer covers how your app talks to the outside world: HTTP, the fetch API, request/response structure, headers, and CORS. HTTP (HyperText Transfer Protocol) is the language of the web — every API call Crosstalk makes to Anthropic, OpenAI, and Google is an HTTP request with a method (POST), headers (authentication, content type), and a body (the prompt and parameters). CORS (Cross-Origin Resource Sharing) is a browser security mechanism that restricts which domains a webpage can make API calls to, and why some calls require special server-side configuration to permit. Headers carry metadata about a request — including API keys, versioning, and CORS permissions — and understanding how they work explains several otherwise-mysterious configuration requirements in this project (the `anthropic-dangerous-direct-browser-access` header being a good example).
 
@@ -59,6 +59,39 @@ This layer covers how your app talks to the outside world: HTTP, the fetch API, 
 → `devstack-frontend.md`
 
 The frontend layer is what runs in the browser: HTML, CSS, JavaScript, and in this project's case, React (loaded from a CDN rather than built with a bundler). The browser's JavaScript runtime is a sandboxed environment with access to the DOM (the rendered page), the fetch API (network requests), the Web Crypto API (encryption), and storage APIs (IndexedDB, sessionStorage). React is a library for building user interfaces declaratively — you describe what the UI should look like given a particular state, and React figures out the minimal DOM updates needed to get there. The current single-file architecture (everything in one `index.html`, Babel transpiling JSX at runtime) is a deliberate simplicity choice that trades build-step overhead for portability, but it comes with tradeoffs in performance and scalability that will eventually motivate a more conventional setup.
+
+---
+
+## Development Conventions
+
+### Commit Messages
+
+Crosstalk uses the **Conventional Commits** format: `type: short description in imperative mood`. The description should complete the sentence "this commit will..." — so "add Workers layer file" not "added Workers layer file."
+
+```
+feat: add conductor mode to parallel prompt flow
+fix: correct CORS headers on R2 Worker response
+docs: add devstack-workers and devstack-api layer files
+chore: update _redirects rule for devstack reader
+```
+
+**Standard types:**
+
+| Type | When to use |
+|---|---|
+| `feat` | A new feature visible to the user |
+| `fix` | A bug fix |
+| `docs` | Documentation only — no code change |
+| `chore` | Housekeeping: config, routing rules, dependency updates |
+| `refactor` | Code restructured without changing behavior |
+| `style` | Formatting, whitespace — no logic change |
+| `ci` | Changes to CI/build pipeline config |
+| `perf` | Performance improvement |
+| `revert` | Reverting a prior commit |
+
+In practice for Crosstalk you'll mostly reach for `feat`, `fix`, `docs`, and `chore`. When in doubt between `chore` and `docs`, ask whether the change affects something a user would read (`docs`) or something only the build/deploy process touches (`chore`).
+
+A future devstack glossary will collect industry-standard terminology from across all layers in one place. The CT glossary serves a different function — it's for terms coined or specifically repurposed within the project itself (opening cycle, compressed local heteroglossia, etc.).
 
 ---
 
@@ -79,5 +112,5 @@ The frontend layer is what runs in the browser: HTML, CSS, JavaScript, and in th
 
 ---
 
-*Created: 2026-03-03 | Project: Crosstalk Lab / Codex Kitchen*
-*Next: expand devstack-auth.md — flagged as priority layer*
+*Created: 2026-03-03 | Updated: 2026-03-03 | Project: Crosstalk Lab / Codex Kitchen*
+*Layer filenames corrected. Development Conventions section added.*
