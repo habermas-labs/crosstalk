@@ -27,8 +27,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 006 | `[INFRA]` | Cloudflare Pages deployment | Static hosting with GitHub integration for both projects | `implemented` | Infrastructure decision | 2026-03 |
 | 007 | `[INFRA]` | Cloudflare Access authentication | Email OTP gating during development phase | `implemented` | Infrastructure decision | 2026-03 |
 | 008 | `[INFRA]` | R2 bucket for .ctk storage | `crosstalk-keys` bucket created for secure remote key file hosting | `implemented` | Claude suggestion | 2026-03 |
-| 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | `planned` | Claude suggestion | 2026-03 |
-| 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | `planned` | Claude suggestion | 2026-03 |
+| 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | `implemented` | Claude suggestion | 2026-03 |
+| 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | `implemented` | Claude suggestion | 2026-03 |
 | 011 | `[CT]` | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
 | 012 | `[CT]` | Conductor mode | Queue models to respond in sequence, each seeing prior responses before answering | `idea` | Claude suggestion | 2026-03 |
 | 013 | `[CT]` | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
