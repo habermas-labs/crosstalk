@@ -758,6 +758,7 @@
 
         const content = buildPromptContent(userText, included);
         setPrompt('');
+        setDirectTo('all');
         setIncludeResponse('none');
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
@@ -805,6 +806,7 @@
 
         const baseContent = buildPromptContent(userText, included);
         setPrompt('');
+        setDirectTo('all');
         setIncludeResponse('none');
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
@@ -871,6 +873,7 @@
 
         const content = buildPromptContent(userText, included);
         setPrompt('');
+        setDirectTo('all');
         setIncludeResponse('none');
 
         setLoading(prev => ({ ...prev, [targetModel]: true }));
@@ -1070,9 +1073,9 @@
                   }}
                 >
                   <option value="all">All</option>
-                  <option value="claude">◈ Claude</option>
-                  <option value="chatgpt">◇ ChatGPT</option>
-                  <option value="gemini">△ Gemini</option>
+                  {enabled['claude']  && keys['claude']?.trim()  && <option value="claude">◈ Claude</option>}
+                  {enabled['chatgpt'] && keys['chatgpt']?.trim() && <option value="chatgpt">◇ ChatGPT</option>}
+                  {enabled['gemini']  && keys['gemini']?.trim()  && <option value="gemini">△ Gemini</option>}
                 </select>
               </div>
 
