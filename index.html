@@ -65,7 +65,6 @@
     // ─────────────────────────────────────────────
 
     const cryptoUtils = {
-      // Derive an AES-GCM key from a passphrase
       async deriveKey(passphrase, salt) {
         const enc = new TextEncoder();
         const keyMaterial = await crypto.subtle.importKey(
@@ -80,7 +79,6 @@
         );
       },
 
-      // Encrypt an object to a base64 string
       async encrypt(data, passphrase) {
         const enc = new TextEncoder();
         const salt = crypto.getRandomValues(new Uint8Array(16));
@@ -91,7 +89,6 @@
           key,
           enc.encode(JSON.stringify(data))
         );
-        // Pack salt + iv + ciphertext into one blob
         const packed = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
         packed.set(salt, 0);
         packed.set(iv, salt.length);
@@ -99,7 +96,6 @@
         return btoa(String.fromCharCode(...packed));
       },
 
-      // Decrypt a base64 string back to an object
       async decrypt(base64, passphrase) {
         const packed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
         const salt = packed.slice(0, 16);
@@ -198,13 +194,36 @@
     // Settings Panel
     // ─────────────────────────────────────────────
 
-    function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, onClose }) {
+    function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, conductorOrder, setConductorOrder, onClose }) {
       const [exportPassphrase, setExportPassphrase] = useState('');
       const [importPassphrase, setImportPassphrase] = useState('');
       const [urlKeySource, setUrlKeySource] = useState('https://keys.yourcrosstalklab.com');
       const [urlPassphrase, setUrlPassphrase] = useState('');
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const fileInputRef = useRef(null);
+
+      const MODEL_META = {
+        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  icon: '◈' },
+        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', icon: '◇' },
+        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  icon: '△' },
+      };
+
+      const models = [
+        { id: 'claude',  label: 'Claude',  accent: 'var(--claude-accent)'  },
+        { id: 'chatgpt', label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
+        { id: 'gemini',  label: 'Gemini',  accent: 'var(--gemini-accent)'  }
+      ];
+
+      // Update a single position in the conductor order
+      const handleOrderChange = (position, newModel) => {
+        // Swap: if newModel is already in the order, swap it with what's currently at this position
+        const current = [...conductorOrder];
+        const existingPos = current.indexOf(newModel);
+        const displaced = current[position];
+        current[existingPos] = displaced;
+        current[position] = newModel;
+        setConductorOrder(current);
+      };
 
       // Load keys from a remote URL (Cloudflare Worker → R2)
       const handleLoadFromUrl = async () => {
@@ -232,12 +251,6 @@
         }
       };
 
-      const models = [
-        { id: 'claude', label: 'Claude', accent: 'var(--claude-accent)' },
-        { id: 'chatgpt', label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
-        { id: 'gemini', label: 'Gemini', accent: 'var(--gemini-accent)' }
-      ];
-
       // Export keys to encrypted file
       const handleExport = async () => {
         if (!exportPassphrase.trim()) {
@@ -248,7 +261,6 @@
           setCryptoStatus({ type: 'info', msg: 'Encrypting...' });
           const data = { keys, systemPrompts, exportedAt: new Date().toISOString() };
           const encrypted = await cryptoUtils.encrypt(data, exportPassphrase);
-          // Download as .ctk file
           const blob = new Blob([encrypted], { type: 'text/plain' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -288,6 +300,19 @@
 
       const statusColors = { error: '#f47068', success: '#6bcf8e', info: 'var(--gemini-accent)' };
 
+      const selectStyle = {
+        padding: '6px 10px',
+        background: 'var(--bg-secondary)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius)',
+        color: 'var(--text-primary)',
+        fontFamily: 'JetBrains Mono',
+        fontSize: '12px',
+        outline: 'none',
+        cursor: 'pointer',
+        flex: 1,
+      };
+
       return (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
@@ -306,6 +331,7 @@
               }}>✕</button>
             </div>
 
+            {/* API Keys + System Prompts */}
             {models.map(m => (
               <div key={m.id} style={{ marginBottom: '24px' }}>
                 <label style={{
@@ -342,6 +368,69 @@
                 />
               </div>
             ))}
+
+            {/* ── Conductor Order ── */}
+            <div style={{
+              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
+              border: '1px solid var(--border-subtle)', marginBottom: '16px'
+            }}>
+              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
+                Conductor Order
+              </h3>
+              <p style={{
+                fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
+                marginBottom: '14px', lineHeight: 1.5
+              }}>
+                Opening cycle sequence — each model sees the responses of models before it.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {conductorOrder.map((modelId, position) => (
+                  <React.Fragment key={position}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                      <label style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '10px',
+                        color: 'var(--text-muted)', textAlign: 'center'
+                      }}>
+                        {position === 0 ? '1st' : position === 1 ? '2nd' : '3rd'}
+                      </label>
+                      <select
+                        value={modelId}
+                        onChange={e => handleOrderChange(position, e.target.value)}
+                        style={{
+                          ...selectStyle,
+                          color: MODEL_META[modelId].accent,
+                          borderColor: modelId === 'claude' ? 'var(--claude-border)'
+                            : modelId === 'chatgpt' ? 'var(--chatgpt-border)'
+                            : 'var(--gemini-border)',
+                        }}
+                      >
+                        <option value="claude">◈ Claude</option>
+                        <option value="chatgpt">◇ ChatGPT</option>
+                        <option value="gemini">△ Gemini</option>
+                      </select>
+                    </div>
+                    {position < 2 && (
+                      <span style={{
+                        color: 'var(--text-muted)', fontFamily: 'JetBrains Mono',
+                        fontSize: '14px', marginTop: '18px', flexShrink: 0
+                      }}>→</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              {/* Preview */}
+              <div style={{
+                marginTop: '12px', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                color: 'var(--text-muted)', textAlign: 'center'
+              }}>
+                {conductorOrder.map((m, i) => (
+                  <span key={m}>
+                    <span style={{ color: MODEL_META[m].accent }}>{MODEL_META[m].icon} {MODEL_META[m].label}</span>
+                    {i < conductorOrder.length - 1 && <span> → </span>}
+                  </span>
+                ))}
+              </div>
+            </div>
 
             {/* Key File Management */}
             <div style={{
@@ -490,11 +579,11 @@
     // Model Response Card
     // ─────────────────────────────────────────────
 
-    function ModelCard({ model, response, isLoading, error, enabled, onToggle, onSendTo }) {
+    function ModelCard({ model, response, isLoading, error, enabled, onToggle }) {
       const config = {
-        claude: { label: 'Claude', accent: 'var(--claude-accent)', bg: 'var(--claude-bg)', border: 'var(--claude-border)', icon: '◈' },
+        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
-        gemini: { label: 'Gemini', accent: 'var(--gemini-accent)', bg: 'var(--gemini-bg)', border: 'var(--gemini-border)', icon: '△' }
+        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  bg: 'var(--gemini-bg)',  border: 'var(--gemini-border)',  icon: '△' }
       }[model];
 
       return (
@@ -506,7 +595,10 @@
           display: 'flex', flexDirection: 'column', position: 'relative'
         }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            marginBottom: '16px'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ color: config.accent, fontSize: '18px' }}>{config.icon}</span>
               <span style={{
@@ -519,25 +611,26 @@
                 }} />
               )}
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                onClick={onToggle}
-                style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '4px 10px',
-                  background: enabled ? config.border : 'var(--border-subtle)',
-                  border: 'none', borderRadius: '4px', cursor: 'pointer',
-                  color: enabled ? config.accent : 'var(--text-muted)'
-                }}
-              >
-                {enabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
+            <button
+              onClick={onToggle}
+              style={{
+                fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '4px 10px',
+                background: enabled ? config.border : 'var(--border-subtle)',
+                border: 'none', borderRadius: '4px', cursor: 'pointer',
+                color: enabled ? config.accent : 'var(--text-muted)'
+              }}
+            >
+              {enabled ? 'ON' : 'OFF'}
+            </button>
           </div>
 
           {/* Content */}
           <div style={{ flex: 1, overflowY: 'auto', fontSize: '14px', lineHeight: 1.7 }}>
             {error && (
-              <div style={{ color: '#f47068', fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px', background: 'rgba(244,112,104,0.1)', borderRadius: '4px' }}>
+              <div style={{
+                color: '#f47068', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                padding: '8px', background: 'rgba(244,112,104,0.1)', borderRadius: '4px'
+              }}>
                 {error}
               </div>
             )}
@@ -552,27 +645,9 @@
             )}
           </div>
 
-          {/* Send-to buttons */}
+          {/* Copy button — stays at bottom, only when there's a response */}
           {response && (
-            <div style={{ marginTop: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {['claude', 'chatgpt', 'gemini'].filter(m => m !== model).map(target => {
-                const targetConfig = {
-                  claude: { label: 'Claude', accent: 'var(--claude-accent)' },
-                  chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
-                  gemini: { label: 'Gemini', accent: 'var(--gemini-accent)' }
-                }[target];
-                return (
-                  <button key={target} onClick={() => onSendTo(target, model, response)}
-                    style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
-                      background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                      borderRadius: '4px', cursor: 'pointer', color: targetConfig.accent
-                    }}
-                  >
-                    → Send to {targetConfig.label}
-                  </button>
-                );
-              })}
+            <div style={{ marginTop: '12px' }}>
               <button onClick={() => navigator.clipboard.writeText(response)}
                 style={{
                   fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
@@ -611,7 +686,11 @@
                 <div style={{
                   fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px'
                 }}>
-                  Turn {i + 1} — {turn.mode === 'parallel' ? 'Parallel' : 'Directed'}
+                  Turn {i + 1} — {
+                    turn.mode === 'parallel' ? 'Parallel' :
+                    turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => ({claude:'◈',chatgpt:'◇',gemini:'△'})[m]).join('→')})` :
+                    `Directed`
+                  }
                 </div>
                 <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                   {turn.prompt.slice(0, 120)}{turn.prompt.length > 120 ? '…' : ''}
@@ -642,7 +721,9 @@
       const [turnHistory, setTurnHistory] = useState([]);
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
-      const [conductorActive, setConductorActive] = useState(false); // true while cycle is running
+      const [conductorActive, setConductorActive] = useState(false);
+      const [directTo, setDirectTo] = useState('all');         // 'all' | 'claude' | 'chatgpt' | 'gemini'
+      const [includeResponse, setIncludeResponse] = useState('none'); // 'none' | 'claude' | 'chatgpt' | 'gemini'
       const textareaRef = useRef(null);
 
       // Auto-resize textarea
@@ -654,42 +735,50 @@
         }
       }, [prompt]);
 
-      // Check if any keys are configured
       const hasAnyKey = Object.values(keys).some(k => k.trim());
+
+      // Build the full prompt content, optionally prepending an included model's response
+      const buildPromptContent = (userText, includeModel) => {
+        if (!includeModel || includeModel === 'none' || !responses[includeModel]) return userText;
+        const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+        const included = responses[includeModel];
+        if (!userText.trim()) {
+          // Move 2: pure response routing, no new user text
+          return `Here is ${modelLabels[includeModel]}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${included}\n---`;
+        }
+        // Move 3: combined — user prompt + included response
+        return `${userText}\n\n---\nFor context, here is ${modelLabels[includeModel]}'s response to our previous discussion:\n\n${included}\n---`;
+      };
 
       // Send to all enabled models in parallel
       const sendParallel = useCallback(async () => {
-        if (!prompt.trim()) return;
+        const userText = prompt.trim();
+        const included = includeResponse !== 'none' ? includeResponse : null;
+        if (!userText && !included) return;
 
-        const currentPrompt = prompt.trim();
+        const content = buildPromptContent(userText, included);
         setPrompt('');
+        setIncludeResponse('none');
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
-
-        // Clear previous responses
         setResponses({ claude: null, chatgpt: null, gemini: null });
         setErrors({ claude: null, chatgpt: null, gemini: null });
 
-        // Set loading for active models
         const loadingState = { claude: false, chatgpt: false, gemini: false };
         models.forEach(m => loadingState[m] = true);
         setLoading(loadingState);
 
-        // Update conversation histories
         const newHistories = { ...conversationHistory };
         models.forEach(m => {
-          newHistories[m] = [...newHistories[m], { role: 'user', content: currentPrompt }];
+          newHistories[m] = [...newHistories[m], { role: 'user', content }];
         });
         setConversationHistory(newHistories);
 
-        // Send to all in parallel
         const results = {};
         await Promise.allSettled(models.map(async (model) => {
           try {
             const response = await apiAdapters[model](
-              newHistories[model],
-              systemPrompts[model],
-              keys[model]
+              newHistories[model], systemPrompts[model], keys[model]
             );
             results[model] = { response };
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -705,20 +794,18 @@
           }
         }));
 
-        // Save to turn history
-        setTurnHistory(prev => [...prev, {
-          mode: 'parallel',
-          prompt: currentPrompt,
-          results
-        }]);
-      }, [prompt, enabled, keys, systemPrompts, conversationHistory]);
+        setTurnHistory(prev => [...prev, { mode: 'parallel', prompt: content, results }]);
+      }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, responses]);
 
-      // Send opening cycle in conductor mode — sequential, each model sees prior responses
+      // Opening cycle — sequential, each model sees prior responses
       const sendConductor = useCallback(async () => {
-        if (!prompt.trim()) return;
+        const userText = prompt.trim();
+        const included = includeResponse !== 'none' ? includeResponse : null;
+        if (!userText && !included) return;
 
-        const currentPrompt = prompt.trim();
+        const baseContent = buildPromptContent(userText, included);
         setPrompt('');
+        setIncludeResponse('none');
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
         if (models.length === 0) return;
@@ -728,36 +815,28 @@
         setConductorActive(true);
 
         const results = {};
-        const priorResponses = []; // accumulates as each model responds
+        const priorResponses = [];
 
         for (const model of models) {
           setLoading(prev => ({ ...prev, [model]: true }));
 
-          // Build this model's prompt: original prompt + all prior responses so far
-          let contextualPrompt = currentPrompt;
+          let contextualPrompt = baseContent;
           if (priorResponses.length > 0) {
             const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
             const priorText = priorResponses
               .map(p => '### ' + modelLabels[p.model] + '\n' + p.response)
               .join('\n\n');
-            contextualPrompt = currentPrompt
+            contextualPrompt = baseContent
               + '\n\n---\nThe following models have already responded to this prompt.'
               + ' Please read their responses before giving your own:\n\n'
               + priorText
               + '\n\n---\nNow give your own response, engaging with what has been said where relevant.';
           }
 
-          const newHistory = [
-            ...conversationHistory[model],
-            { role: 'user', content: contextualPrompt }
-          ];
+          const newHistory = [...conversationHistory[model], { role: 'user', content: contextualPrompt }];
 
           try {
-            const response = await apiAdapters[model](
-              newHistory,
-              systemPrompts[model],
-              keys[model]
-            );
+            const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model]);
             results[model] = { response };
             priorResponses.push({ model, response });
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -775,48 +854,43 @@
         }
 
         setConductorActive(false);
-
         setTurnHistory(prev => [...prev, {
-          mode: 'conductor',
-          order: models,
-          prompt: currentPrompt,
-          results
+          mode: 'conductor', order: models, prompt: baseContent, results
         }]);
-      }, [prompt, enabled, keys, systemPrompts, conversationHistory, conductorOrder]);
+      }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, conductorOrder, responses]);
 
-      // Send one model's response to another model
-      const sendToModel = useCallback(async (targetModel, sourceModel, sourceResponse) => {
+      // Send to a single model — directed prompt (Move 1) or combined (Move 3)
+      const sendDirect = useCallback(async (targetModel) => {
+        const userText = prompt.trim();
+        const included = includeResponse !== 'none' ? includeResponse : null;
+        if (!userText && !included) return;
         if (!keys[targetModel]?.trim()) {
           setErrors(prev => ({ ...prev, [targetModel]: `No API key configured for ${targetModel}` }));
           return;
         }
 
-        const sourceLabel = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[sourceModel];
-        const directedPrompt = `Here is ${sourceLabel}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${sourceResponse}\n---`;
+        const content = buildPromptContent(userText, included);
+        setPrompt('');
+        setIncludeResponse('none');
 
         setLoading(prev => ({ ...prev, [targetModel]: true }));
         setResponses(prev => ({ ...prev, [targetModel]: null }));
         setErrors(prev => ({ ...prev, [targetModel]: null }));
 
-        const newHistory = [...conversationHistory[targetModel], { role: 'user', content: directedPrompt }];
+        const newHistory = [...conversationHistory[targetModel], { role: 'user', content }];
         setConversationHistory(prev => ({ ...prev, [targetModel]: newHistory }));
 
         try {
-          const response = await apiAdapters[targetModel](
-            newHistory,
-            systemPrompts[targetModel],
-            keys[targetModel]
-          );
+          const response = await apiAdapters[targetModel](newHistory, systemPrompts[targetModel], keys[targetModel]);
           setResponses(prev => ({ ...prev, [targetModel]: response }));
           setConversationHistory(prev => ({
             ...prev,
             [targetModel]: [...prev[targetModel], { role: 'assistant', content: response }]
           }));
           setTurnHistory(prev => [...prev, {
-            mode: 'directed',
-            source: sourceModel,
-            target: targetModel,
-            prompt: directedPrompt,
+            mode: 'directed', target: targetModel,
+            source: included || null,
+            prompt: content,
             results: { [targetModel]: { response } }
           }]);
         } catch (err) {
@@ -824,7 +898,10 @@
         } finally {
           setLoading(prev => ({ ...prev, [targetModel]: false }));
         }
-      }, [keys, systemPrompts, conversationHistory]);
+      }, [prompt, includeResponse, keys, systemPrompts, conversationHistory, responses]);
+
+      // Moderated dialogue — send one model's response to another
+
 
       // Clear conversation
       const clearConversation = () => {
@@ -832,52 +909,42 @@
         setErrors({ claude: null, chatgpt: null, gemini: null });
         setConversationHistory({ claude: [], chatgpt: [], gemini: [] });
         setTurnHistory([]);
+        setDirectTo('all');
+        setIncludeResponse('none');
       };
 
       // Export session as markdown transcript
       const exportTranscript = () => {
         if (turnHistory.length === 0) return;
-
         const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
         const modelIcons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
-
         const now = new Date();
         const dateStr = now.toLocaleDateString('en-CA');
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const activeModels = ['claude', 'chatgpt', 'gemini']
           .filter(m => keys[m]?.trim())
-          .map(m => `${modelIcons[m]} ${modelLabels[m]}`)
-          .join(' · ');
+          .map(m => `${modelIcons[m]} ${modelLabels[m]}`).join(' · ');
 
         let md = `# Triangulation Session\n`;
         md += `*Exported: ${dateStr} at ${timeStr}*  \n`;
         md += `*Models: ${activeModels}*  \n`;
-        md += `*Turns: ${turnHistory.length}*\n\n`;
-        md += `---\n\n`;
+        md += `*Turns: ${turnHistory.length}*\n\n---\n\n`;
 
         turnHistory.forEach((turn, i) => {
-          const turnLabel = turn.mode === 'parallel'
-            ? 'Parallel'
+          const turnLabel = turn.mode === 'parallel' ? 'Parallel'
             : turn.mode === 'conductor'
             ? `Conductor — ${turn.order.map(m => modelIcons[m]).join(' → ')}`
             : `Directed — ${modelLabels[turn.source]} → ${modelLabels[turn.target]}`;
 
           md += `## Turn ${i + 1} — ${turnLabel}\n\n`;
-
-          if (turn.prompt) {
-            md += `**Prompt:** ${turn.prompt}\n\n`;
-          }
+          if (turn.prompt) md += `**Prompt:** ${turn.prompt}\n\n`;
 
           Object.keys(turn.results).forEach(model => {
             const result = turn.results[model];
             md += `### ${modelIcons[model]} ${modelLabels[model]}\n\n`;
-            if (result.response) {
-              md += `${result.response}\n\n`;
-            } else if (result.error) {
-              md += `*Error: ${result.error}*\n\n`;
-            }
+            if (result.response) md += `${result.response}\n\n`;
+            else if (result.error) md += `*Error: ${result.error}*\n\n`;
           });
-
           md += `---\n\n`;
         });
 
@@ -890,17 +957,18 @@
         URL.revokeObjectURL(url);
       };
 
-      // Handle keyboard
+      // Keyboard handler
       const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          if (sendMode === 'conductor') {
-            sendConductor();
-          } else {
-            sendParallel();
-          }
+          if (directTo !== 'all') sendDirect(directTo);
+          else if (sendMode === 'conductor') sendConductor();
+          else sendParallel();
         }
       };
+
+      // Conductor order display for status line
+      const conductorOrderLabels = { claude: '◈', chatgpt: '◇', gemini: '△' };
 
       return (
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
@@ -910,10 +978,7 @@
             marginBottom: '32px', paddingBottom: '20px', borderBottom: '1px solid var(--border-subtle)'
           }}>
             <div>
-              <h1 style={{
-                fontFamily: 'JetBrains Mono', fontSize: '24px', fontWeight: 700,
-                letterSpacing: '-0.5px'
-              }}>
+              <h1 style={{ fontFamily: 'JetBrains Mono', fontSize: '24px', fontWeight: 700, letterSpacing: '-0.5px' }}>
                 <span style={{ color: 'var(--claude-accent)' }}>◈</span>
                 <span style={{ color: 'var(--chatgpt-accent)' }}>◇</span>
                 <span style={{ color: 'var(--gemini-accent)' }}>△</span>
@@ -928,24 +993,19 @@
                 fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                 background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)'
-              }}>
-                Clear
-              </button>
+              }}>Clear</button>
               <button onClick={exportTranscript} disabled={turnHistory.length === 0} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                 background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius)', cursor: turnHistory.length > 0 ? 'pointer' : 'default',
+                borderRadius: 'var(--radius)',
+                cursor: turnHistory.length > 0 ? 'pointer' : 'default',
                 color: turnHistory.length > 0 ? 'var(--chatgpt-accent)' : 'var(--text-muted)'
-              }}>
-                Export ↓
-              </button>
+              }}>Export ↓</button>
               <button onClick={() => setShowSettings(true)} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                 background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-primary)'
-              }}>
-                ⚙ Settings
-              </button>
+              }}>⚙ Settings</button>
             </div>
           </header>
 
@@ -963,9 +1023,7 @@
                 fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '10px 24px',
                 background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
                 cursor: 'pointer', color: 'var(--claude-accent)'
-              }}>
-                Open Settings
-              </button>
+              }}>Open Settings</button>
             </div>
           )}
 
@@ -979,7 +1037,7 @@
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter your prompt — Shift+Enter for newline, Enter to send to all active models..."
+              placeholder="Enter your prompt — Shift+Enter for newline, Enter to send..."
               rows={2}
               style={{
                 width: '100%', background: 'transparent', border: 'none', outline: 'none',
@@ -987,60 +1045,150 @@
                 lineHeight: 1.6, resize: 'none'
               }}
             />
+
+            {/* Controls row */}
             <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px'
+              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap'
             }}>
+
+              {/* Direct to dropdown */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <label style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
+                }}>Direct to</label>
+                <select
+                  value={directTo}
+                  onChange={e => setDirectTo(e.target.value)}
+                  style={{
+                    padding: '5px 8px', background: 'var(--bg-input)',
+                    border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                    color: directTo === 'all' ? 'var(--text-primary)'
+                      : directTo === 'claude' ? 'var(--claude-accent)'
+                      : directTo === 'chatgpt' ? 'var(--chatgpt-accent)'
+                      : 'var(--gemini-accent)',
+                    fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
+                  }}
+                >
+                  <option value="all">All</option>
+                  <option value="claude">◈ Claude</option>
+                  <option value="chatgpt">◇ ChatGPT</option>
+                  <option value="gemini">△ Gemini</option>
+                </select>
+              </div>
+
+              {/* Include dropdown — only shown when at least one model has a response */}
+              {['claude','chatgpt','gemini'].some(m => responses[m]) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
+                  }}>Include</label>
+                  <select
+                    value={includeResponse}
+                    onChange={e => setIncludeResponse(e.target.value)}
+                    style={{
+                      padding: '5px 8px', background: 'var(--bg-input)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: includeResponse === 'none' ? 'var(--text-secondary)'
+                        : includeResponse === 'claude' ? 'var(--claude-accent)'
+                        : includeResponse === 'chatgpt' ? 'var(--chatgpt-accent)'
+                        : 'var(--gemini-accent)',
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
+                    }}
+                  >
+                    <option value="none">None</option>
+                    {responses['claude']  && <option value="claude">◈ Claude</option>}
+                    {responses['chatgpt'] && <option value="chatgpt">◇ ChatGPT</option>}
+                    {responses['gemini']  && <option value="gemini">△ Gemini</option>}
+                  </select>
+                </div>
+              )}
+
+              {/* Spacer */}
+              <div style={{ flex: 1 }} />
+
+              {/* Status */}
               <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)' }}>
                 {conductorActive
-                  ? <span style={{ color: 'var(--gemini-accent)' }}>◈ Conducting…</span>
-                  : <>Active: {['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim()).map(m =>
-                      ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m])
-                    ).join(', ') || 'None'}</>
+                  ? <span style={{ color: 'var(--gemini-accent)' }}>
+                      ◈ Conducting… {conductorOrder.map(m => conductorOrderLabels[m]).join(' → ')}
+                    </span>
+                  : directTo !== 'all'
+                  ? <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo] }}>
+                      {{ claude:'◈ Claude', chatgpt:'◇ ChatGPT', gemini:'△ Gemini' }[directTo]}
+                    </span>
+                  : sendMode === 'conductor'
+                  ? <span>
+                      Order: {conductorOrder.map((m, i) => (
+                        <span key={m}>
+                          <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[m] }}>
+                            {conductorOrderLabels[m]}
+                          </span>
+                          {i < conductorOrder.length - 1 && ' → '}
+                        </span>
+                      ))}
+                    </span>
+                  : <>Active: {['claude', 'chatgpt', 'gemini']
+                      .filter(m => enabled[m] && keys[m]?.trim())
+                      .map(m => ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m]))
+                      .join(', ') || 'None'}
+                    </>
                 }
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
+
+              {/* Send buttons — Parallel + Conductor when directTo=all, single Send when directed */}
+              {directTo === 'all' ? (
+                <>
+                  <button
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    onClick={() => { setSendMode('parallel'); sendParallel(); }}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
+                      background: 'var(--bg-input)',
+                      border: `1px solid ${sendMode === 'parallel' ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                      borderRadius: 'var(--radius)',
+                      cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
+                      color: sendMode === 'parallel' ? 'var(--text-primary)' : 'var(--text-muted)',
+                      fontWeight: sendMode === 'parallel' ? 600 : 400,
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
+                    }}
+                  >Parallel ↵</button>
+                  <button
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    onClick={() => { setSendMode('conductor'); sendConductor(); }}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
+                      background: 'var(--bg-input)',
+                      border: `1px solid ${sendMode === 'conductor' ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                      borderRadius: 'var(--radius)',
+                      cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
+                      color: sendMode === 'conductor' ? 'var(--text-primary)' : 'var(--text-muted)',
+                      fontWeight: sendMode === 'conductor' ? 600 : 400,
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
+                    }}
+                  >Conductor ↵</button>
+                </>
+              ) : (
                 <button
-                  disabled={!prompt.trim() || conductorActive}
-                  onClick={() => { setSendMode('parallel'); if (prompt.trim() && !conductorActive) sendParallel(); }}
+                  disabled={!prompt.trim() && includeResponse === 'none'}
+                  onClick={() => sendDirect(directTo)}
                   style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
-                    background: sendMode === 'parallel' && prompt.trim() && !conductorActive
-                      ? 'var(--claude-accent)' : 'var(--border-subtle)',
-                    border: sendMode === 'parallel' ? '2px solid var(--claude-accent)' : '2px solid transparent',
-                    borderRadius: 'var(--radius)',
-                    cursor: prompt.trim() && !conductorActive ? 'pointer' : 'default',
-                    color: sendMode === 'parallel' && prompt.trim() && !conductorActive
-                      ? 'var(--bg-primary)' : 'var(--text-muted)',
-                    fontWeight: 600
+                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
+                    background: {claude:'var(--claude-border)',chatgpt:'var(--chatgpt-border)',gemini:'var(--gemini-border)'}[directTo],
+                    border: 'none', borderRadius: 'var(--radius)',
+                    cursor: (!prompt.trim() && includeResponse === 'none') ? 'default' : 'pointer',
+                    color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo],
+                    fontWeight: 600,
+                    opacity: (!prompt.trim() && includeResponse === 'none') ? 0.4 : 1
                   }}
-                >
-                  Parallel ↵
-                </button>
-                <button
-                  disabled={!prompt.trim() || conductorActive}
-                  onClick={() => { setSendMode('conductor'); if (prompt.trim() && !conductorActive) sendConductor(); }}
-                  style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '8px 20px',
-                    background: sendMode === 'conductor' && prompt.trim() && !conductorActive
-                      ? 'var(--gemini-accent)' : 'var(--border-subtle)',
-                    border: sendMode === 'conductor' ? '2px solid var(--gemini-accent)' : '2px solid transparent',
-                    borderRadius: 'var(--radius)',
-                    cursor: prompt.trim() && !conductorActive ? 'pointer' : 'default',
-                    color: sendMode === 'conductor' && prompt.trim() && !conductorActive
-                      ? 'var(--bg-primary)' : 'var(--text-muted)',
-                    fontWeight: 600
-                  }}
-                >
-                  Conductor ↵
-                </button>
-              </div>
+                >Send ↵</button>
+              )}
+
             </div>
           </div>
 
           {/* Model Response Grid */}
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px',
-            marginBottom: '24px'
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px'
           }}>
             {['claude', 'chatgpt', 'gemini'].map(model => (
               <ModelCard
@@ -1051,7 +1199,6 @@
                 error={errors[model]}
                 enabled={enabled[model]}
                 onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
-                onSendTo={sendToModel}
               />
             ))}
           </div>
@@ -1064,11 +1211,11 @@
             <SettingsPanel
               keys={keys} setKeys={setKeys}
               systemPrompts={systemPrompts} setSystemPrompts={setSystemPrompts}
+              conductorOrder={conductorOrder} setConductorOrder={setConductorOrder}
               onClose={() => setShowSettings(false)}
             />
           )}
 
-          {/* Pulse animation */}
           <style>{`
             @keyframes pulse {
               0%, 100% { opacity: 1; }
@@ -1097,7 +1244,7 @@
             }
             .prose strong { color: var(--text-primary); }
             .prose a { color: var(--gemini-accent); }
-
+            select option { background: var(--bg-secondary); color: var(--text-primary); }
             @media (max-width: 900px) {
               div[style*="grid-template-columns: repeat(3"] {
                 grid-template-columns: 1fr !important;
