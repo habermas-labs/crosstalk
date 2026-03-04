@@ -202,6 +202,136 @@
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const fileInputRef = useRef(null);
 
+      // Key test state: null | 'testing' | 'pass' | 'fail'
+      const [keyTestStatus, setKeyTestStatus] = useState({ claude: null, chatgpt: null, gemini: null });
+      const [keyTestMsg, setKeyTestMsg] = useState({ claude: '', chatgpt: '', gemini: '' });
+
+      const setTestResult = (modelId, status, msg = '') => {
+        setKeyTestStatus(prev => ({ ...prev, [modelId]: status }));
+        setKeyTestMsg(prev => ({ ...prev, [modelId]: msg }));
+      };
+
+      const testKey = async (modelId) => {
+        const key = keys[modelId]?.trim();
+        if (!key) {
+          setTestResult(modelId, 'fail', 'No key entered.');
+          return;
+        }
+        setTestResult(modelId, 'testing', '');
+        try {
+          if (modelId === 'claude') {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+              },
+              body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 10,
+                messages: [{ role: 'user', content: 'Hi' }]
+              })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.type + ': ' + data.error.message);
+            setTestResult(modelId, 'pass', 'Key validated.');
+          } else if (modelId === 'chatgpt') {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+              },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                max_tokens: 10,
+                messages: [{ role: 'user', content: 'Hi' }]
+              })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.code + ': ' + data.error.message);
+            setTestResult(modelId, 'pass', 'Key validated.');
+          } else if (modelId === 'gemini') {
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Hi' }] }] })
+              }
+            );
+            const data = await res.json();
+            if (data.error) {
+              // Distinguish quota:0 (provisioning failure) from other errors
+              const msg = data.error.message || '';
+              if (msg.includes('limit: 0') || msg.includes('free_tier') || (res.status === 429 && msg.includes('quota'))) {
+                throw new Error('Quota not provisioned — create a new key in a new Google project. See Quick Start Guide Step 3.');
+              }
+              throw new Error(data.error.message);
+            }
+            setTestResult(modelId, 'pass', 'Key validated.');
+          }
+        } catch (err) {
+          const msg = err.message || 'Unknown error.';
+          // Friendly messages for common failure modes
+          if (msg.includes('401') || msg.includes('invalid_api_key') || msg.includes('authentication')) {
+            setTestResult(modelId, 'fail', 'Invalid key — check that you copied the full key without extra spaces.');
+          } else if (msg.includes('Quota not provisioned')) {
+            setTestResult(modelId, 'fail', msg);
+          } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+            setTestResult(modelId, 'fail', 'Service unreachable — check your connection and try again.');
+          } else {
+            setTestResult(modelId, 'fail', msg);
+          }
+        }
+      };
+
+      const testAll = async () => {
+        await Promise.all(['claude', 'chatgpt', 'gemini'].map(id => testKey(id)));
+      };
+
+      // Derive export button state from test results
+      const exportState = (() => {
+        const statuses = ['claude', 'chatgpt', 'gemini'].map(id => keyTestStatus[id]);
+        const anyFail = statuses.some(s => s === 'fail');
+        const allPass = statuses.every(s => s === 'pass');
+        if (allPass) return 'green';
+        if (anyFail) return 'red';
+        return 'yellow';
+      })();
+
+      const exportColors = {
+        green:  { bg: '#1a3d24', color: '#6bcf8e', border: '#1a3d24' },
+        yellow: { bg: '#2a2a10', color: '#c8b84a', border: '#3a3a18' },
+        red:    { bg: '#3d1a1a', color: '#f47068', border: '#3d1a1a' },
+      };
+
+      const exportTooltips = {
+        green:  'All keys validated — ready to export',
+        yellow: 'Some keys untested — export will include only entered keys',
+        red:    'One or more keys failed — click to review before exporting',
+      };
+
+      // Pill color logic
+      const pillColor = (modelId) => {
+        const s = keyTestStatus[modelId];
+        if (s === 'pass')    return { bg: '#1a3d24', color: '#6bcf8e', border: '#2a5a34' };
+        if (s === 'fail')    return { bg: '#3d1a1a', color: '#f47068', border: '#5a2a2a' };
+        if (s === 'testing') return { bg: 'var(--bg-input)', color: 'var(--text-muted)', border: 'var(--border-subtle)' };
+        // null = unconfirmed (yellow attention)
+        return { bg: '#2a2a10', color: '#c8b84a', border: '#3a3a18' };
+      };
+
+      const pillTooltip = (modelId) => {
+        const s = keyTestStatus[modelId];
+        if (s === 'pass')    return 'Key validated';
+        if (s === 'fail')    return 'Validation failed — check your key';
+        if (s === 'testing') return 'Testing...';
+        return 'Not yet tested';
+      };
+
       const MODEL_META = {
         claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', icon: '◇' },
@@ -257,9 +387,34 @@
           setCryptoStatus({ type: 'error', msg: 'Enter a passphrase to encrypt your keys.' });
           return;
         }
+
+        // Strip any keys that failed validation, with confirmation
+        let exportKeys = { ...keys };
+        const failedModels = ['claude', 'chatgpt', 'gemini'].filter(id => keyTestStatus[id] === 'fail');
+
+        if (failedModels.length > 0) {
+          const failedLabels = failedModels.map(id =>
+            ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[id])
+          );
+          const confirmed = window.confirm(
+            `The following key${failedLabels.length > 1 ? 's' : ''} failed validation and will not be included:\n\n` +
+            failedLabels.map(l => `  • ${l}`).join('\n') +
+            `\n\nProceed without ${failedLabels.length > 1 ? 'them' : 'it'}?`
+          );
+          if (!confirmed) return;
+          failedModels.forEach(id => { exportKeys[id] = ''; });
+        }
+
+        // Abort if nothing valid remains
+        const hasValid = ['claude', 'chatgpt', 'gemini'].some(id => exportKeys[id]?.trim());
+        if (!hasValid) {
+          setCryptoStatus({ type: 'error', msg: 'No valid keys to export — all keys either failed or are empty.' });
+          return;
+        }
+
         try {
           setCryptoStatus({ type: 'info', msg: 'Encrypting...' });
-          const data = { keys, systemPrompts, exportedAt: new Date().toISOString() };
+          const data = { keys: exportKeys, systemPrompts, exportedAt: new Date().toISOString() };
           const encrypted = await cryptoUtils.encrypt(data, exportPassphrase);
           const blob = new Blob([encrypted], { type: 'text/plain' });
           const url = URL.createObjectURL(blob);
@@ -338,18 +493,47 @@
                   fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
                   color: m.accent, display: 'block', marginBottom: '6px'
                 }}>{m.label} API Key</label>
-                <input
-                  type="password"
-                  value={keys[m.id] || ''}
-                  onChange={e => setKeys(prev => ({ ...prev, [m.id]: e.target.value }))}
-                  placeholder={`Enter ${m.label} API key...`}
-                  style={{
-                    width: '100%', padding: '10px 14px', background: 'var(--bg-input)',
-                    border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                    color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
-                    outline: 'none'
-                  }}
-                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type="password"
+                    value={keys[m.id] || ''}
+                    onChange={e => {
+                      setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
+                      setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
+                      setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
+                    }}
+                    placeholder={`Enter ${m.label} API key...`}
+                    style={{
+                      flex: 1, padding: '10px 14px', background: 'var(--bg-input)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    onClick={() => testKey(m.id)}
+                    disabled={keyTestStatus[m.id] === 'testing'}
+                    title={pillTooltip(m.id)}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '6px 12px',
+                      borderRadius: '999px', border: `1px solid ${pillColor(m.id).border}`,
+                      background: pillColor(m.id).bg, color: pillColor(m.id).color,
+                      cursor: keyTestStatus[m.id] === 'testing' ? 'default' : 'pointer',
+                      whiteSpace: 'nowrap', transition: 'all 0.2s ease', flexShrink: 0
+                    }}
+                  >
+                    {keyTestStatus[m.id] === 'testing' ? '...' : 'Test'}
+                  </button>
+                </div>
+                {keyTestMsg[m.id] && (
+                  <div style={{
+                    marginTop: '4px', fontSize: '11px', fontFamily: 'JetBrains Mono',
+                    color: keyTestStatus[m.id] === 'pass' ? '#6bcf8e' : '#f47068',
+                    lineHeight: 1.4
+                  }}>
+                    {keyTestMsg[m.id]}
+                  </div>
+                )}
                 <label style={{
                   fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
                   color: 'var(--text-secondary)', display: 'block', marginBottom: '6px', marginTop: '12px'
@@ -437,16 +621,42 @@
               padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
               border: '1px solid var(--border-subtle)', marginBottom: '16px'
             }}>
-              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '16px' }}>
-                Key File (Encrypted)
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600 }}>
+                  Key File (Encrypted)
+                </h3>
+                <button
+                  onClick={testAll}
+                  disabled={['claude','chatgpt','gemini'].some(id => keyTestStatus[id] === 'testing')}
+                  title={
+                    ['claude','chatgpt','gemini'].every(id => keyTestStatus[id] === 'pass')
+                      ? 'All keys validated'
+                      : 'Test all keys before exporting'
+                  }
+                  style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 14px',
+                    borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s ease',
+                    border: `1px solid ${exportColors[exportState].border}`,
+                    background: exportColors[exportState].bg,
+                    color: exportColors[exportState].color,
+                  }}
+                >
+                  {['claude','chatgpt','gemini'].some(id => keyTestStatus[id] === 'testing') ? 'Testing...' : 'Test All'}
+                </button>
+              </div>
 
               {/* Export */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{
                   fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
-                  display: 'block', marginBottom: '6px'
+                  display: 'block', marginBottom: '4px'
                 }}>Export — save your keys to an encrypted file</label>
+                <p style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)',
+                  marginBottom: '8px', lineHeight: 1.5
+                }}>
+                  🟡 Yellow = untested keys included as-is · 🟢 Green = all passed · 🔴 Red = failed keys excluded with confirmation · Test and export in the same Settings session — closing resets test results.
+                </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="password"
@@ -460,11 +670,17 @@
                       outline: 'none'
                     }}
                   />
-                  <button onClick={handleExport} style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                    background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
-                    cursor: 'pointer', color: 'var(--claude-accent)', whiteSpace: 'nowrap'
-                  }}>
+                  <button
+                    onClick={handleExport}
+                    title={exportTooltips[exportState]}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
+                      border: 'none', borderRadius: 'var(--radius)',
+                      cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s ease',
+                      background: exportColors[exportState].bg,
+                      color: exportColors[exportState].color,
+                    }}
+                  >
                     Export .ctk
                   </button>
                 </div>
