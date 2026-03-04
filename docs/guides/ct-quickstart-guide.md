@@ -66,6 +66,31 @@ Gemini has a free tier for API access, so you may not need to add billing at all
 
 The key starts with `AIza`.
 
+#### If Gemini returns a quota error immediately
+
+This is a known provisioning issue with new free-tier keys and has nothing to do with actual usage. The error looks like this:
+
+> Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0
+
+The key detail is **limit: 0** — Google issued you a key but never attached any quota to it. You haven't used anything; the bucket was empty from the start.
+
+**The fix:**
+
+1. Go back to [aistudio.google.com](https://aistudio.google.com)
+2. Click **Get API Key** → **Create API key**
+3. This time, select **"Create API key in new project"** — do not reuse the existing project
+4. Copy the new key and use it in place of the original
+
+Creating a new project forces Google's backend to provision quota correctly. The original key and project can be deleted.
+
+**Before building your `.ctk` file**, verify the new key is working:
+
+1. Open **⚙ Settings** in CT
+2. Enter only the Gemini key — leave Claude and ChatGPT blank for now
+3. Close Settings and send a simple prompt (e.g. "Hello")
+4. If Gemini responds, the key is live — proceed to add your other keys and export your `.ctk`
+5. If you get another quota error, repeat the new-project process above; it occasionally takes two attempts
+
 ### Step 4 — Create Your `.ctk` Key File
 
 CT uses an encrypted key file (`.ctk`) to store your API keys portably. You create it from within CT itself.
