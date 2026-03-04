@@ -38,7 +38,6 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 031 | `[CT]` | Summary export | Send full session to a designated model to synthesize key points of convergence and divergence; closely related to Synthesis mode (013) | `idea` | Session discussion | 2026-03 |
 | 032 | `[CT]` | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios and more sophisticated orchestration; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
 | 033 | `[CT]` | Password manager for credential workflow | Recommend and document a credential management approach in onboarding documentation for the key setup workflow | `idea` | Session discussion | 2026-03 |
-| 034 | `[CT]` | Conductor order selection | Allow user to set the sequence order for Conductor mode in Settings; currently hardcoded Claude → ChatGPT → Gemini; gate for 038 — Conductor order must be configurable before file handling triangulation session can be run as intended | `planned` | Session discussion | 2026-03 |
 | 035 | `[CT]` | Drag-and-drop conductor ordering | Reorder model cards dynamically to set Conductor sequence; always conducts left to right | `idea` | Session discussion | 2026-03 |
 | 036 | `[CT]` | Conductor mid-conversation reordering | Ability to change the Conductor sequence order dynamically mid-session | `idea` | Session discussion | 2026-03 |
 | 037 | `[CT]` | File/attachment support | Per-model file dispatch (Claude base64, OpenAI Files API, Gemini File API); IndexedDB as local staging layer; design question around when files are dispatched in Parallel vs Conductor modes | `idea` | Session discussion | 2026-03-03 |
@@ -74,7 +73,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 009 | `[INFRA]` | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | Claude suggestion | 2026-03 |
 | 010 | `[CT]` | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | Claude suggestion | 2026-03 |
 | 016 | `[CT]` | Export transcript | Save full triangulation session as formatted markdown | Claude suggestion | 2026-03 |
-| 012 | `[CT]` | Conductor mode | Sequential opening cycle — each model sees prior responses before answering; post-cycle dialogue uses directed routing | Claude suggestion | 2026-03 |
+| 034 | `[CT]` | Conductor order selection | Configurable opening cycle sequence via 1st/2nd/3rd dropdowns in Settings with swap mechanic and color-coded preview; conductor order displayed in status line; gate for 038 | Session discussion | 2026-03 |
+| 048 | `[CT]` | Directed engagement controls | "Direct to" and "Include" dropdowns in input area; Direct to: All/Claude/ChatGPT/Gemini routes prompt to one model or all; Include: None/[models with responses] attaches a model's response to the outgoing message; Parallel/Conductor buttons visible only when Direct to is All; single color-coded Send button when targeting one model; three moderated dialogue moves emerge from these two controls rather than being implemented as distinct UI features | Session discussion | 2026-03-03 |
 
 ---
 
@@ -108,6 +108,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - RIFF mode (046) is the primary triangulation mode in the philosophical sense — structured friction between assigned roles, grounded in Bakhtin's dialogism. The Observer role in RIFF is the structural instantiation of outsideness/vnenakhodimost'.
 - Mode exit scaffolding (047) reframes session end as an epistemic moment. In focus mode specifically it provides structured reflection the native interfaces don't offer; it also creates the natural handoff point from focus into RIFF.
 - The theoretical foundation for triangulation as an epistemic practice is Bakhtin's outsideness (vnenakhodimost') and surplus of seeing, connected to sociocultural hermeneutics. See permanent note: vnenakhodimost-surplus-of-seeing.md
+- The three moderated dialogue moves (directed prompt, response routing, combined move) are usage patterns that emerge from the Direct to / Include controls, not discrete features. The taxonomy belongs in documentation, not in the implementation. (048)
 
 ---
-*Last updated: 2026-03-03*
+*Last updated: 2026-03-04*
