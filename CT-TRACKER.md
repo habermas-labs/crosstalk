@@ -63,6 +63,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 058 | `[CT]` | Gemini free-tier provisioning troubleshooting — quickstart guide addition | Add a troubleshooting subsection to Step 3 (Get a Google Gemini API Key) in the Quick Start Guide. Content: the `limit: 0` error pattern, what it means (quota never provisioned, not quota exhausted), the clean-slate fix (create new key in a new project via "Create API key in new project"), and the manual verification procedure (enter key, send a test prompt, confirm response before building `.ctk`). Manual procedure is the interim workaround until CT-057 (pre-flight validation) is implemented. | `planned` | Session discussion / Gemini troubleshooting | 2026-03 |
 | 059 | `[CT]` | Favicon | Distinctive browser tab icon for quick visual identification; important for users running many tabs simultaneously; small but real piece of Crosstalk brand identity; should be recognizable at 16×16px — the size it actually renders in a crowded tab bar | `idea` | User insight | 2026-03-04 |
 | 060 | `[CT]` | Session idea log / idea registry export | Lightweight export mode that captures only the labeled ideas from the coordinate system (041) as a clean standalone artifact; distinct from full transcript export (016) and summary export (031) — not the conversation, not a synthesis, just the index of what was generated; the natural companion output to a RIP session; structured for immediate use as input to a RIFF session or import to Zettelkasten | `idea` | User insight | 2026-03-04 |
+| 061 | `[CT]` | Settings panel section reorder | Reorder Settings sections: Conductor Order first, API Keys second, Key File third. Conductor Order is lowest urgency; current placement interrupts the keys → key file workflow. | `planned` | Session discussion | 2026-03 |
 
 ---
 
@@ -72,6 +73,9 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 |---|---------|-----|-------------|--------|-------|---------|
 | B001 | `[CT]` | Gemini appears in Direct to when OFF | Direct to dropdown includes disabled models; should filter to enabled models with configured keys only | `resolved` | 2026-03-04 | — |
 | B002 | `[CT]` | Dropdowns not resetting after send | Direct to and Include dropdowns retain their values after a send action; should reset to All and None respectively | `resolved` | 2026-03-04 | — |
+| B003 | `[CT]` | Pill not reverting to yellow on select-all-then-paste | Replacing key field contents by selecting all and pasting does not trigger onChange — no change event fires, so the test pill stays red/green rather than reverting to yellow. Backspace correctly triggers revert; paste-over-selection does not. | `open` | 2026-03 | — |
+| B004 | `[CT]` | Settings modal closes on cursor leaving window | Backdrop onClick handler fires when cursor moves outside the browser window, closing Settings unintentionally. Reproducible when selecting text in an external app and returning to paste. | `open` | 2026-03 | — |
+| B005 | `[CT]` | No show/hide toggle on key input fields | API key fields display as password dots with no visibility toggle, making it impossible to verify what was typed. Causes transcription errors on long alphanumeric keys (e.g. O vs 0). | `open` | 2026-03 | — |
 
 ---
 
