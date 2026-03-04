@@ -20,8 +20,8 @@ AES stands for Advanced Encryption Standard. It is the symmetric encryption algo
 
 **GCM** stands for Galois/Counter Mode, the operating mode. This is what makes AES-GCM an *authenticated encryption* scheme rather than just a cipher. It provides two guarantees simultaneously:
 
-- **Confidentiality** — the data is unreadable without the key
-- **Integrity** — any tampering with the ciphertext is detectable; a corrupted or modified file will fail to decrypt rather than silently producing garbage
+* **Confidentiality** — the data is unreadable without the key
+* **Integrity** — any tampering with the ciphertext is detectable; a corrupted or modified file will fail to decrypt rather than silently producing garbage
 
 The integrity guarantee is why we use GCM rather than older modes like CBC. A forged or corrupted `.ctk` file won't decrypt to bad data — it will throw an error, which is exactly what you want.
 
@@ -55,7 +55,7 @@ The relevant Web Crypto methods in Crosstalk's implementation:
 
 ```javascript
 // Import a passphrase as raw key material for PBKDF2
-crypto.subtle.importKey('raw', encodedPassphrase, 'PBKDF2', false, ['deriveKey'])
+crypto.subtle.importKey('raw', encodedPassphrase, 'PBKDF2', false, \['deriveKey'])
 
 // Derive an AES-GCM key from the passphrase + salt
 crypto.subtle.deriveKey(
@@ -63,7 +63,7 @@ crypto.subtle.deriveKey(
   keyMaterial,
   { name: 'AES-GCM', length: 256 },
   false,        // not extractable — the key can't be read back out of the browser
-  ['encrypt', 'decrypt']
+  \['encrypt', 'decrypt']
 )
 
 // Encrypt
@@ -82,7 +82,7 @@ The `iv` (initialization vector) is a random 12-byte value generated fresh for e
 The exported `.ctk` file is a single base64-encoded string. Inside that string, three pieces of data are packed together in sequence:
 
 ```
-[ 16 bytes: salt ][ 12 bytes: IV ][ remaining bytes: ciphertext ]
+\[ 16 bytes: salt ]\[ 12 bytes: IV ]\[ remaining bytes: ciphertext ]
 ```
 
 When you import the file, the code reads the salt and IV from their fixed positions at the front, then uses them together with your passphrase to derive the key and decrypt the ciphertext. Without the passphrase, the salt and IV are useless — they're public values that only matter when combined with the secret you hold.
@@ -94,29 +94,84 @@ Base64 encoding converts the raw binary blob into printable ASCII characters, wh
 ## What This Protects Against (and What It Doesn't)
 
 **Protected:**
-- Someone who finds or copies the `.ctk` file without knowing your passphrase
-- The file being intercepted in transit
-- The file being stored somewhere unintended (email attachment, cloud sync, etc.)
+
+* Someone who finds or copies the `.ctk` file without knowing your passphrase
+* The file being intercepted in transit
+* The file being stored somewhere unintended (email attachment, cloud sync, etc.)
 
 **Not protected:**
-- Someone who has both the file and your passphrase
-- Someone who can observe your screen or keystrokes when you enter your passphrase
-- Malware running on your machine with access to browser memory
-- A malicious browser extension with access to page content
+
+* Someone who has both the file and your passphrase
+* Someone who can observe your screen or keystrokes when you enter your passphrase
+* Malware running on your machine with access to browser memory
+* A malicious browser extension with access to page content
 
 The threat model this is designed for is a stolen or misplaced file — the most realistic risk for a portable credential file carried across machines. It is not designed to protect against a fully compromised machine, which is a fundamentally different (and much harder) problem.
 
 ---
 
-## Summary
+## Multi-User Key Distribution
 
-| Concept | What it means in practice |
-|---------|--------------------------|
-| AES-256-GCM | Symmetric authenticated encryption — confidentiality plus tamper detection |
-| Symmetric encryption | Same key encrypts and decrypts |
-| Authenticated encryption | Detects tampering; corrupted ciphertext fails rather than decrypts silently |
-| PBKDF2 | Turns a passphrase into a cryptographic key through deliberate slowness |
-| Salt | Random value mixed into PBKDF2 to prevent precomputed attacks and key reuse |
-| IV (initialization vector) | Random value mixed into AES-GCM so identical plaintexts produce different ciphertext |
-| Web Crypto API | Browser-native cryptographic primitives — fast, audited, standard |
-| Base64 | Encoding that converts binary data to printable ASCII for file storage |
+The single-user threat model above assumes one person with one set of keys. When you introduce other users — even a small trusted group — the security design changes in ways worth understanding explicitly.
+
+### The Core Tension
+
+The `.ctk` approach was designed for portability: one person carrying their own credentials across machines. Sharing a `.ctk` with other people introduces a different problem: **you no longer control who has access to the keys after the fact.** Once you share a file and a passphrase, anyone who received them can use the keys indefinitely, and you have no way to revoke access without rotating the underlying API keys themselves.
+
+This isn't a flaw in the encryption — the encryption is still doing exactly what it's supposed to do. It's a property of symmetric encryption generally: the same mechanism that protects the file also makes it impossible to distinguish "authorized user who received the passphrase" from "unauthorized user who guessed or was given the passphrase." There is no revocation concept built in.
+
+### Two Approaches and When to Use Each
+
+**Approach A — Shared encrypted file, publicly accessible URL**
+
+The `.ctk` file is uploaded to R2 with public access enabled. Anyone with the URL can download it; only someone with the passphrase can decrypt it. Authentication (knowing the passphrase) is the only gate.
+
+*When this is appropriate:* Small trusted circles, demo use, situations where the underlying API keys are disposable (low credit limits, no sensitive data access, easy to rotate). The passphrase becomes the shared secret — treat it accordingly.
+
+*The actual threat model:* A publicly accessible encrypted file is safe against anyone who doesn't have the passphrase. It is not safe if the passphrase leaks. Rotation means generating new keys, creating a new `.ctk`, uploading it, and distributing the new passphrase — there is no partial revocation.
+
+In Crosstalk's demo setup, this is acceptable because the demo keys are intentionally limited: fixed spending caps, auto-renew off, created specifically for demo use and separate from the personal development keys. If the demo keys are compromised or exhausted, the blast radius is a few dollars and an afternoon of key rotation — not access to anything else.
+
+**Approach B — Shared encrypted file, gated by Cloudflare Access**
+
+The `.ctk` is served through the authenticated Worker endpoint. A user must pass the Access email OTP challenge before they can even retrieve the file, and then also supply the passphrase to decrypt it. Two independent gates.
+
+*When this is appropriate:* Situations requiring genuine access control — you need to be able to add and remove specific people, you're sharing keys with higher credit limits, or you want an audit trail of who fetched the file and when (Cloudflare Access logs these requests).
+
+*The actual threat model:* Access handles identity (this is a known email address that received and used an OTP). Encryption handles confidentiality (even if the file were somehow intercepted in transit, it's still encrypted). Removing someone from the Access whitelist prevents future fetches but doesn't invalidate a copy they've already downloaded — if that matters, you still need to rotate the underlying keys.
+
+### The Two-Layer Principle
+
+The architectural insight worth internalizing: **access control and encryption solve different problems and should be chosen accordingly, not substituted for each other.**
+
+Access control (Cloudflare Access, a password, a gated URL) answers: *who is allowed to retrieve this file?* It can be revoked. It requires infrastructure to enforce. It fails if the infrastructure is misconfigured or bypassed.
+
+Encryption answers: *if someone has this file, can they read it?* It cannot be revoked once the file and passphrase are known. It requires no infrastructure — it works offline, in transit, at rest. It fails if the passphrase leaks.
+
+Using both together gives you defense in depth: an attacker needs to defeat both gates rather than just one. Using only access control (unencrypted file behind a login) is fragile — one misconfiguration exposes everything. Using only encryption (publicly accessible encrypted file) is durable but irrevocable. For sensitive long-lived credentials, use both. For disposable demo credentials with spending caps, encryption alone is a reasonable tradeoff.
+
+### Spending Limits as a Security Control
+
+For demo key distribution specifically, API spending limits are underrated as a security mechanism. A key with a $5 cap and auto-renew disabled can only ever cost $5 in the worst case — whether that's from authorized demo use, accidental overuse, or the key being shared beyond the intended circle. The cap converts an open-ended financial exposure into a bounded one.
+
+This is a different kind of control than encryption or access gating: it doesn't prevent unauthorized use, but it limits the consequence of it. For low-stakes demo scenarios it's often the most practical first line of defense — cheap to implement, easy to understand, and self-limiting by design.
+
+---
+
+## Summary (updated)
+
+|Concept|What it means in practice|
+|-|-|
+|AES-256-GCM|Symmetric authenticated encryption — confidentiality plus tamper detection|
+|Symmetric encryption|Same key encrypts and decrypts|
+|Authenticated encryption|Detects tampering; corrupted ciphertext fails rather than decrypts silently|
+|PBKDF2|Turns a passphrase into a cryptographic key through deliberate slowness|
+|Salt|Random value mixed into PBKDF2 to prevent precomputed attacks and key reuse|
+|IV (initialization vector)|Random value mixed into AES-GCM so identical plaintexts produce different ciphertext|
+|Web Crypto API|Browser-native cryptographic primitives — fast, audited, standard|
+|Base64|Encoding that converts binary data to printable ASCII for file storage|
+|Access control|Gate on who can retrieve a file — revocable, infrastructure-dependent|
+|Encryption|Gate on who can read a file — irrevocable once passphrase is known, infrastructure-free|
+|Spending limits|Cap on financial exposure from key misuse — not a confidentiality control, but limits blast radius|
+|Defense in depth|Using access control and encryption together so an attacker must defeat both independently|
+
