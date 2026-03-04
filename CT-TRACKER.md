@@ -66,8 +66,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 | # | Project | Bug | Description | Status | Found | Resolved |
 |---|---------|-----|-------------|--------|-------|---------|
-| B001 | `[CT]` | Gemini appears in Direct to when OFF | Direct to dropdown includes disabled models; should filter to enabled models with configured keys only | `open` | 2026-03-04 | — |
-| B002 | `[CT]` | Dropdowns not resetting after send | Direct to and Include dropdowns retain their values after a send action; should reset to All and None respectively | `open` | 2026-03-04 | — |
+| B001 | `[CT]` | Gemini appears in Direct to when OFF | Direct to dropdown includes disabled models; should filter to enabled models with configured keys only | `resolved` | 2026-03-04 | — |
+| B002 | `[CT]` | Dropdowns not resetting after send | Direct to and Include dropdowns retain their values after a send action; should reset to All and None respectively | `resolved` | 2026-03-04 | — |
 
 ---
 
@@ -129,4 +129,4 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Handoff summaries (015) must preserve authorship and voice, not just content; models receiving their own prior output lose co-author status and treat the human as source of all ideas in the prompt — provenance tracking is essential for intellectual integrity of the session record
 
 ---
-*Last updated: 2026-03-04*
+*Last updated: 2026-03-03*
