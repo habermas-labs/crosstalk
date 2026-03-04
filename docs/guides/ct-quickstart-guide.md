@@ -78,8 +78,11 @@ The key detail is **limit: 0** — Google issued you a key but never attached an
 
 1. Go back to [aistudio.google.com](https://aistudio.google.com)
 2. Click **Get API Key** → **Create API key**
-3. This time, select **"Create API key in new project"** — do not reuse the existing project
-4. Copy the new key and use it in place of the original
+3. In the **Choose an imported project** dropdown, select **+ Create project**
+4. Name your new project and click **Create project**
+5. You'll return to the key creation dialog with your new project selected in the dropdown
+6. Click **Create API key** to generate a key under the new project
+7. Copy the new key and use it in place of the original
 
 Creating a new project forces Google's backend to provision quota correctly. The original key and project can be deleted.
 
@@ -87,8 +90,8 @@ Creating a new project forces Google's backend to provision quota correctly. The
 
 1. Open **⚙ Settings** in CT
 2. Enter only the Gemini key — leave Claude and ChatGPT blank for now
-3. Close Settings and send a simple prompt (e.g. "Hello")
-4. If Gemini responds, the key is live — proceed to add your other keys and export your `.ctk`
+3. Click the **Test** pill next to the Gemini key field
+4. If the pill turns green and shows "Key validated", the key is live — proceed to add your other keys and export your `.ctk`
 5. If you get another quota error, repeat the new-project process above; it occasionally takes two attempts
 
 ### Step 4 — Create Your `.ctk` Key File
