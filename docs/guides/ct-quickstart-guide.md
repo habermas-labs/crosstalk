@@ -98,15 +98,15 @@ Creating a new project forces Google's backend to provision quota correctly. The
 
 CT uses an encrypted key file (`.ctk`) to store your API keys portably. You create it from within CT itself.
 
+Before exporting, use the **Test** pill next to each key field to validate your keys. You can also click **Test All** in the Key File section to run all three at once. The pills and the Export button use a shared color system: 🟢 green means validated, 🔴 red means the key failed and will be excluded from the export with your confirmation, and 🟡 yellow means the key hasn't been tested yet and will be included as-is. Yellow is not a failure — it just means unconfirmed. Test and export in the same Settings session; closing Settings resets the test results.
+
 1. Go to `yourcrosstalklab.com/demo/` and log in
 2. Open **⚙ Settings**
 3. In the top section, enter each of your three API keys in the appropriate fields (Claude, ChatGPT, Gemini)
-4. Scroll down to **Key File (Encrypted)** → **Export**
-5. Choose a passphrase — something memorable that you don't use elsewhere. You'll need this every time you load your keys
-6. Click **Export .ctk** — a file called `crosstalk-keys.ctk` downloads to your computer
+4. Test your keys using the **Test** pills or **Test All**
+5. Scroll down to **Key File (Encrypted)** → enter a passphrase and click **Export .ctk**
+6. A file called `crosstalk-keys.ctk` downloads to your computer
 7. Keep this file somewhere you won't lose it (a USB drive, a synced folder, etc.)
-
-Your keys are now stored in encrypted form. The `.ctk` file is useless without the passphrase — if someone finds the file, they can't use it.
 
 ### Step 5 — Load Your Keys Next Time
 
