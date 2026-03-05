@@ -168,7 +168,7 @@
           body.systemInstruction = { parts: [{ text: systemPrompt }] };
         }
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -201,6 +201,8 @@
       const [urlPassphrase, setUrlPassphrase] = useState('');
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const fileInputRef = useRef(null);
+
+      const [showKey, setShowKey] = useState({ claude: false, chatgpt: false, gemini: false });
 
       // Key test state: null | 'testing' | 'pass' | 'fail'
       const [keyTestStatus, setKeyTestStatus] = useState({ claude: null, chatgpt: null, gemini: null });
@@ -255,7 +257,7 @@
             setTestResult(modelId, 'pass', 'Key validated.');
           } else if (modelId === 'gemini') {
             const res = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -472,12 +474,15 @@
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
-        }} onClick={onClose}>
+        }}
+          onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._closeOnMouseUp = true; }}
+          onMouseUp={e => { if (e.currentTarget._closeOnMouseUp) { e.currentTarget._closeOnMouseUp = false; onClose(); } }}
+        >
           <div style={{
             background: 'var(--bg-secondary)', borderRadius: '12px', padding: '32px',
             width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto',
             border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)'
-          }} onClick={e => e.stopPropagation()}>
+          }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h2 style={{ fontFamily: 'JetBrains Mono', fontSize: '18px', fontWeight: 700 }}>Configuration</h2>
               <button onClick={onClose} style={{
@@ -494,22 +499,40 @@
                   color: m.accent, display: 'block', marginBottom: '6px'
                 }}>{m.label} API Key</label>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <input
-                    type="password"
-                    value={keys[m.id] || ''}
-                    onChange={e => {
-                      setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
-                      setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
-                      setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
-                    }}
-                    placeholder={`Enter ${m.label} API key...`}
-                    style={{
-                      flex: 1, padding: '10px 14px', background: 'var(--bg-input)',
-                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
-                      outline: 'none'
-                    }}
-                  />
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      type={showKey[m.id] ? 'text' : 'password'}
+                      value={keys[m.id] || ''}
+                      onChange={e => {
+                        setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
+                        setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
+                        setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
+                      }}
+                      onInput={e => {
+                        setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
+                        setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
+                        setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
+                      }}
+                      placeholder={`Enter ${m.label} API key...`}
+                      style={{
+                        width: '100%', padding: '10px 36px 10px 14px', background: 'var(--bg-input)',
+                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => setShowKey(prev => ({ ...prev, [m.id]: !prev[m.id] }))}
+                      title={showKey[m.id] ? 'Hide key' : 'Show key'}
+                      style={{
+                        position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', fontSize: '14px', padding: '2px', lineHeight: 1
+                      }}
+                    >
+                      {showKey[m.id] ? '🙈' : '👁'}
+                    </button>
+                  </div>
                   <button
                     onClick={() => testKey(m.id)}
                     disabled={keyTestStatus[m.id] === 'testing'}
