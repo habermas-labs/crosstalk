@@ -182,6 +182,17 @@
     };
 
     // ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // Session Utilities
+    // ─────────────────────────────────────────────
+
+    const generateSessionId = () => {
+      // compact ISO date + 6 random hex chars — human-readable, no dependency
+      const date = new Date().toLocaleDateString('en-CA').replace(/-/g, '');
+      const rand = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+      return `ct-${date}-${rand}`;
+    };
+
     // Markdown renderer
     // ─────────────────────────────────────────────
 
@@ -1037,6 +1048,14 @@
         claude: [], chatgpt: [], gemini: []
       });
       const [turnHistory, setTurnHistory] = useState([]);
+      const [sessionMeta, setSessionMeta] = useState(() => ({
+        sessionId: generateSessionId(),
+        startedAt: new Date().toISOString(),
+        modelsActive: [],       // populated on first send
+        verbosity: null,        // hook for CT-063
+        readabilityTarget: null, // hook for CT-064
+        sessionModality: 'visual', // hook for CT-062/067
+      }));
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
       const [conductorActive, setConductorActive] = useState(false);
@@ -1074,12 +1093,21 @@
         const included = includeResponse !== 'none' ? includeResponse : null;
         if (!userText && !included) return;
 
+        const turnTimestamp = new Date().toISOString();
+        const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const content = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
         setIncludeResponse('none');
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
+
+        // Record active models on first send
+        setSessionMeta(prev => prev.modelsActive.length === 0
+          ? { ...prev, modelsActive: models }
+          : prev
+        );
+
         setResponses({ claude: null, chatgpt: null, gemini: null });
         setErrors({ claude: null, chatgpt: null, gemini: null });
 
@@ -1099,21 +1127,33 @@
             const response = await apiAdapters[model](
               newHistories[model], systemPrompts[model], keys[model]
             );
-            results[model] = { response };
+            results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             setResponses(prev => ({ ...prev, [model]: response }));
             setConversationHistory(prev => ({
               ...prev,
               [model]: [...prev[model], { role: 'assistant', content: response }]
             }));
           } catch (err) {
-            results[model] = { error: err.message };
+            results[model] = { response: null, error: err.message, responseTimestamp: new Date().toISOString() };
             setErrors(prev => ({ ...prev, [model]: err.message }));
           } finally {
             setLoading(prev => ({ ...prev, [model]: false }));
           }
         }));
 
-        setTurnHistory(prev => [...prev, { mode: 'parallel', prompt: content, results }]);
+        setTurnHistory(prev => [...prev, {
+          turnIndex: prev.length,
+          timestamp: turnTimestamp,
+          mode: 'parallel',
+          userText,
+          include: includeSnapshot,
+          target: null,
+          order: null,
+          builtPrompt: content,
+          results,
+          sessionModality: 'visual',
+          roles: {},
+        }]);
       }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, responses]);
 
       // Opening cycle — sequential, each model sees prior responses
@@ -1122,6 +1162,8 @@
         const included = includeResponse !== 'none' ? includeResponse : null;
         if (!userText && !included) return;
 
+        const turnTimestamp = new Date().toISOString();
+        const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const baseContent = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
@@ -1129,6 +1171,12 @@
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
         if (models.length === 0) return;
+
+        // Record active models on first send
+        setSessionMeta(prev => prev.modelsActive.length === 0
+          ? { ...prev, modelsActive: models }
+          : prev
+        );
 
         setResponses({ claude: null, chatgpt: null, gemini: null });
         setErrors({ claude: null, chatgpt: null, gemini: null });
@@ -1157,7 +1205,7 @@
 
           try {
             const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model]);
-            results[model] = { response };
+            results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             priorResponses.push({ model, response });
             setResponses(prev => ({ ...prev, [model]: response }));
             setConversationHistory(prev => ({
@@ -1165,7 +1213,7 @@
               [model]: [...prev[model], { role: 'assistant', content: response }]
             }));
           } catch (err) {
-            results[model] = { error: err.message };
+            results[model] = { response: null, error: err.message, responseTimestamp: new Date().toISOString() };
             setErrors(prev => ({ ...prev, [model]: err.message }));
             priorResponses.push({ model, response: `[Error: ${err.message}]` });
           } finally {
@@ -1175,7 +1223,17 @@
 
         setConductorActive(false);
         setTurnHistory(prev => [...prev, {
-          mode: 'conductor', order: models, prompt: baseContent, results
+          turnIndex: prev.length,
+          timestamp: turnTimestamp,
+          mode: 'conductor',
+          userText,
+          include: includeSnapshot,
+          target: null,
+          order: models,
+          builtPrompt: baseContent,
+          results,
+          sessionModality: 'visual',
+          roles: {},
         }]);
       }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, conductorOrder, responses]);
 
@@ -1189,10 +1247,18 @@
           return;
         }
 
+        const turnTimestamp = new Date().toISOString();
+        const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const content = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
         setIncludeResponse('none');
+
+        // Record active models on first send
+        setSessionMeta(prev => prev.modelsActive.length === 0
+          ? { ...prev, modelsActive: [targetModel] }
+          : prev
+        );
 
         setLoading(prev => ({ ...prev, [targetModel]: true }));
         setResponses(prev => ({ ...prev, [targetModel]: null }));
@@ -1209,13 +1275,33 @@
             [targetModel]: [...prev[targetModel], { role: 'assistant', content: response }]
           }));
           setTurnHistory(prev => [...prev, {
-            mode: 'directed', target: targetModel,
-            source: included || null,
-            prompt: content,
-            results: { [targetModel]: { response } }
+            turnIndex: prev.length,
+            timestamp: turnTimestamp,
+            mode: 'directed',
+            userText,
+            include: includeSnapshot,
+            target: targetModel,
+            order: null,
+            builtPrompt: content,
+            results: { [targetModel]: { response, error: null, responseTimestamp: new Date().toISOString() } },
+            sessionModality: 'visual',
+            roles: {},
           }]);
         } catch (err) {
           setErrors(prev => ({ ...prev, [targetModel]: err.message }));
+          setTurnHistory(prev => [...prev, {
+            turnIndex: prev.length,
+            timestamp: turnTimestamp,
+            mode: 'directed',
+            userText,
+            include: includeSnapshot,
+            target: targetModel,
+            order: null,
+            builtPrompt: content,
+            results: { [targetModel]: { response: null, error: err.message, responseTimestamp: new Date().toISOString() } },
+            sessionModality: 'visual',
+            roles: {},
+          }]);
         } finally {
           setLoading(prev => ({ ...prev, [targetModel]: false }));
         }
@@ -1230,6 +1316,14 @@
         setErrors({ claude: null, chatgpt: null, gemini: null });
         setConversationHistory({ claude: [], chatgpt: [], gemini: [] });
         setTurnHistory([]);
+        setSessionMeta({
+          sessionId: generateSessionId(),
+          startedAt: new Date().toISOString(),
+          modelsActive: [],
+          verbosity: null,
+          readabilityTarget: null,
+          sessionModality: 'visual',
+        });
         setDirectTo('all');
         setIncludeResponse('none');
       };
@@ -1240,32 +1334,85 @@
         const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
         const modelIcons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
         const now = new Date();
+        const exportedAt = now.toISOString();
         const dateStr = now.toLocaleDateString('en-CA');
         const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const activeModels = ['claude', 'chatgpt', 'gemini']
-          .filter(m => keys[m]?.trim())
-          .map(m => `${modelIcons[m]} ${modelLabels[m]}`).join(' · ');
 
-        let md = `# Triangulation Session\n`;
-        md += `*Exported: ${dateStr} at ${timeStr}*  \n`;
-        md += `*Models: ${activeModels}*  \n`;
-        md += `*Turns: ${turnHistory.length}*\n\n---\n\n`;
+        // Session duration
+        const startedAt = new Date(sessionMeta.startedAt);
+        const durationMs = now - startedAt;
+        const durationMins = Math.round(durationMs / 60000);
+        const durationStr = durationMins < 1 ? '<1 min' : `${durationMins} min`;
+
+        // Active models from sessionMeta, fallback to keyed models
+        const activeModelIds = sessionMeta.modelsActive.length > 0
+          ? sessionMeta.modelsActive
+          : ['claude', 'chatgpt', 'gemini'].filter(m => keys[m]?.trim());
+        const activeModelsStr = activeModelIds.map(m => `${modelIcons[m]} ${modelLabels[m]}`).join(' · ');
+
+        // Modes used across turns
+        const modesUsed = [...new Set(turnHistory.map(t => t.mode))].join(', ');
+
+        let md = `# Crosstalk Lab — Session Transcript\n\n`;
+        md += `| | |\n|---|---|\n`;
+        md += `| **Session ID** | \`${sessionMeta.sessionId}\` |\n`;
+        md += `| **Started** | ${new Date(sessionMeta.startedAt).toLocaleDateString('en-CA')} at ${new Date(sessionMeta.startedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} |\n`;
+        md += `| **Exported** | ${dateStr} at ${timeStr} |\n`;
+        md += `| **Duration** | ${durationStr} |\n`;
+        md += `| **Models** | ${activeModelsStr} |\n`;
+        md += `| **Turns** | ${turnHistory.length} |\n`;
+        md += `| **Modes used** | ${modesUsed} |\n`;
+        if (sessionMeta.verbosity)        md += `| **Verbosity** | ${sessionMeta.verbosity} |\n`;
+        if (sessionMeta.readabilityTarget) md += `| **Readability target** | ${sessionMeta.readabilityTarget} |\n`;
+        md += `\n---\n\n`;
 
         turnHistory.forEach((turn, i) => {
-          const turnLabel = turn.mode === 'parallel' ? 'Parallel'
-            : turn.mode === 'conductor'
-            ? `Conductor — ${turn.order.map(m => modelIcons[m]).join(' → ')}`
-            : `Directed — ${modelLabels[turn.source]} → ${modelLabels[turn.target]}`;
+          // Turn header
+          let turnLabel = '';
+          if (turn.mode === 'parallel') {
+            turnLabel = 'Parallel';
+          } else if (turn.mode === 'conductor') {
+            turnLabel = `Conductor — ${turn.order.map(m => modelIcons[m]).join(' → ')}`;
+          } else {
+            // directed
+            const includeLabel = turn.include ? ` + ${modelIcons[turn.include.model]}` : '';
+            turnLabel = `Directed → ${modelIcons[turn.target]} ${modelLabels[turn.target]}${includeLabel}`;
+          }
 
-          md += `## Turn ${i + 1} — ${turnLabel}\n\n`;
-          if (turn.prompt) md += `**Prompt:** ${turn.prompt}\n\n`;
+          const turnTime = new Date(turn.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          md += `## Turn ${i + 1} — ${turnLabel}\n`;
+          md += `*${turnTime}*\n\n`;
 
-          Object.keys(turn.results).forEach(model => {
+          // Prompt — show userText and include provenance separately
+          if (turn.userText) {
+            md += `**Prompt:** ${turn.userText}\n\n`;
+          }
+          if (turn.include) {
+            md += `**Included:** ${modelIcons[turn.include.model]} ${modelLabels[turn.include.model]}'s prior response\n\n`;
+            md += `> ${turn.include.snapshot.split('\n').join('\n> ')}\n\n`;
+          }
+          if (!turn.userText && !turn.include) {
+            // fallback — should not occur with enriched schema
+            md += `**Prompt:** *(no text)*\n\n`;
+          }
+
+          // Responses
+          const responseModels = turn.order
+            ? turn.order.filter(m => turn.results[m])
+            : Object.keys(turn.results);
+
+          responseModels.forEach(model => {
             const result = turn.results[model];
-            md += `### ${modelIcons[model]} ${modelLabels[model]}\n\n`;
+            const respTime = result.responseTimestamp
+              ? new Date(result.responseTimestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              : null;
+            md += `### ${modelIcons[model]} ${modelLabels[model]}`;
+            if (respTime) md += ` *[${respTime}]*`;
+            md += `\n\n`;
             if (result.response) md += `${result.response}\n\n`;
             else if (result.error) md += `*Error: ${result.error}*\n\n`;
           });
+
           md += `---\n\n`;
         });
 
@@ -1273,7 +1420,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `triangulation-${dateStr}.md`;
+        a.download = `ct-session-${sessionMeta.sessionId}.md`;
         a.click();
         URL.revokeObjectURL(url);
       };
