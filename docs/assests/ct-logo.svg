@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+  <defs>
+
+    <!-- Glow filter — bioluminescent, diffuse -->
+    <filter id="glow-soft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6" result="blur1"/>
+      <feGaussianBlur stdDeviation="12" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glow-vertex" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Edge gradients: cool vertex → warm midpoint → cool vertex -->
+
+    <!-- apex(#d8dfe8) → green(#6bcf8e) : midpoint warm #a8e8c0 -->
+    <linearGradient id="grad-apex-green" x1="245" y1="63.9" x2="104" y2="276.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#d8dfe8"/>
+      <stop offset="50%"  stop-color="#a8e8c0"/>
+      <stop offset="100%" stop-color="#6bcf8e"/>
+    </linearGradient>
+
+    <!-- apex(#d8dfe8) → blue(#7ba4f4) : midpoint warm #c0d4f8 -->
+    <linearGradient id="grad-apex-blue" x1="245" y1="63.9" x2="278" y2="226.9" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#d8dfe8"/>
+      <stop offset="50%"  stop-color="#c0d4f8"/>
+      <stop offset="100%" stop-color="#7ba4f4"/>
+    </linearGradient>
+
+    <!-- apex(#d8dfe8) → amber(#d4a574) : midpoint warm #e8d0b0 -->
+    <linearGradient id="grad-apex-amber" x1="245" y1="63.9" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#d8dfe8"/>
+      <stop offset="50%"  stop-color="#e8d0b0"/>
+      <stop offset="100%" stop-color="#d4a574"/>
+    </linearGradient>
+
+    <!-- green(#6bcf8e) → blue(#7ba4f4) : midpoint warm #90d8c4 -->
+    <linearGradient id="grad-green-blue" x1="104" y1="276.7" x2="278" y2="226.9" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#6bcf8e"/>
+      <stop offset="50%"  stop-color="#90d8c4"/>
+      <stop offset="100%" stop-color="#7ba4f4"/>
+    </linearGradient>
+
+    <!-- green(#6bcf8e) → amber(#d4a574) : midpoint warm #b0dca0 -->
+    <linearGradient id="grad-green-amber" x1="104" y1="276.7" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#6bcf8e"/>
+      <stop offset="50%"  stop-color="#b8dca8"/>
+      <stop offset="100%" stop-color="#d4a574"/>
+    </linearGradient>
+
+    <!-- blue(#7ba4f4) → amber(#d4a574) : midpoint warm #b8c4e0 -->
+    <linearGradient id="grad-blue-amber" x1="278" y1="226.9" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#7ba4f4"/>
+      <stop offset="50%"  stop-color="#b8c0e4"/>
+      <stop offset="100%" stop-color="#d4a574"/>
+    </linearGradient>
+
+    <!-- Glow gradients (wider, warmer, more diffuse) -->
+    <linearGradient id="glow-apex-green" x1="245" y1="63.9" x2="104" y2="276.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#e8e0d4" stop-opacity="0.5"/>
+      <stop offset="50%"  stop-color="#a0e8b0" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#6bcf8e" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="glow-apex-blue" x1="245" y1="63.9" x2="278" y2="226.9" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#e8e0d4" stop-opacity="0.5"/>
+      <stop offset="50%"  stop-color="#a0c0f8" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7ba4f4" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="glow-apex-amber" x1="245" y1="63.9" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#e8e0d4" stop-opacity="0.5"/>
+      <stop offset="50%"  stop-color="#e8c090" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#d4a574" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="glow-green-blue" x1="104" y1="276.7" x2="278" y2="226.9" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#6bcf8e" stop-opacity="0.4"/>
+      <stop offset="50%"  stop-color="#90e0c8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#7ba4f4" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="glow-green-amber" x1="104" y1="276.7" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#6bcf8e" stop-opacity="0.4"/>
+      <stop offset="50%"  stop-color="#b8dca8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#d4a574" stop-opacity="0.4"/>
+    </linearGradient>
+    <linearGradient id="glow-blue-amber" x1="278" y1="226.9" x2="354" y2="298.7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#7ba4f4" stop-opacity="0.4"/>
+      <stop offset="50%"  stop-color="#b8c0e4" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#d4a574" stop-opacity="0.4"/>
+    </linearGradient>
+
+  </defs>
+
+  <!-- Background -->
+  <rect width="500" height="500" fill="#0a0e17"/>
+
+  <!-- Glow layer (thick, blurred strokes behind edges) -->
+  <g opacity="1">
+    <line x1="245" y1="63.9" x2="104"  y2="276.7" stroke="url(#glow-apex-green)"  stroke-width="14" stroke-linecap="round" filter="url(#glow-soft)"/>
+    <line x1="245" y1="63.9" x2="278"  y2="226.9" stroke="url(#glow-apex-blue)"   stroke-width="14" stroke-linecap="round" filter="url(#glow-soft)"/>
+    <line x1="245" y1="63.9" x2="354"  y2="298.7" stroke="url(#glow-apex-amber)"  stroke-width="14" stroke-linecap="round" filter="url(#glow-soft)"/>
+    <line x1="104" y1="276.7" x2="278" y2="226.9"  stroke="url(#glow-green-blue)"  stroke-width="12" stroke-linecap="round" filter="url(#glow-soft)"/>
+    <line x1="104" y1="276.7" x2="354" y2="298.7"  stroke="url(#glow-green-amber)" stroke-width="12" stroke-linecap="round" filter="url(#glow-soft)"/>
+    <line x1="278" y1="226.9" x2="354" y2="298.7"  stroke="url(#glow-blue-amber)"  stroke-width="12" stroke-linecap="round" filter="url(#glow-soft)"/>
+  </g>
+
+  <!-- Edge lines (crisp, gradient-stroked) -->
+  <g stroke-width="2.2" stroke-linecap="round">
+    <line x1="245" y1="63.9" x2="104"  y2="276.7" stroke="url(#grad-apex-green)"/>
+    <line x1="245" y1="63.9" x2="278"  y2="226.9" stroke="url(#grad-apex-blue)"/>
+    <line x1="245" y1="63.9" x2="354"  y2="298.7" stroke="url(#grad-apex-amber)"/>
+    <line x1="104" y1="276.7" x2="278" y2="226.9"  stroke="url(#grad-green-blue)"/>
+    <line x1="104" y1="276.7" x2="354" y2="298.7"  stroke="url(#grad-green-amber)"/>
+    <line x1="278" y1="226.9" x2="354" y2="298.7"  stroke="url(#grad-blue-amber)"/>
+  </g>
+
+  <!-- Vertex dots — glow then crisp dot on top -->
+  <!-- Apex: white #d8dfe8 -->
+  <circle cx="245" cy="63.9" r="9" fill="#d8dfe8" opacity="0.25" filter="url(#glow-vertex)"/>
+  <circle cx="245" cy="63.9" r="4.5" fill="#d8dfe8"/>
+
+  <!-- Green (ChatGPT): #6bcf8e -->
+  <circle cx="104" cy="276.7" r="9" fill="#6bcf8e" opacity="0.25" filter="url(#glow-vertex)"/>
+  <circle cx="104" cy="276.7" r="4.5" fill="#6bcf8e"/>
+
+  <!-- Blue (Gemini): #7ba4f4 -->
+  <circle cx="278" cy="226.9" r="9" fill="#7ba4f4" opacity="0.25" filter="url(#glow-vertex)"/>
+  <circle cx="278" cy="226.9" r="4.5" fill="#7ba4f4"/>
+
+  <!-- Amber (Claude): #d4a574 -->
+  <circle cx="354" cy="298.7" r="9" fill="#d4a574" opacity="0.25" filter="url(#glow-vertex)"/>
+  <circle cx="354" cy="298.7" r="4.5" fill="#d4a574"/>
+
+</svg>
