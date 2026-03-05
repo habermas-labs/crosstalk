@@ -200,6 +200,7 @@
       const [urlKeySource, setUrlKeySource] = useState('https://keys.yourcrosstalklab.com');
       const [urlPassphrase, setUrlPassphrase] = useState('');
       const [cryptoStatus, setCryptoStatus] = useState(null);
+      const [exportConfirm, setExportConfirm] = useState(null); // { failedLabels, exportKeys }
       const fileInputRef = useRef(null);
 
       const [showKey, setShowKey] = useState({ claude: false, chatgpt: false, gemini: false });
@@ -291,14 +292,20 @@
       };
 
       const testAll = async () => {
-        await Promise.all(['claude', 'chatgpt', 'gemini'].map(id => testKey(id)));
+        // Only test fields that have content — empty fields stay yellow
+        const ids = ['claude', 'chatgpt', 'gemini'].filter(id => keys[id]?.trim());
+        if (ids.length === 0) return;
+        await Promise.all(ids.map(id => testKey(id)));
       };
 
       // Derive export button state from test results
+      // Empty fields count as yellow (unconfirmed), not red
       const exportState = (() => {
-        const statuses = ['claude', 'chatgpt', 'gemini'].map(id => keyTestStatus[id]);
-        const anyFail = statuses.some(s => s === 'fail');
-        const allPass = statuses.every(s => s === 'pass');
+        const enteredIds = ['claude', 'chatgpt', 'gemini'].filter(id => keys[id]?.trim());
+        if (enteredIds.length === 0) return 'yellow';
+        const enteredStatuses = enteredIds.map(id => keyTestStatus[id]);
+        const anyFail = enteredStatuses.some(s => s === 'fail');
+        const allPass = enteredStatuses.every(s => s === 'pass');
         if (allPass) return 'green';
         if (anyFail) return 'red';
         return 'yellow';
@@ -390,30 +397,29 @@
           return;
         }
 
-        // Strip any keys that failed validation, with confirmation
-        let exportKeys = { ...keys };
         const failedModels = ['claude', 'chatgpt', 'gemini'].filter(id => keyTestStatus[id] === 'fail');
 
         if (failedModels.length > 0) {
+          // Show inline confirmation instead of window.confirm
           const failedLabels = failedModels.map(id =>
             ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[id])
           );
-          const confirmed = window.confirm(
-            `The following key${failedLabels.length > 1 ? 's' : ''} failed validation and will not be included:\n\n` +
-            failedLabels.map(l => `  • ${l}`).join('\n') +
-            `\n\nProceed without ${failedLabels.length > 1 ? 'them' : 'it'}?`
-          );
-          if (!confirmed) return;
+          let exportKeys = { ...keys };
           failedModels.forEach(id => { exportKeys[id] = ''; });
-        }
-
-        // Abort if nothing valid remains
-        const hasValid = ['claude', 'chatgpt', 'gemini'].some(id => exportKeys[id]?.trim());
-        if (!hasValid) {
-          setCryptoStatus({ type: 'error', msg: 'No valid keys to export — all keys either failed or are empty.' });
+          const hasValid = ['claude', 'chatgpt', 'gemini'].some(id => exportKeys[id]?.trim());
+          if (!hasValid) {
+            setCryptoStatus({ type: 'error', msg: 'No valid keys to export — all keys either failed or are empty.' });
+            return;
+          }
+          setExportConfirm({ failedLabels, exportKeys });
           return;
         }
 
+        await doExport({ ...keys });
+      };
+
+      const doExport = async (exportKeys) => {
+        setExportConfirm(null);
         try {
           setCryptoStatus({ type: 'info', msg: 'Encrypting...' });
           const data = { keys: exportKeys, systemPrompts, exportedAt: new Date().toISOString() };
@@ -502,6 +508,7 @@
                   <div style={{ flex: 1, position: 'relative' }}>
                     <input
                       type={showKey[m.id] ? 'text' : 'password'}
+                      autoComplete="new-password"
                       value={keys[m.id] || ''}
                       onChange={e => {
                         setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
@@ -787,6 +794,44 @@
                   </button>
                 </div>
               </div>
+
+              {/* Inline export confirmation — replaces window.confirm */}
+              {exportConfirm && (
+                <div style={{
+                  marginTop: '12px', padding: '12px', borderRadius: 'var(--radius)',
+                  background: '#3d1a1a', border: '1px solid #5a2a2a',
+                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#f47068'
+                }}>
+                  <div style={{ marginBottom: '8px', fontWeight: 600 }}>
+                    The following key{exportConfirm.failedLabels.length > 1 ? 's' : ''} failed validation and will not be included:
+                  </div>
+                  {exportConfirm.failedLabels.map(l => (
+                    <div key={l} style={{ marginBottom: '4px' }}>• {l}</div>
+                  ))}
+                  <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => doExport(exportConfirm.exportKeys)}
+                      style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px',
+                        background: '#5a2a2a', border: '1px solid #7a3a3a', borderRadius: 'var(--radius)',
+                        color: '#f47068', cursor: 'pointer'
+                      }}
+                    >
+                      Proceed without {exportConfirm.failedLabels.length > 1 ? 'them' : 'it'}
+                    </button>
+                    <button
+                      onClick={() => setExportConfirm(null)}
+                      style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px',
+                        background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                        borderRadius: 'var(--radius)', color: 'var(--text-secondary)', cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Status message */}
               {cryptoStatus && (
