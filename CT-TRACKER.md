@@ -76,6 +76,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | B003 | `[CT]` | Pill not reverting to yellow on select-all-then-paste | Replacing key field contents by selecting all and pasting does not trigger onChange — no change event fires, so the test pill stays red/green rather than reverting to yellow. Backspace correctly triggers revert; paste-over-selection does not. | `open` | 2026-03 | — |
 | B004 | `[CT]` | Settings modal closes on cursor leaving window | Backdrop onClick handler fires when cursor moves outside the browser window, closing Settings unintentionally. Reproducible when selecting text in an external app and returning to paste. | `open` | 2026-03 | — |
 | B005 | `[CT]` | No show/hide toggle on key input fields | API key fields display as password dots with no visibility toggle, making it impossible to verify what was typed. Causes transcription errors on long alphanumeric keys (e.g. O vs 0). | `open` | 2026-03 | — |
+| B006 | `[CT]` | Gemini model string `gemini-2.0-flash` not provisioned on free tier | Hardcoded model string caused all Gemini API calls to fail with quota:0 on free tier accounts. Replaced with `gemini-2.5-flash`. Model string is a known maintenance point — see CT-018 for long-term solution. | `resolved` | 2026-03 | 2026-03 |
+| B007 | `[CT]` | Chrome prompts to save API key fields as passwords | Key input fields typed as password trigger Chrome's password save dialog; may cause autofill of wrong keys in future sessions. Fix: add `autoComplete="new-password"` to key input fields. | `open` | 2026-03 | — |
 
 ---
 
