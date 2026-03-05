@@ -204,6 +204,7 @@
       const fileInputRef = useRef(null);
 
       const [showKey, setShowKey] = useState({ claude: false, chatgpt: false, gemini: false });
+      const [showPassphrase, setShowPassphrase] = useState({ export: false, import: false, url: false });
 
       // Key test state: null | 'testing' | 'pass' | 'fail'
       const [keyTestStatus, setKeyTestStatus] = useState({ claude: null, chatgpt: null, gemini: null });
@@ -688,18 +689,29 @@
                   🟡 Yellow = untested keys included as-is · 🟢 Green = all passed · 🔴 Red = failed keys excluded with confirmation · Test and export in the same Settings session — closing resets test results.
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="password"
-                    value={exportPassphrase}
-                    onChange={e => setExportPassphrase(e.target.value)}
-                    placeholder="Choose a passphrase..."
-                    style={{
-                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                      outline: 'none'
-                    }}
-                  />
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      type={showPassphrase.export ? 'text' : 'password'}
+                      value={exportPassphrase}
+                      onChange={e => setExportPassphrase(e.target.value)}
+                      placeholder="Choose a passphrase..."
+                      style={{
+                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => setShowPassphrase(prev => ({ ...prev, export: !prev.export }))}
+                      title={showPassphrase.export ? 'Hide passphrase' : 'Show passphrase'}
+                      style={{
+                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
+                      }}
+                    >{showPassphrase.export ? '🙈' : '👁'}</button>
+                  </div>
                   <button
                     onClick={handleExport}
                     title={exportTooltips[exportState]}
@@ -723,18 +735,29 @@
                   display: 'block', marginBottom: '6px'
                 }}>Import — load keys from an encrypted file</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="password"
-                    value={importPassphrase}
-                    onChange={e => setImportPassphrase(e.target.value)}
-                    placeholder="Enter your passphrase..."
-                    style={{
-                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                      outline: 'none'
-                    }}
-                  />
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      type={showPassphrase.import ? 'text' : 'password'}
+                      value={importPassphrase}
+                      onChange={e => setImportPassphrase(e.target.value)}
+                      placeholder="Enter your passphrase..."
+                      style={{
+                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => setShowPassphrase(prev => ({ ...prev, import: !prev.import }))}
+                      title={showPassphrase.import ? 'Hide passphrase' : 'Show passphrase'}
+                      style={{
+                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
+                      }}
+                    >{showPassphrase.import ? '🙈' : '👁'}</button>
+                  </div>
                   <button onClick={() => fileInputRef.current?.click()} style={{
                     fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                     background: 'var(--gemini-border)', border: 'none', borderRadius: 'var(--radius)',
@@ -773,18 +796,29 @@
                   />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="password"
-                    value={urlPassphrase}
-                    onChange={e => setUrlPassphrase(e.target.value)}
-                    placeholder="Enter your passphrase..."
-                    style={{
-                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                      outline: 'none'
-                    }}
-                  />
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      type={showPassphrase.url ? 'text' : 'password'}
+                      value={urlPassphrase}
+                      onChange={e => setUrlPassphrase(e.target.value)}
+                      placeholder="Enter your passphrase..."
+                      style={{
+                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => setShowPassphrase(prev => ({ ...prev, url: !prev.url }))}
+                      title={showPassphrase.url ? 'Hide passphrase' : 'Show passphrase'}
+                      style={{
+                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
+                      }}
+                    >{showPassphrase.url ? '🙈' : '👁'}</button>
+                  </div>
                   <button onClick={handleLoadFromUrl} style={{
                     fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                     background: 'var(--chatgpt-border)', border: 'none', borderRadius: 'var(--radius)',
