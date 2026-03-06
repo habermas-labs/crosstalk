@@ -36,6 +36,8 @@ Files in the CT repo are verified present there. Files in the ZK vault are verif
 | D-18 | crosstalklaboverview.pdf | CT/docs | CT overview document; shareable reference |
 | D-19 | ct-tetras-session-map.md | CT/docs/logs | Session map for Tetras ideation thread 2026-03-06; 22 entries; working document to be retired |
 | D-20 | the-in-between.md | ZK/permanent | Philosophical grounding for In-Between Tetra; Winnicott transitional space, Vygotsky ZPD, Bakhtin heteroglossia |
+| D-21 | hedra-facing-presets.md | ZK/permanent | Hedra as named facing presets; interaction geometries native to AI; catalog of CT-enabled structures unavailable to human communication; Tetra/Hedra taxonomy
+|D-22 | interaction-geometries-whitepaper.md | CT/docs/whitepapers | Whitepaper stub: thesis that AI enables interaction geometries structurally impossible or unavailable to human communication; seven geometries cataloged; Bakhtin grounding
 
 ---
 
