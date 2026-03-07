@@ -1023,7 +1023,7 @@
                   }
                 </div>
                 <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  {turn.prompt.slice(0, 120)}{turn.prompt.length > 120 ? '…' : ''}
+                  {(turn.userText || turn.prompt || '').slice(0, 120)}{(turn.userText || turn.prompt || '').length > 120 ? '…' : ''}
                 </div>
               </div>
             ))}
