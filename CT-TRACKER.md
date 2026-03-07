@@ -105,6 +105,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | B009 | `[CT]` | Aggregate state not recalculating after individual test | Test All and Export buttons do not recalculate state after an individual pill test; stale red persists even when a subsequent individual test passes. Aggregate should recalculate on every state change, treating empty fields as yellow. | `resolved` | 2026-03 | — |
 | B010 | `[CT]` | No show/hide toggle on passphrase fields | Passphrase input fields display as password dots with no visibility toggle; a mistyped passphrase produces an unrecoverable .ctk file. Same fix as B005 — add show/hide toggle to export, import, and URL passphrase fields. | `resolved` | 2026-03 | — |
 | B011 | `[CT]` | HistoryPanel crash on userText field rename | `turn.prompt` became undefined after 074 schema renamed field to `userText`; crashed React render on first response arrival. Fix: fallback chain `turn.userText \|\| turn.prompt \|\| ''` in HistoryPanel. | `resolved` | 2026-03-05 | 2026-03-05 |
+B012 | [CT] | Summarize with flyout not triggering | Submenu used CSS hover (onMouseEnter/onMouseLeave) to toggle display directly on DOM node — collapsed on mouse drift before submenu items could be reached; also non-functional on touch. Fix: replaced with summarizeMenuOpen React state toggled on click. | resolved | 2026-03-07 | 2026-03-07
 
 ---
 
