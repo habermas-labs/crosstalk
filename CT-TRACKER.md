@@ -136,6 +136,7 @@ B013 | [CT] | HistoryPanel crash on turn.prompt in display row | Second instance
 | 074 | `[CT]` | Turn schema enrichment and session metadata | Enriched turnHistory schema with turnIndex, timestamp, userText, include, target, order, builtPrompt, results with responseTimestamp; session-level sessionMeta with sessionId, startedAt, modelsActive; export updated with structured session header table, turn timestamps, include attribution as blockquote, conductor-ordered rendering, session ID in filename | Session discussion | 2026-03-05 |
 | 057 | `[CT]` | API key pre-flight validation | "Test" pill adjacent to each API key field in Settings; fires a minimal test call to each provider; green/pass or red/fail with specific diagnosis: invalid key (401/403), Gemini quota:0 (provisioning failure distinct from exhausted quota), or network unreachable; Test All runs all three; aggregate export state reflects results | Session discussion | 2026-03-05 |
 | 058 | `[CT]` | Gemini free-tier provisioning troubleshooting — quickstart guide addition | Troubleshooting subsection added to Step 3 of Quick Start Guide; covers limit:0 error pattern, new-project fix procedure, and manual verification using Test pill before .ctk export | Session discussion | 2026-03-05 |
+B014 | [CT] | Chrome password manager prompting on passphrase fields | Password-type inputs lacked autoComplete attribute; Chrome offered to save passphrases. Fix: autoComplete="new-password" on all three passphrase fields (export, import, URL load). | resolved | 2026-03-07 | 2026-03-07
 
 ---
 
