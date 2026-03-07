@@ -1,14 +1,12 @@
 ---
 title: Project Directory
-date: 2026-03-06
+date: 2026-03-07
 status: working-document
 ---
 
 # Project Directory
 
-Cross-repository index of project files not held in the Claude project space. Used to orient Claude to what exists and where without loading every file into active context.
-
-Files in the CT repo are verified present there. Files in the ZK vault are verified present there. Once all files are accounted for and the "Files retained in project space" section is no longer needed, that section will be removed.
+Cross-repository index of project files not held in Claude project knowledge. Used to orient Claude to what exists and where without loading every file into active context.
 
 ---
 
@@ -26,42 +24,36 @@ Files in the CT repo are verified present there. Files in the ZK vault are verif
 | D-08 | devstack-storage.md | CT/docs/devstack | Cloudflare R2 setup, crosstalk-keys bucket, key file distribution via Worker |
 | D-09 | devstack-workers.md | CT/docs/devstack | Cloudflare Workers implementation, CORS configuration, R2 integration |
 | D-10 | devstack-index.html | CT/docs/devstack | Three-column devstack reader: sidebar nav, prose rendering, TOC, localStorage annotations |
-| D-11 | SETUP.md | CT/ | Early quickstart guide; largely superseded by ct-quickstart-guide.md |
-| D-12 | ct-logo-handoff.md | CT/docs | Logo specification for designer handoff: geometry, vertex colors, edge gradients, glow treatment |
-| D-13 | ct-color-system-philosophy.md | CT/docs | Color system rationale: vertex colors, warm midpoints as epistemic friction, bioluminescent glow |
-| D-14 | ct-design-rationale.md | CT/docs | Public-facing design rationale; wireframe philosophy, equivalence-of-vertices argument |
-| D-15 | ct-elevator-email.md | CT/docs | Email-format elevator pitch for CT |
-| D-16 | ct-elevator-spoken.md | CT/docs | Spoken elevator pitch for CT |
-| D-17 | ctlogoreferencegeminiv3.png | CT/docs/assets | Gemini-generated logo reference image; correct atmosphere, incorrect geometry (square pyramid) |
-| D-18 | crosstalklaboverview.pdf | CT/docs | CT overview document; shareable reference |
-| D-19 | ct-tetras-session-map.md | CT/docs/logs | Session map for Tetras ideation thread 2026-03-06; 22 entries; working document to be retired |
-| D-20 | the-in-between.md | ZK/permanent | Philosophical grounding for In-Between Tetra; Winnicott transitional space, Vygotsky ZPD, Bakhtin heteroglossia |
-| D-21 | hedra-facing-presets.md | ZK/permanent | Hedra as named facing presets; interaction geometries native to AI; catalog of CT-enabled structures unavailable to human communication; Tetra/Hedra taxonomy
-| D-22 | interaction-geometries-whitepaper.md | CT/docs/whitepapers | Whitepaper stub: thesis that AI enables interaction geometries structurally impossible or unavailable to human communication; seven geometries cataloged; Bakhtin grounding
-| D-23 | dimensionality-ladder.md | ZK/permanent | Dimensionality ladder framework for human-AI interaction; 1D→2D→2D+→3D progression; theoretical grounding for Tetra/Hedra taxonomy and CT pitch scaffold
-| D-24 | polyhedra-interaction-geometry.md | ZK/permanent | Geometric taxonomy of CT interaction configurations; Tetras and Hedras defined; named instance catalogs; tetrahedron properties and composability principles
+| D-11 | ct-elevator-email.md | CT/docs/communications | Email-format elevator pitch for CT |
+| D-12 | ct-elevator-spoken.md | CT/docs/communications | Spoken elevator pitch for CT |
+| D-13 | crosstalk-lab-overview.pdf | CT/docs/communications | CT overview document; shareable public reference |
+| D-14 | ct-logo-handoff.md | CT/docs/communications | Logo specification for designer handoff: geometry, vertex colors, edge gradients, glow treatment |
+| D-15 | ct-wp-design-rationale.md | CT/docs/whitepapers/_stubs | Stub: public-facing design rationale; wireframe philosophy, equivalence-of-vertices argument |
+| D-16 | ct-wp-conversation-moves.md | CT/docs/whitepapers/_stubs | Stub: taxonomy of moderated dialogue moves emerging from directed engagement controls |
+| D-17 | ct-wp-interaction-geometries.md | CT/docs/whitepapers/_stubs | Stub: thesis that AI enables interaction geometries structurally impossible or unavailable to human communication; seven geometries cataloged; Bakhtin grounding |
+| D-18 | ct-demo-setup.md | CT/docs/guides | Demo environment setup and configuration guide |
+| D-19 | ct-quickstart-guide.md | CT/docs/guides | End-user quickstart: API key setup, .ctk file creation, onboarding procedure |
+| D-20 | ct-tetras-session-map.md | CT/docs/logs | Session map for Tetras ideation thread 2026-03-06; 22 entries; working document to be retired |
+| D-21 | ct-color-system-philosophy.md | ZK/permanent | Visual identity philosophy; tetrahedron as hermeneutic argument; color system rationale; Bakhtinian warm midpoint |
+| D-22 | ct-interaction-design-taxonomy.md | ZK/permanent | Roles, modes, meta-structure as three distinct levels of CT interaction design |
+| D-23 | the-in-between.md | ZK/permanent | Philosophical grounding for In-Between Tetra; Winnicott transitional space, Vygotsky ZPD, Bakhtin heteroglossia |
+| D-24 | hedra-facing-presets.md | ZK/permanent | Hedra as named facing presets; interaction geometries native to AI; Tetra/Hedra taxonomy |
+| D-25 | dimensionality-ladder.md | ZK/permanent | Dimensionality ladder framework for human-AI interaction; 1D→2D→2D+→3D progression; theoretical grounding for Tetra/Hedra taxonomy and CT pitch scaffold |
+| D-26 | polyhedra-interaction-geometry.md | ZK/permanent | Geometric taxonomy of CT interaction configurations; Tetras and Hedras defined; named instance catalogs; tetrahedron properties and composability principles |
+| D-27 | ct-session-log-2026-03-04.md | ZK/log | Session log: feature ideation covering modes, roles, meta-structure, accessibility, voice, prompt engineering surfaces; entries CT-040 through CT-073 |
+| D-28 | ct-session-log-2026-03-06-feature-suggestions-v2.md | ZK/log | Session log: elevator speech, dimensionality ladder, Hedra concept, interaction geometries whitepaper thesis, Crosstalk move, RIFF fold metaphor |
+| D-29 | ctlogoreferencegeminiv3.png | CT/docs/assets | Gemini-generated logo reference image; correct atmosphere, incorrect geometry (square pyramid) |
+| D-30 | ct-session-20260305-b901f7-ai-political-topics.md | CT/docs/sessions | Session transcript: AI engagement with politically divisive topics; baseline/third-tier annotated example; useful for training guide as contrast with later sessions |
+| D-31 | ct-session-20260306-956108-water-is-wet.md | CT/docs/sessions | Session transcript: "water is wet" — koan session; provenance preservation demonstration; ChatGPT correctly attributed Claude-authored questions to Claude across handoff; Turn 8 landing: wetness as relational/boundary phenomenon, Bakhtin-adjacent |
+| D-32 | ct-session-20260307-ce45a5-the-in-between.md | CT/docs/sessions | Session transcript: the-in-between — anti-convergence/RIFF design session; Gemini self-generated RIFF-adjacent protocol unprompted (Turn 3); tension map export framing emerged (Turn 6); primary annotated example for training guide |
 
 ---
 
-## Files retained in project space
+## Notes
 
-*Remove this section once all files are verified and cleanup is complete.*
-
-| Filename | Location | Notes |
-|---|---|---|
-| CT-TRACKER.md | CT/ | Living document; actively consulted |
-| ct-interaction-design-taxonomy.md | CT/docs | Constantly relevant to development decisions |
-| index.html | CT/ | Active development |
-| ct-prompt-engineering-surfaces.md | CT/docs | Active reference |
-| ct-accessibility-design-principles.md | CT/docs | Active reference |
-| ct-conversation-moves.md | CT/docs | Active reference |
-| ct-session-log-2026-03-04.md | ZK/log | Session record |
-| ct-demo-setup.md | CT/docs | Living document; evolves with CT |
-| ct-quickstart-guide.md | CT/docs | Living document; evolves with CT |
-| reciprocal-teaching-ct-preset.md | ZK/permanent | Theoretical foundation; actively referenced |
-| ethics-of-becoming.md | ZK/permanent | Theoretical foundation; actively referenced |
-| heteroglossia-compression-ai-provenance.md | ZK/permanent | Theoretical foundation; actively referenced |
-| sociocultural-hermeneutics.md | ZK/permanent | Theoretical foundation; actively referenced |
-| vnenakhodimost-surplus-of-seeing.md | ZK/permanent | Theoretical foundation; actively referenced |
-| emergent-role-behavior-model-self-positioning.md | ZK/permanent | Theoretical foundation; actively referenced |
-| provenance-preservation-multimodel-handoffs.md | ZK/permanent | Theoretical foundation; actively referenced |
+- CT/demos/ directory exists and is currently empty; naming conventions and redirect rules for demo clones documented in devstack-demos.md (pending)
+- CT/docs/whitepapers/_stubs/ convention: underscore prefix floats directory to top of listing; files move to CT/docs/whitepapers/ on graduation from stub status
+- CT/docs/communications/ holds all outward-facing public documents: pitches, overview, logo and design handoffs
+- CT/docs/sessions/ holds annotated session transcripts; naming convention ct-session-YYYYMMDD-XXXXXX-slug.md; primary source material for training guide development and Hedra gesture documentation
+- ct-prompt-engineering-surfaces.md, ct-accessibility-design-principles.md, reciprocal-teaching-ct-preset.md, ethics-of-becoming.md, heteroglossia-compression-ai-provenance.md, sociocultural-hermeneutics.md, vnenakhodimost-surplus-of-seeing.md, emergent-role-behavior-model-self-positioning.md, provenance-preservation-multimodel-handoffs.md — all in project knowledge and ZK/permanent; no directory entry needed while held in project knowledge
+- ct-epistemic-training-framework.md — in project knowledge and ZK/permanent; no directory entry needed while held in project knowledge
