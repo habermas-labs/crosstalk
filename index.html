@@ -596,69 +596,6 @@
               </div>
             ))}
 
-            {/* ── Conductor Order ── */}
-            <div style={{
-              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
-              border: '1px solid var(--border-subtle)', marginBottom: '16px'
-            }}>
-              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
-                Conductor Order
-              </h3>
-              <p style={{
-                fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
-                marginBottom: '14px', lineHeight: 1.5
-              }}>
-                Opening cycle sequence — each model sees the responses of models before it.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {conductorOrder.map((modelId, position) => (
-                  <React.Fragment key={position}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                      <label style={{
-                        fontFamily: 'JetBrains Mono', fontSize: '10px',
-                        color: 'var(--text-muted)', textAlign: 'center'
-                      }}>
-                        {position === 0 ? '1st' : position === 1 ? '2nd' : '3rd'}
-                      </label>
-                      <select
-                        value={modelId}
-                        onChange={e => handleOrderChange(position, e.target.value)}
-                        style={{
-                          ...selectStyle,
-                          color: MODEL_META[modelId].accent,
-                          borderColor: modelId === 'claude' ? 'var(--claude-border)'
-                            : modelId === 'chatgpt' ? 'var(--chatgpt-border)'
-                            : 'var(--gemini-border)',
-                        }}
-                      >
-                        <option value="claude">◈ Claude</option>
-                        <option value="chatgpt">◇ ChatGPT</option>
-                        <option value="gemini">△ Gemini</option>
-                      </select>
-                    </div>
-                    {position < 2 && (
-                      <span style={{
-                        color: 'var(--text-muted)', fontFamily: 'JetBrains Mono',
-                        fontSize: '14px', marginTop: '18px', flexShrink: 0
-                      }}>→</span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-              {/* Preview */}
-              <div style={{
-                marginTop: '12px', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                color: 'var(--text-muted)', textAlign: 'center'
-              }}>
-                {conductorOrder.map((m, i) => (
-                  <span key={m}>
-                    <span style={{ color: MODEL_META[m].accent }}>{MODEL_META[m].icon} {MODEL_META[m].label}</span>
-                    {i < conductorOrder.length - 1 && <span> → </span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-
             {/* Key File Management */}
             <div style={{
               padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
@@ -890,6 +827,69 @@
               )}
             </div>
 
+            {/* ── Conductor Order ── */}
+            <div style={{
+              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
+              border: '1px solid var(--border-subtle)', marginBottom: '16px'
+            }}>
+              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
+                Conductor Order
+              </h3>
+              <p style={{
+                fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
+                marginBottom: '14px', lineHeight: 1.5
+              }}>
+                Opening cycle sequence — each model sees the responses of models before it.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {conductorOrder.map((modelId, position) => (
+                  <React.Fragment key={position}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                      <label style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '10px',
+                        color: 'var(--text-muted)', textAlign: 'center'
+                      }}>
+                        {position === 0 ? '1st' : position === 1 ? '2nd' : '3rd'}
+                      </label>
+                      <select
+                        value={modelId}
+                        onChange={e => handleOrderChange(position, e.target.value)}
+                        style={{
+                          ...selectStyle,
+                          color: MODEL_META[modelId].accent,
+                          borderColor: modelId === 'claude' ? 'var(--claude-border)'
+                            : modelId === 'chatgpt' ? 'var(--chatgpt-border)'
+                            : 'var(--gemini-border)',
+                        }}
+                      >
+                        <option value="claude">◈ Claude</option>
+                        <option value="chatgpt">◇ ChatGPT</option>
+                        <option value="gemini">△ Gemini</option>
+                      </select>
+                    </div>
+                    {position < 2 && (
+                      <span style={{
+                        color: 'var(--text-muted)', fontFamily: 'JetBrains Mono',
+                        fontSize: '14px', marginTop: '18px', flexShrink: 0
+                      }}>→</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+              {/* Preview */}
+              <div style={{
+                marginTop: '12px', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                color: 'var(--text-muted)', textAlign: 'center'
+              }}>
+                {conductorOrder.map((m, i) => (
+                  <span key={m}>
+                    <span style={{ color: MODEL_META[m].accent }}>{MODEL_META[m].icon} {MODEL_META[m].label}</span>
+                    {i < conductorOrder.length - 1 && <span> → </span>}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div style={{
               padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
               border: '1px solid var(--border-subtle)', fontSize: '13px', color: 'var(--text-secondary)',
@@ -1023,7 +1023,7 @@
                   }
                 </div>
                 <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  {(turn.userText || turn.prompt || '').slice(0, 120)}{((turn.userText || turn.prompt || '').length > 120) ? '…' : ''}
+                  {turn.prompt.slice(0, 120)}{turn.prompt.length > 120 ? '…' : ''}
                 </div>
               </div>
             ))}
@@ -1065,7 +1065,9 @@
       const textareaRef = useRef(null);
       const exportMenuRef = useRef(null);
       const [exportMenuOpen, setExportMenuOpen] = useState(false);
+      const [summarizeMenuOpen, setSummarizeMenuOpen] = useState(false);
       const [summarizing, setSummarizing] = useState(false);
+      const [promptFocused, setPromptFocused] = useState(false);
 
       // Auto-resize textarea
       useEffect(() => {
@@ -1081,6 +1083,7 @@
         const handler = (e) => {
           if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
             setExportMenuOpen(false);
+            setSummarizeMenuOpen(false);
           }
         };
         document.addEventListener('mousedown', handler);
@@ -1560,7 +1563,7 @@
               {/* Export dropdown */}
               <div ref={exportMenuRef} style={{ position: 'relative' }}>
                 <button
-                  onClick={() => turnHistory.length > 0 && setExportMenuOpen(o => !o)}
+                  onClick={() => { if (turnHistory.length > 0) { if (exportMenuOpen) setSummarizeMenuOpen(false); setExportMenuOpen(o => !o); } }}
                   disabled={turnHistory.length === 0}
                   style={{
                     fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
@@ -1597,26 +1600,29 @@
                       <span style={{ color: 'var(--chatgpt-accent)' }}>↓</span> Full Transcript
                     </button>
 
-                    {/* Summarize with — flyout trigger */}
-                    <div style={{ position: 'relative' }}
-                      onMouseEnter={e => e.currentTarget.querySelector('.submenu').style.display = 'block'}
-                      onMouseLeave={e => e.currentTarget.querySelector('.submenu').style.display = 'none'}
-                    >
-                      <button style={{
+                    {/* Summarize with — click-toggle submenu */}
+                    <div style={{ position: 'relative' }}>
+                      <button onClick={() => setSummarizeMenuOpen(v => !v)} style={{
                         width: '100%', textAlign: 'left', padding: '10px 14px',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-primary)',
+                        background: summarizeMenuOpen ? 'var(--bg-card)' : 'none', border: 'none',
+                        cursor: summarizing ? 'default' : 'pointer',
+                        fontFamily: 'JetBrains Mono', fontSize: '12px', color: summarizing ? 'var(--text-muted)' : 'var(--text-primary)',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                      }}>
+                      }}
+                        onMouseEnter={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'var(--bg-card)'; }}
+                        onMouseLeave={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'none'; }}
+                      >
                         <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: 'var(--chatgpt-accent)' }}>◎</span> Summarize with
+                          <span style={{ color: 'var(--chatgpt-accent)' }}>◎</span>
+                          {summarizing ? 'Summarizing…' : 'Summarize with'}
                         </span>
-                        <span style={{ fontSize: '10px', opacity: 0.5 }}>▶</span>
+                        <span style={{ fontSize: '10px', opacity: 0.5 }}>{summarizeMenuOpen ? '▼' : '▶'}</span>
                       </button>
 
-                      {/* Flyout submenu */}
-                      <div className="submenu" style={{
-                        display: 'none', position: 'absolute',
+                      {/* Submenu — click-toggled */}
+                      {summarizeMenuOpen && (
+                      <div style={{
+                        position: 'absolute',
                         top: 0, left: 'calc(100% + 1px)',
                         background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
                         borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
@@ -1630,7 +1636,7 @@
                           return (
                             <button key={model}
                               disabled={!available}
-                              onClick={() => available && summarizeWith(model)}
+                              onClick={() => { if (available) { setSummarizeMenuOpen(false); setExportMenuOpen(false); summarizeWith(model); } }}
                               style={{
                                 width: '100%', textAlign: 'left', padding: '10px 14px',
                                 background: 'none', border: 'none',
@@ -1650,6 +1656,7 @@
                           );
                         })}
                       </div>
+                      )}
                     </div>
 
                     {/* Divider */}
@@ -1712,7 +1719,13 @@
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter your prompt — Shift+Enter for newline, Enter to send..."
+              onFocus={() => setPromptFocused(true)}
+              onBlur={() => setPromptFocused(false)}
+              placeholder={
+                includeResponse !== 'none' && prompt === ''
+                  ? `Routing ${includeResponse === 'claude' ? 'Claude' : includeResponse === 'chatgpt' ? 'ChatGPT' : 'Gemini'}'s response — add a prompt or send as-is…`
+                  : 'Enter your prompt — Shift+Enter for newline, Enter to send…'
+              }
               rows={2}
               style={{
                 width: '100%', background: 'transparent', border: 'none', outline: 'none',
@@ -1814,7 +1827,7 @@
               {directTo === 'all' ? (
                 <>
                   <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none')}
                     onClick={() => { setSendMode('parallel'); sendParallel(); }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
@@ -1824,11 +1837,11 @@
                       cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
                       color: sendMode === 'parallel' ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: sendMode === 'parallel' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none') ? 0.4 : 1
                     }}
                   >Parallel ↵</button>
                   <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none')}
                     onClick={() => { setSendMode('conductor'); sendConductor(); }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
@@ -1838,7 +1851,7 @@
                       cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
                       color: sendMode === 'conductor' ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: sendMode === 'conductor' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none') ? 0.4 : 1
                     }}
                   >Conductor ↵</button>
                 </>
