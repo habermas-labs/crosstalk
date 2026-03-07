@@ -88,6 +88,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 077 | `[CT]` | Expandable history turns | History panel shows only 120-character preview of each turn's userText; long prompts are unrecoverable after the prompt field clears. Click to expand should reveal full userText inline. Natural precursor to load-turn-back-into-prompt feature. | `idea` | Session discussion | 2026-03-05 |
 | 078 | `[CT]` | Plain text export | Flat text export with no markdown formatting; permanent option alongside full transcript export. Use cases: testing/inspection without renderer interference, users who prefer or need unformatted output. | `idea` | Session discussion | 2026-03-05 |
 | 079 | [CT] | Hedra — named facing presets | Structured interaction presets defined by the perspective or stance each model is directed to present toward a problem — the "face" each model turns to the object of inquiry. Parallel class to Tetras (073): Tetras define four-vertex role structures (human + 3 models); Hedra define facing/perspective assignments independent of vertex structure. Instances are named evocatively for their function. First candidate: the 3x2 perspective matrix (each model argues two assigned positions in sequence, executed in parallel — six responses from one prompt). Hedra and Tetras are composable — a Tetra can run with a Hedra overlay. Singular and plural both: Hedra, Hedras. | `idea` | Session discussion | 2026-03-06 |
+
 ---
 
 ## Bugs
@@ -106,6 +107,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | B010 | `[CT]` | No show/hide toggle on passphrase fields | Passphrase input fields display as password dots with no visibility toggle; a mistyped passphrase produces an unrecoverable .ctk file. Same fix as B005 — add show/hide toggle to export, import, and URL passphrase fields. | `resolved` | 2026-03 | — |
 | B011 | `[CT]` | HistoryPanel crash on userText field rename | `turn.prompt` became undefined after 074 schema renamed field to `userText`; crashed React render on first response arrival. Fix: fallback chain `turn.userText \|\| turn.prompt \|\| ''` in HistoryPanel. | `resolved` | 2026-03-05 | 2026-03-05 |
 B012 | [CT] | Summarize with flyout not triggering | Submenu used CSS hover (onMouseEnter/onMouseLeave) to toggle display directly on DOM node — collapsed on mouse drift before submenu items could be reached; also non-functional on touch. Fix: replaced with summarizeMenuOpen React state toggled on click. | resolved | 2026-03-07 | 2026-03-07
+B013 | [CT] | HistoryPanel crash on turn.prompt in display row | Second instance of bare turn.prompt reference missed by B011 fix; crashed on first response arrival when HistoryPanel tried to render the truncated prompt preview. Fix: fallback chain (turn.userText || turn.prompt || '') on line 1026. | resolved | 2026-03-07 | 2026-03-07
 
 ---
 
