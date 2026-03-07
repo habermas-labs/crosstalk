@@ -191,7 +191,7 @@
       // compact ISO date + 6 random hex chars — human-readable, no dependency
       const date = new Date().toLocaleDateString('en-CA').replace(/-/g, '');
       const rand = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
-      return `ct-${date}-${rand}`;
+      return `${date}-${rand}`;
     };
 
     // Markdown renderer
@@ -643,6 +643,7 @@
                       type={showPassphrase.export ? 'text' : 'password'}
                       value={exportPassphrase}
                       onChange={e => setExportPassphrase(e.target.value)}
+                      autoComplete="new-password"
                       placeholder="Choose a passphrase..."
                       style={{
                         width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
@@ -689,6 +690,7 @@
                       type={showPassphrase.import ? 'text' : 'password'}
                       value={importPassphrase}
                       onChange={e => setImportPassphrase(e.target.value)}
+                      autoComplete="new-password"
                       placeholder="Enter your passphrase..."
                       style={{
                         width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
@@ -750,6 +752,7 @@
                       type={showPassphrase.url ? 'text' : 'password'}
                       value={urlPassphrase}
                       onChange={e => setUrlPassphrase(e.target.value)}
+                      autoComplete="new-password"
                       placeholder="Enter your passphrase..."
                       style={{
                         width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
@@ -1067,7 +1070,6 @@
       const [exportMenuOpen, setExportMenuOpen] = useState(false);
       const [summarizeMenuOpen, setSummarizeMenuOpen] = useState(false);
       const [summarizing, setSummarizing] = useState(false);
-      const [promptFocused, setPromptFocused] = useState(false);
 
       // Auto-resize textarea
       useEffect(() => {
@@ -1512,7 +1514,7 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `ct-summary-${sessionMeta.sessionId}.md`;
+          a.download = `ct-summary-${sessionMeta.sessionId}-${targetModel}.md`;
           a.click();
           URL.revokeObjectURL(url);
         } catch (err) {
@@ -1619,14 +1621,14 @@
                         <span style={{ fontSize: '10px', opacity: 0.5 }}>{summarizeMenuOpen ? '▼' : '▶'}</span>
                       </button>
 
-                      {/* Submenu — click-toggled */}
+                      {/* Submenu — click-toggled, renders below trigger */}
                       {summarizeMenuOpen && (
                       <div style={{
                         position: 'absolute',
-                        top: 0, left: 'calc(100% + 1px)',
+                        top: 'calc(100% + 1px)', left: 0,
                         background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
                         borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
-                        minWidth: '160px', overflow: 'hidden'
+                        minWidth: '100%', overflow: 'hidden', zIndex: 51
                       }}>
                         {['claude', 'chatgpt', 'gemini'].map(model => {
                           const labels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
@@ -1719,8 +1721,6 @@
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => setPromptFocused(true)}
-              onBlur={() => setPromptFocused(false)}
               placeholder={
                 includeResponse !== 'none' && prompt === ''
                   ? `Routing ${includeResponse === 'claude' ? 'Claude' : includeResponse === 'chatgpt' ? 'ChatGPT' : 'Gemini'}'s response — add a prompt or send as-is…`
@@ -1827,7 +1827,7 @@
               {directTo === 'all' ? (
                 <>
                   <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none')}
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
                     onClick={() => { setSendMode('parallel'); sendParallel(); }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
@@ -1837,11 +1837,11 @@
                       cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
                       color: sendMode === 'parallel' ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: sendMode === 'parallel' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none') ? 0.4 : 1
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
                     }}
                   >Parallel ↵</button>
                   <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none')}
+                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
                     onClick={() => { setSendMode('conductor'); sendConductor(); }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
@@ -1851,7 +1851,7 @@
                       cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
                       color: sendMode === 'conductor' ? 'var(--text-primary)' : 'var(--text-muted)',
                       fontWeight: sendMode === 'conductor' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive || (!promptFocused && !prompt.trim() && includeResponse === 'none') ? 0.4 : 1
+                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
                     }}
                   >Conductor ↵</button>
                 </>
