@@ -1121,6 +1121,7 @@
         sessionModality: 'visual', // hook for CT-062/067
       }));
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
+      const [modeArmed, setModeArmed] = useState(false);
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
       const [conductorActive, setConductorActive] = useState(false);
       const [directTo, setDirectTo] = useState('all');         // 'all' | 'claude' | 'chatgpt' | 'gemini'
@@ -1216,6 +1217,7 @@
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setModeArmed(false);
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
 
@@ -1286,6 +1288,7 @@
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setModeArmed(false);
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
         if (models.length === 0) return;
@@ -1446,6 +1449,7 @@
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setModeArmed(false);
       };
 
       // Export session as markdown transcript
@@ -1629,8 +1633,10 @@
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           if (directTo !== 'all') sendDirect(directTo);
-          else if (sendMode === 'conductor') sendConductor();
-          else sendParallel();
+          else if (modeArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none')) {
+            if (sendMode === 'conductor') sendConductor();
+            else sendParallel();
+          }
         }
       };
 
@@ -1967,37 +1973,43 @@
                 }
               </div>
 
-              {/* Send buttons — Parallel + Conductor when directTo=all, single Send when directed */}
+              {/* Send controls — mode dropdown + send button when directTo=all, single Send when directed */}
               {directTo === 'all' ? (
                 <>
+                  <select
+                    value={modeArmed || sendMode !== 'parallel' || turnHistory.length > 0 ? sendMode : ''}
+                    onChange={e => { if (e.target.value) { setSendMode(e.target.value); setModeArmed(true); } }}
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 10px',
+                      background: modeArmed ? 'var(--bg-card)' : turnHistory.length > 0 ? 'var(--bg-input)' : 'transparent',
+                      border: `1px solid ${modeArmed ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                      borderRadius: 'var(--radius)', cursor: 'pointer', outline: 'none',
+                      color: modeArmed ? 'var(--text-primary)' : turnHistory.length > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {!modeArmed && turnHistory.length === 0 && <option value="">Mode:</option>}
+                    <option value="parallel">Parallel</option>
+                    <option value="conductor">Conductor</option>
+                  </select>
                   <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
-                    onClick={() => { setSendMode('parallel'); sendParallel(); }}
+                    disabled={!modeArmed || (!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    onClick={() => sendMode === 'parallel' ? sendParallel() : sendConductor()}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
-                      background: 'var(--bg-input)',
-                      border: `1px solid ${sendMode === 'parallel' ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                      background: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                        ? 'var(--bg-card)' : 'transparent',
+                      border: `1px solid ${modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                        ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
                       borderRadius: 'var(--radius)',
-                      cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
-                      color: sendMode === 'parallel' ? 'var(--text-primary)' : 'var(--text-muted)',
-                      fontWeight: sendMode === 'parallel' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
+                      cursor: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                        ? 'pointer' : 'default',
+                      color: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                        ? 'var(--text-primary)'
+                        : turnHistory.length > 0 ? 'var(--text-muted)' : 'var(--text-muted)',
+                      fontWeight: 600,
+                      opacity: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive ? 1 : 0.4,
                     }}
-                  >Parallel ↵</button>
-                  <button
-                    disabled={(!prompt.trim() && includeResponse === 'none') || conductorActive}
-                    onClick={() => { setSendMode('conductor'); sendConductor(); }}
-                    style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
-                      background: 'var(--bg-input)',
-                      border: `1px solid ${sendMode === 'conductor' ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
-                      borderRadius: 'var(--radius)',
-                      cursor: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 'default' : 'pointer',
-                      color: sendMode === 'conductor' ? 'var(--text-primary)' : 'var(--text-muted)',
-                      fontWeight: sendMode === 'conductor' ? 600 : 400,
-                      opacity: (!prompt.trim() && includeResponse === 'none') || conductorActive ? 0.4 : 1
-                    }}
-                  >Conductor ↵</button>
+                  >Send ↵</button>
                 </>
               ) : (
                 <button
