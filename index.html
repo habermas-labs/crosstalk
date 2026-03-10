@@ -1012,7 +1012,24 @@
     // ─────────────────────────────────────────────
 
     function HistoryPanel({ history, onLoadTurn }) {
+      const [expanded, setExpanded] = useState({});
+      const [copied, setCopied] = useState({});
+
       if (history.length === 0) return null;
+
+      const toggleExpand = (i, e) => {
+        e.stopPropagation();
+        setExpanded(prev => ({ ...prev, [i]: !prev[i] }));
+      };
+
+      const copyText = (i, text, e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(prev => ({ ...prev, [i]: true }));
+          setTimeout(() => setCopied(prev => ({ ...prev, [i]: false })), 2000);
+        });
+      };
+
       return (
         <div style={{
           borderTop: '1px solid var(--border-subtle)', marginTop: '24px', paddingTop: '20px'
@@ -1021,26 +1038,58 @@
             CONVERSATION HISTORY
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {history.map((turn, i) => (
-              <div key={i} style={{
-                padding: '12px 16px', background: 'var(--bg-secondary)',
-                borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)',
-                cursor: 'pointer'
-              }} onClick={() => onLoadTurn(turn)}>
-                <div style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px'
-                }}>
-                  Turn {i + 1} — {
-                    turn.mode === 'parallel' ? 'Parallel' :
-                    turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => ({claude:'◈',chatgpt:'◇',gemini:'△'})[m]).join('→')})` :
-                    `Directed`
-                  }
+            {history.map((turn, i) => {
+              const fullText = turn.userText || turn.prompt || '';
+              const isLong = fullText.length > 120;
+              const isExpanded = expanded[i];
+              return (
+                <div key={i} style={{
+                  padding: '12px 16px', background: 'var(--bg-secondary)',
+                  borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)',
+                  cursor: 'pointer'
+                }} onClick={() => onLoadTurn(turn)}>
+                  <div style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px'
+                  }}>
+                    Turn {i + 1} — {
+                      turn.mode === 'parallel' ? 'Parallel' :
+                      turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => ({claude:'◈',chatgpt:'◇',gemini:'△'})[m]).join('→')})` :
+                      `Directed`
+                    }
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    {isExpanded ? fullText : `${fullText.slice(0, 120)}${isLong ? '…' : ''}`}
+                  </div>
+                  {/* Expand / copy controls */}
+                  {(isLong || isExpanded) && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      marginTop: '8px'
+                    }} onClick={e => e.stopPropagation()}>
+                      <button onClick={e => toggleExpand(i, e)} style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
+                        background: 'transparent', border: '1px solid var(--border-subtle)',
+                        borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-muted)'
+                      }}>
+                        {isExpanded ? '▲ collapse' : '▼ expand'}
+                      </button>
+                      {isExpanded && (
+                        <button onClick={e => copyText(i, fullText, e)} style={{
+                          fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
+                          background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius)', cursor: 'pointer',
+                          color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
+                          transition: 'color 0.15s, background 0.15s'
+                        }}>
+                          {copied[i] ? '✓ copied' : '⎘ copy'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  {(turn.userText || turn.prompt || '').slice(0, 120)}{(turn.userText || turn.prompt || '').length > 120 ? '…' : ''}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );
