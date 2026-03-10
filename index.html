@@ -48,6 +48,17 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+    @keyframes carouselFade {
+      0%   { opacity: 0; transform: translateY(4px); }
+      12%  { opacity: 1; transform: translateY(0); }
+      80%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-4px); }
+    }
+    .carousel-word {
+      display: inline-block;
+      animation: carouselFade 3.8s ease-in-out forwards;
+    }
   </style>
 </head>
 <body>
@@ -1064,12 +1075,48 @@
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
       const [conductorActive, setConductorActive] = useState(false);
       const [directTo, setDirectTo] = useState('all');         // 'all' | 'claude' | 'chatgpt' | 'gemini'
+      const [excludeModel, setExcludeModel] = useState('none'); // 'none' | 'claude' | 'chatgpt' | 'gemini'
       const [includeResponse, setIncludeResponse] = useState('none'); // 'none' | 'claude' | 'chatgpt' | 'gemini'
+
+      const activeModels = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
+
+      const handleSetDirectTo = (val) => {
+        setDirectTo(val);
+        if (val !== 'all') setExcludeModel('none');
+      };
+      const handleSetExcludeModel = (val) => {
+        setExcludeModel(val);
+        if (val !== 'none') setDirectTo('all');
+      };
       const textareaRef = useRef(null);
       const exportMenuRef = useRef(null);
       const [exportMenuOpen, setExportMenuOpen] = useState(false);
       const [summarizeMenuOpen, setSummarizeMenuOpen] = useState(false);
       const [summarizing, setSummarizing] = useState(false);
+
+      // Carousel
+      const CAROUSEL_WORDS = [
+        'Triangulation', 'Reciprocity', 'the Agora', 'Discourse',
+        'Porosity', 'Calibration', 'the In-Between', 'RIP'
+      ];
+      const CAROUSEL_TOTAL = CAROUSEL_WORDS.length * 2; // two full passes
+      const [carouselIndex, setCarouselIndex] = useState(0);
+      const [carouselKey, setCarouselKey] = useState(0);
+      const [carouselDone, setCarouselDone] = useState(false);
+      const carouselTickRef = useRef(0);
+      useEffect(() => {
+        const timer = setInterval(() => {
+          carouselTickRef.current += 1;
+          if (carouselTickRef.current >= CAROUSEL_TOTAL) {
+            clearInterval(timer);
+            setCarouselDone(true);
+            return;
+          }
+          setCarouselIndex(carouselTickRef.current % CAROUSEL_WORDS.length);
+          setCarouselKey(k => k + 1);
+        }, 3800);
+        return () => clearInterval(timer);
+      }, []);
 
       // Auto-resize textarea
       useEffect(() => {
@@ -1118,9 +1165,10 @@
         const content = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
+        setExcludeModel('none');
         setIncludeResponse('none');
 
-        const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
+        const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -1174,7 +1222,7 @@
           sessionModality: 'visual',
           roles: {},
         }]);
-      }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, responses]);
+      }, [prompt, excludeModel, includeResponse, enabled, keys, systemPrompts, conversationHistory, responses]);
 
       // Opening cycle — sequential, each model sees prior responses
       const sendConductor = useCallback(async () => {
@@ -1187,6 +1235,7 @@
         const baseContent = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
+        setExcludeModel('none');
         setIncludeResponse('none');
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
@@ -1272,6 +1321,7 @@
         const content = buildPromptContent(userText, included);
         setPrompt('');
         setDirectTo('all');
+        setExcludeModel('none');
         setIncludeResponse('none');
 
         // Record active models on first send
@@ -1345,6 +1395,7 @@
           sessionModality: 'visual',
         });
         setDirectTo('all');
+        setExcludeModel('none');
         setIncludeResponse('none');
       };
 
@@ -1549,7 +1600,7 @@
                 <span style={{ color: 'var(--claude-accent)' }}>◈</span>
                 <span style={{ color: 'var(--chatgpt-accent)' }}>◇</span>
                 <span style={{ color: 'var(--gemini-accent)' }}>△</span>
-                {' '}Triangulation
+                {' '}Crosstalk Lab
               </h1>
               <p style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
                 Multi-model dialogue interface
@@ -1697,9 +1748,25 @@
           {!hasAnyKey && (
             <div style={{
               padding: '24px', background: 'var(--bg-secondary)', borderRadius: '12px',
-              border: '1px solid var(--border-subtle)', textAlign: 'center', marginBottom: '24px'
+              border: '1px solid var(--border-subtle)', marginBottom: '24px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center'
             }}>
-              <p style={{ fontSize: '16px', marginBottom: '12px' }}>Welcome to Triangulation</p>
+              <p style={{ fontSize: '16px', marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '0.35em', width: '100%', textAlign: 'left' }}>
+                <span style={{ whiteSpace: 'nowrap' }}>Welcome to</span>
+                {carouselDone ? (
+                  <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}>
+                    your Crosstalk Lab
+                  </span>
+                ) : (
+                  <span
+                    key={carouselKey}
+                    className="carousel-word"
+                    style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}
+                  >
+                    {CAROUSEL_WORDS[carouselIndex]}
+                  </span>
+                )}
+              </p>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
                 Add your API keys in Settings to start querying models.
               </p>
@@ -1723,7 +1790,7 @@
               onKeyDown={handleKeyDown}
               placeholder={
                 includeResponse !== 'none' && prompt === ''
-                  ? `Routing ${includeResponse === 'claude' ? 'Claude' : includeResponse === 'chatgpt' ? 'ChatGPT' : 'Gemini'}'s response — add a prompt or send as-is…`
+                  ? `Forwarding ${includeResponse === 'claude' ? 'Claude' : includeResponse === 'chatgpt' ? 'ChatGPT' : 'Gemini'}'s response — add a prompt or send as-is…`
                   : 'Enter your prompt — Shift+Enter for newline, Enter to send…'
               }
               rows={2}
@@ -1746,7 +1813,7 @@
                 }}>Direct to</label>
                 <select
                   value={directTo}
-                  onChange={e => setDirectTo(e.target.value)}
+                  onChange={e => handleSetDirectTo(e.target.value)}
                   style={{
                     padding: '5px 8px', background: 'var(--bg-input)',
                     border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
@@ -1764,12 +1831,39 @@
                 </select>
               </div>
 
-              {/* Include dropdown — only shown when at least one model has a response */}
+              {/* Exclude dropdown — only shown when 3+ models active */}
+              {activeModels.length >= 3 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
+                  }}>Exclude</label>
+                  <select
+                    value={excludeModel}
+                    onChange={e => handleSetExcludeModel(e.target.value)}
+                    style={{
+                      padding: '5px 8px', background: 'var(--bg-input)',
+                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
+                      color: excludeModel === 'none' ? 'var(--text-secondary)'
+                        : excludeModel === 'claude' ? 'var(--claude-accent)'
+                        : excludeModel === 'chatgpt' ? 'var(--chatgpt-accent)'
+                        : 'var(--gemini-accent)',
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
+                    }}
+                  >
+                    <option value="none">None</option>
+                    {enabled['claude']  && keys['claude']?.trim()  && <option value="claude">◈ Claude</option>}
+                    {enabled['chatgpt'] && keys['chatgpt']?.trim() && <option value="chatgpt">◇ ChatGPT</option>}
+                    {enabled['gemini']  && keys['gemini']?.trim()  && <option value="gemini">△ Gemini</option>}
+                  </select>
+                </div>
+              )}
+
+              {/* Forward dropdown — only shown when at least one model has a response */}
               {['claude','chatgpt','gemini'].some(m => responses[m]) && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{
                     fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
-                  }}>Include</label>
+                  }}>Forward</label>
                   <select
                     value={includeResponse}
                     onChange={e => setIncludeResponse(e.target.value)}
@@ -1804,6 +1898,8 @@
                   ? <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo] }}>
                       {{ claude:'◈ Claude', chatgpt:'◇ ChatGPT', gemini:'△ Gemini' }[directTo]}
                     </span>
+                  : excludeModel !== 'none'
+                  ? <span>Excluding <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[excludeModel] }}>{{ claude:'◈ Claude', chatgpt:'◇ ChatGPT', gemini:'△ Gemini' }[excludeModel]}</span></span>
                   : sendMode === 'conductor'
                   ? <span>
                       Order: {conductorOrder.map((m, i) => (
@@ -1815,8 +1911,7 @@
                         </span>
                       ))}
                     </span>
-                  : <>Active: {['claude', 'chatgpt', 'gemini']
-                      .filter(m => enabled[m] && keys[m]?.trim())
+                  : <>Active: {activeModels
                       .map(m => ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m]))
                       .join(', ') || 'None'}
                     </>
