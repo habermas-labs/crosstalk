@@ -1652,11 +1652,14 @@
       };
 
       // Keyboard handler
+      // Send is armed if mode explicitly selected OR if Exclude is active (persistent intent)
+      const sendArmed = modeArmed || excludeModel !== 'none';
+
       const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           if (directTo !== 'all') sendDirect(directTo);
-          else if (modeArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none')) {
+          else if (sendArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none')) {
             if (sendMode === 'conductor') sendConductor();
             else sendParallel();
           }
@@ -2013,33 +2016,33 @@
                     onChange={e => { if (e.target.value) { setSendMode(e.target.value); setModeArmed(true); } }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 10px',
-                      background: modeArmed ? 'var(--bg-card)' : turnHistory.length > 0 ? 'var(--bg-input)' : 'transparent',
-                      border: `1px solid ${modeArmed ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                      background: sendArmed ? 'var(--bg-card)' : turnHistory.length > 0 ? 'var(--bg-input)' : 'transparent',
+                      border: `1px solid ${sendArmed ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
                       borderRadius: 'var(--radius)', cursor: 'pointer', outline: 'none',
-                      color: modeArmed ? 'var(--text-primary)' : turnHistory.length > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
+                      color: sendArmed ? 'var(--text-primary)' : turnHistory.length > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
                     }}
                   >
-                    {!modeArmed && turnHistory.length === 0 && <option value="">Mode:</option>}
+                    {!sendArmed && turnHistory.length === 0 && <option value="">Mode:</option>}
                     <option value="parallel">Parallel</option>
                     <option value="conductor">Conductor</option>
                   </select>
                   <button
-                    disabled={!modeArmed || (!prompt.trim() && includeResponse === 'none') || conductorActive}
+                    disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none') || conductorActive}
                     onClick={() => sendMode === 'parallel' ? sendParallel() : sendConductor()}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
-                      background: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                      background: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
                         ? 'var(--bg-card)' : 'transparent',
-                      border: `1px solid ${modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                      border: `1px solid ${sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
                         ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
                       borderRadius: 'var(--radius)',
-                      cursor: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                      cursor: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
                         ? 'pointer' : 'default',
-                      color: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
+                      color: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
                         ? 'var(--text-primary)'
                         : turnHistory.length > 0 ? 'var(--text-muted)' : 'var(--text-muted)',
                       fontWeight: 600,
-                      opacity: modeArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive ? 1 : 0.4,
+                      opacity: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive ? 1 : 0.4,
                     }}
                   >Send ↵</button>
                 </>
