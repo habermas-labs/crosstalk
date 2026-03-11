@@ -1652,8 +1652,8 @@
       };
 
       // Keyboard handler
-      // Send is armed if mode explicitly selected OR if Exclude is active (persistent intent)
-      const sendArmed = modeArmed || excludeModel !== 'none';
+      // Send is armed if mode explicitly selected OR Exclude active OR session already underway
+      const sendArmed = modeArmed || excludeModel !== 'none' || turnHistory.length > 0;
 
       const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
