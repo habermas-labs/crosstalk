@@ -50,14 +50,28 @@
     ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
     @keyframes carouselFade {
-      0%   { opacity: 0; transform: translateY(4px); }
-      12%  { opacity: 1; transform: translateY(0); }
-      80%  { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-4px); }
+      0%   { opacity: 0; }
+      12%  { opacity: 1; }
+      78%  { opacity: 1; }
+      92%  { opacity: 0; }
+      100% { opacity: 0; }
+    }
+    @keyframes carouselFadeLast {
+      0%   { opacity: 0; }
+      15%  { opacity: 1; }
+      100% { opacity: 1; }
     }
     .carousel-word {
-      display: inline-block;
-      animation: carouselFade 3.8s ease-in-out forwards;
+      display: inline;
+      animation: carouselFade 3.6s ease-in-out forwards;
+    }
+    .carousel-word-last {
+      display: inline;
+      animation: carouselFadeLast 3.6s ease-in-out forwards;
+    }
+    @keyframes taglineFade {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
     }
   </style>
 </head>
@@ -1136,7 +1150,11 @@
       };
       const handleSetExcludeModel = (val) => {
         setExcludeModel(val);
-        if (val !== 'none') setDirectTo('all');
+        if (val !== 'none') {
+          setDirectTo('all');
+          setSendMode('parallel');
+          setModeArmed(true);
+        }
       };
       const textareaRef = useRef(null);
       const exportMenuRef = useRef(null);
@@ -1147,26 +1165,30 @@
       // Carousel
       const CAROUSEL_WORDS = [
         'Triangulation', 'Reciprocity', 'the Agora', 'Discourse',
-        'Porosity', 'Calibration', 'the In-Between', 'RIP'
+        'Porosity', 'Calibration', 'the In-Between', 'RIP', 'your Crosstalk Lab'
       ];
-      const CAROUSEL_TOTAL = CAROUSEL_WORDS.length * 2; // two full passes
       const [carouselIndex, setCarouselIndex] = useState(0);
-      const [carouselKey, setCarouselKey] = useState(0);
-      const [carouselDone, setCarouselDone] = useState(false);
+      const [carouselKey, setCarouselKey] = useState(1);
+      const [carouselRunKey, setCarouselRunKey] = useState(0);
+      const [taglineVisible, setTaglineVisible] = useState(false);
       const carouselTickRef = useRef(0);
       useEffect(() => {
+        carouselTickRef.current = 0;
+        setCarouselIndex(0);
+        setCarouselKey(k => k + 1);
+        setTaglineVisible(false);
         const timer = setInterval(() => {
           carouselTickRef.current += 1;
-          if (carouselTickRef.current >= CAROUSEL_TOTAL) {
+          if (carouselTickRef.current >= CAROUSEL_WORDS.length) {
             clearInterval(timer);
-            setCarouselDone(true);
+            setTimeout(() => setTaglineVisible(true), 2000);
             return;
           }
-          setCarouselIndex(carouselTickRef.current % CAROUSEL_WORDS.length);
+          setCarouselIndex(carouselTickRef.current);
           setCarouselKey(k => k + 1);
         }, 3800);
         return () => clearInterval(timer);
-      }, []);
+      }, [carouselRunKey]);
 
       // Auto-resize textarea
       useEffect(() => {
@@ -1227,11 +1249,12 @@
           : prev
         );
 
-        setResponses({ claude: null, chatgpt: null, gemini: null });
-        setErrors({ claude: null, chatgpt: null, gemini: null });
-
+        const resetResponses = {};
+        const resetErrors = {};
         const loadingState = { claude: false, chatgpt: false, gemini: false };
-        models.forEach(m => loadingState[m] = true);
+        models.forEach(m => { resetResponses[m] = null; resetErrors[m] = null; loadingState[m] = true; });
+        setResponses(prev => ({ ...prev, ...resetResponses }));
+        setErrors(prev => ({ ...prev, ...resetErrors }));
         setLoading(loadingState);
 
         const newHistories = { ...conversationHistory };
@@ -1657,9 +1680,34 @@
                 <span style={{ color: 'var(--gemini-accent)' }}>△</span>
                 {' '}Crosstalk Lab
               </h1>
-              <p style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Multi-model dialogue interface
-              </p>
+              <div style={{ marginTop: '6px', fontFamily: 'JetBrains Mono', fontSize: '12px' }}>
+                {taglineVisible ? (
+                  <span
+                    onClick={() => {
+                      setTaglineVisible(false);
+                      setCarouselRunKey(k => k + 1);
+                    }}
+                    style={{
+                      color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none',
+                      animation: 'taglineFade 1.2s ease-out forwards',
+                      display: 'inline-block',
+                    }}
+                  >
+                    Three models. One conductor. Richer thinking.
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Welcome to{' '}
+                    <span
+                      key={carouselKey}
+                      className={carouselIndex === CAROUSEL_WORDS.length - 1 ? 'carousel-word-last' : 'carousel-word'}
+                      style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}
+                    >
+                      {CAROUSEL_WORDS[carouselIndex]}
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={clearConversation} style={{
@@ -1806,22 +1854,6 @@
               border: '1px solid var(--border-subtle)', marginBottom: '24px',
               display: 'flex', flexDirection: 'column', alignItems: 'center'
             }}>
-              <p style={{ fontSize: '16px', marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '0.35em', width: '100%', textAlign: 'left' }}>
-                <span style={{ whiteSpace: 'nowrap' }}>Welcome to</span>
-                {carouselDone ? (
-                  <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}>
-                    your Crosstalk Lab
-                  </span>
-                ) : (
-                  <span
-                    key={carouselKey}
-                    className="carousel-word"
-                    style={{ color: 'var(--text-secondary)', fontStyle: 'italic', whiteSpace: 'nowrap' }}
-                  >
-                    {CAROUSEL_WORDS[carouselIndex]}
-                  </span>
-                )}
-              </p>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
                 Add your API keys in Settings to start querying models.
               </p>
