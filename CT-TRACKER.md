@@ -84,6 +84,25 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 ---
 
+## Proposed Writings
+
+ZK notes and whitepaper sections proposed but not yet drafted. Status legend specific to this section:
+- `pending-archaeology` — cannot draft responsibly until source sessions are recovered
+- `stub-ready` — enough developed here to write a minimal stub; full development pending archaeology
+- `ready` — sufficient material in this project to draft now
+
+| # | Type | Title | Filename | Dependencies | Status | Proposed |
+|---|------|-------|----------|-------------|--------|---------|
+| W001 | ZK term node | Grice — Cooperative Principle | `grice-cooperative-principle.md` | Grice thread from early Claude sessions; backlinks: participation-gigo-matrices.md, ethics-of-ai-engagement-practice.md | `pending-archaeology` | 2026-03-11 |
+| W002 | ZK term node | Workload Outsourcing | `workload-outsourcing.md` | Sufficient material in this session | `stub-ready` | 2026-03-11 |
+| W003 | ZK permanent | CT Authorship and Epistemic Labor | `ct-authorship-epistemic-labor.md` | Grice thread (W001); Chowdhury; heteroglossia framing; RIP/RIFF labor-vs-judgment distinction | `pending-archaeology` | 2026-03-11 |
+| W004 | ZK permanent | Grice, Sycophancy, and the Participation Axis | `grice-sycophancy-participation.md` | Grice thread from early Claude sessions; intellectual path from maxim violation → human axis as failure mode locus | `pending-archaeology` | 2026-03-11 |
+| W005 | Existing note update | Participation-GIGO Matrices — add Gricean genealogy | `participation-gigo-matrices.md` | W001, W004 | `pending-archaeology` | 2026-03-11 |
+| W006 | Existing note update | Ethics of Becoming — add founding role gap | `ethics-of-becoming.md` | This session discussion; no external archaeology needed | `stub-ready` | 2026-03-11 |
+| W007 | Whitepaper section | Workload Outsourcing vs. Cognitive Offloading | ct-wp-authorship-methodology.md | W002, W003; Clark & Chalmers; Chowdhury | `stub-ready` | 2026-03-11 |
+
+---
+
 ## Pending Test
 
 *Entries implemented in code but not yet verified in a live browser session. Moves to Implemented after testing confirms correct behavior. When all entries are cleared, leave the placeholder row so this section survives.*
@@ -207,6 +226,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Forward dropdown design decision (B019): Forward shows all models with responses as available sources, regardless of current routing state (Exclude, Direct to, or Parallel). The only filter is the source model itself — there is no utility in forwarding a response back to its own author. This was clarified through live session testing and multi-model deliberation in ct-session-20260311-56e54a; all three models converged on this logic independently. Routing state does not and should not determine Forward options.
 - Mobile baseline (2026-03-11): current desktop layout renders functionally on mobile without dedicated mobile work; collapsible chips (035/036 adjacency) is the primary blocker for comfortable thumb navigation; a small number of additional layout modifications identified but not yet enumerated — to be captured when mobile work is scoped.
 - Session transcripts archived in `docs/sessions/`; fifth session added: `ct-session-20260311-56e54a.md` (Exclude routing live test and Forward design deliberation).
-
+- Proposed Writings section added 2026-03-11: holds ZK notes and whitepaper sections that are proposed but not yet draftable; pending-archaeology status signals dependency on session recovery from other projects (early Claude project, Chat archive, Gemini manual triangulation sessions). Archaeology threads to run sequentially — Gemini first (has the founding manual triangulation turns), Chat second (EoB theoretical imports).
+- Workload outsourcing (W002) coined this session as the precise alternative to "cognitive offloading" — the labor moves, the judgment stays; structurally parallel to Chowdhury's moral outsourcing where the contrast is inverted (moral outsourcing is dangerous because judgment transfers). Clark and Chalmers Extended Mind is the misappropriated source underlying the cognitive offloading critique.
 ---
 *Last updated: 2026-03-11*
