@@ -1214,8 +1214,9 @@
           setModeArmed(true);
         }
       };
-      // Session vault (CT-083 / CT-019)
+      // Session vault (CT-083 / CT-019 / CT-084)
       const [sessionVault, setSessionVault] = useState([]);
+      const [vaultForward, setVaultForward] = useState(null); // null | vault entry id (number)
       const vaultInputRef = useRef(null);
 
       // Load vault from IndexedDB on mount
@@ -1253,6 +1254,7 @@
         try {
           await vaultDB.remove(id);
           setSessionVault(prev => prev.filter(f => f.id !== id));
+          if (vaultForward === id) setVaultForward(null);
         } catch (err) {
           console.error('Vault remove failed:', err);
         }
@@ -1315,17 +1317,27 @@
 
       const hasAnyKey = Object.values(keys).some(k => k.trim());
 
-      // Build the full prompt content, optionally prepending an included model's response
-      const buildPromptContent = (userText, includeModel) => {
-        if (!includeModel || includeModel === 'none' || !responses[includeModel]) return userText;
+      // Build the full prompt content, optionally appending vault file and/or included model response
+      const buildPromptContent = (userText, includeModel, vaultFile) => {
+        let base = userText;
+
+        // Append vault file first if present — it is reference material, not dialogue
+        if (vaultFile) {
+          const fileBlock = `\n\n---\nAttached file: ${vaultFile.filename}\n\n${vaultFile.content}\n---`;
+          base = base ? base + fileBlock : fileBlock.trimStart();
+        }
+
+        // No model response to include — return base (prompt + optional file)
+        if (!includeModel || includeModel === 'none' || !responses[includeModel]) return base || userText;
+
         const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
         const included = responses[includeModel];
-        if (!userText.trim()) {
+        if (!base.trim()) {
           // Move 2: pure response routing, no new user text
           return `Here is ${modelLabels[includeModel]}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${included}\n---`;
         }
-        // Move 3: combined — user prompt + included response
-        return `${userText}\n\n---\nFor context, here is ${modelLabels[includeModel]}'s response to our previous discussion:\n\n${included}\n---`;
+        // Move 3: combined — user prompt (+ optional file) + included response
+        return `${base}\n\n---\nFor context, here is ${modelLabels[includeModel]}'s response to our previous discussion:\n\n${included}\n---`;
       };
 
       // Send to all enabled models in parallel
@@ -1336,11 +1348,13 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const content = buildPromptContent(userText, included);
+        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
+        const content = buildPromptContent(userText, included, vaultFile);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setVaultForward(null);
         setModeArmed(false);
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
@@ -1398,7 +1412,7 @@
           sessionModality: 'visual',
           roles: {},
         }]);
-      }, [prompt, excludeModel, includeResponse, enabled, keys, systemPrompts, conversationHistory, responses]);
+      }, [prompt, excludeModel, includeResponse, vaultForward, sessionVault, enabled, keys, systemPrompts, conversationHistory, responses]);
 
       // Opening cycle — sequential, each model sees prior responses
       const sendConductor = useCallback(async () => {
@@ -1408,11 +1422,13 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const baseContent = buildPromptContent(userText, included);
+        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
+        const baseContent = buildPromptContent(userText, included, vaultFile);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setVaultForward(null);
         setModeArmed(false);
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
@@ -1481,7 +1497,7 @@
           sessionModality: 'visual',
           roles: {},
         }]);
-      }, [prompt, includeResponse, enabled, keys, systemPrompts, conversationHistory, conductorOrder, responses]);
+      }, [prompt, includeResponse, vaultForward, sessionVault, enabled, keys, systemPrompts, conversationHistory, conductorOrder, responses]);
 
       // Send to a single model — directed prompt (Move 1) or combined (Move 3)
       const sendDirect = useCallback(async (targetModel) => {
@@ -1495,11 +1511,13 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const content = buildPromptContent(userText, included);
+        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
+        const content = buildPromptContent(userText, included, vaultFile);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setVaultForward(null);
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -1552,7 +1570,7 @@
         } finally {
           setLoading(prev => ({ ...prev, [targetModel]: false }));
         }
-      }, [prompt, includeResponse, keys, systemPrompts, conversationHistory, responses]);
+      }, [prompt, includeResponse, vaultForward, sessionVault, keys, systemPrompts, conversationHistory, responses]);
 
       // Moderated dialogue — send one model's response to another
 
@@ -2091,19 +2109,29 @@
                 </div>
               )}
 
-              {/* Forward dropdown — only shown when at least one model has a response */}
-              {['claude','chatgpt','gemini'].some(m => responses[m]) && (
+              {/* Forward dropdown — shown when a model has a response or vault has files */}
+              {(['claude','chatgpt','gemini'].some(m => responses[m]) || sessionVault.length > 0) && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{
                     fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
                   }}>Forward</label>
                   <select
-                    value={includeResponse}
-                    onChange={e => setIncludeResponse(e.target.value)}
+                    value={vaultForward !== null ? `vault:${vaultForward}` : includeResponse}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val.startsWith('vault:')) {
+                        setVaultForward(Number(val.slice(6)));
+                        setIncludeResponse('none');
+                      } else {
+                        setIncludeResponse(val);
+                        setVaultForward(null);
+                      }
+                    }}
                     style={{
                       padding: '5px 8px', background: 'var(--bg-input)',
                       border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: includeResponse === 'none' ? 'var(--text-secondary)'
+                      color: vaultForward !== null ? 'var(--text-secondary)'
+                        : includeResponse === 'none' ? 'var(--text-secondary)'
                         : includeResponse === 'claude' ? 'var(--claude-accent)'
                         : includeResponse === 'chatgpt' ? 'var(--chatgpt-accent)'
                         : 'var(--gemini-accent)',
@@ -2114,6 +2142,12 @@
                     {responses['claude']  && <option value="claude">◈ Claude</option>}
                     {responses['chatgpt'] && <option value="chatgpt">◇ ChatGPT</option>}
                     {responses['gemini']  && <option value="gemini">△ Gemini</option>}
+                    {sessionVault.length > 0 && <option disabled>── vault ──</option>}
+                    {sessionVault.map(f => (
+                      <option key={f.id} value={`vault:${f.id}`}>
+                        {f.filename.endsWith('.md') ? '▪' : '◻'} {f.filename}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
