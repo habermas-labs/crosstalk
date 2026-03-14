@@ -138,6 +138,64 @@
     };
 
     // ─────────────────────────────────────────────
+    // Session Vault — IndexedDB (CT-019 / CT-083)
+    // ─────────────────────────────────────────────
+    // Schema: { id (auto), filename, content, mimeType, size, uploadedAt }
+    // Stage one: .txt and .md only. mimeType/size fields are present for stage two
+    // (binary formats, per-provider file APIs) without requiring a schema migration.
+
+    const vaultDB = (() => {
+      const DB_NAME = 'ct-vault';
+      const STORE   = 'files';
+      const VERSION = 1;
+
+      const open = () => new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE)) {
+            db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+          }
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror   = (e) => reject(e.target.error);
+      });
+
+      return {
+        async getAll() {
+          const db = await open();
+          return new Promise((resolve, reject) => {
+            const tx  = db.transaction(STORE, 'readonly');
+            const req = tx.objectStore(STORE).getAll();
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror   = (e) => reject(e.target.error);
+          });
+        },
+
+        async put(entry) {
+          // entry: { filename, content, mimeType, size, uploadedAt }
+          const db = await open();
+          return new Promise((resolve, reject) => {
+            const tx  = db.transaction(STORE, 'readwrite');
+            const req = tx.objectStore(STORE).add(entry);
+            req.onsuccess = (e) => resolve(e.target.result); // returns assigned id
+            req.onerror   = (e) => reject(e.target.error);
+          });
+        },
+
+        async remove(id) {
+          const db = await open();
+          return new Promise((resolve, reject) => {
+            const tx  = db.transaction(STORE, 'readwrite');
+            const req = tx.objectStore(STORE).delete(id);
+            req.onsuccess = () => resolve();
+            req.onerror   = (e) => reject(e.target.error);
+          });
+        },
+      };
+    })();
+
+    // ─────────────────────────────────────────────
     // API Adapters
     // ─────────────────────────────────────────────
 
@@ -1156,6 +1214,50 @@
           setModeArmed(true);
         }
       };
+      // Session vault (CT-083 / CT-019)
+      const [sessionVault, setSessionVault] = useState([]);
+      const vaultInputRef = useRef(null);
+
+      // Load vault from IndexedDB on mount
+      useEffect(() => {
+        vaultDB.getAll().then(entries => setSessionVault(entries)).catch(() => {});
+      }, []);
+
+      const handleVaultUpload = (e) => {
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        files.forEach(file => {
+          const allowed = file.name.endsWith('.txt') || file.name.endsWith('.md');
+          if (!allowed) return;
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            const entry = {
+              filename:   file.name,
+              content:    ev.target.result,
+              mimeType:   file.type || 'text/plain',
+              size:       file.size,
+              uploadedAt: new Date().toISOString(),
+            };
+            try {
+              const id = await vaultDB.put(entry);
+              setSessionVault(prev => [...prev, { ...entry, id }]);
+            } catch (err) {
+              console.error('Vault write failed:', err);
+            }
+          };
+          reader.readAsText(file);
+        });
+      };
+
+      const removeFromVault = async (id) => {
+        try {
+          await vaultDB.remove(id);
+          setSessionVault(prev => prev.filter(f => f.id !== id));
+        } catch (err) {
+          console.error('Vault remove failed:', err);
+        }
+      };
+
       const textareaRef = useRef(null);
       const exportMenuRef = useRef(null);
       const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -1873,6 +1975,47 @@
             background: 'var(--bg-secondary)', borderRadius: '12px',
             border: '1px solid var(--border-subtle)', padding: '16px', marginBottom: '24px'
           }}>
+            {/* Vault chip bar — only shown when vault has files */}
+            {sessionVault.length > 0 && (
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: '6px',
+                marginBottom: '10px', paddingBottom: '10px',
+                borderBottom: '1px solid var(--border-subtle)'
+              }}>
+                {sessionVault.map(f => (
+                  <span key={f.id} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                    padding: '3px 8px', borderRadius: '4px',
+                    background: 'var(--bg-input)', border: '1px solid var(--border-hover)',
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)',
+                    maxWidth: '200px',
+                  }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {f.filename.endsWith('.md') ? '▪ ' : '◻ '}{f.filename}
+                    </span>
+                    <button
+                      onClick={() => removeFromVault(f.id)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px',
+                        color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1, flexShrink: 0
+                      }}
+                      title={`Remove ${f.filename} from vault`}
+                    >✕</button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Hidden file input for vault uploads */}
+            <input
+              ref={vaultInputRef}
+              type="file"
+              accept=".txt,.md"
+              multiple
+              style={{ display: 'none' }}
+              onChange={handleVaultUpload}
+            />
+
             <textarea
               ref={textareaRef}
               value={prompt}
@@ -1974,6 +2117,22 @@
                   </select>
                 </div>
               )}
+
+              {/* Vault upload button */}
+              <button
+                onClick={() => vaultInputRef.current?.click()}
+                title="Upload .txt or .md files to session vault"
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 10px',
+                  background: sessionVault.length > 0 ? 'var(--bg-input)' : 'transparent',
+                  border: `1px solid ${sessionVault.length > 0 ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                  borderRadius: 'var(--radius)', cursor: 'pointer',
+                  color: sessionVault.length > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ⊕ {sessionVault.length > 0 ? `${sessionVault.length} file${sessionVault.length > 1 ? 's' : ''}` : 'Vault'}
+              </button>
 
               {/* Spacer */}
               <div style={{ flex: 1 }} />
