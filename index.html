@@ -1126,7 +1126,7 @@
                     Turn {i + 1} — {
                       turn.mode === 'parallel' ? 'Parallel' :
                       turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => ({claude:'◈',chatgpt:'◇',gemini:'△'})[m]).join('→')})` :
-                      `Directed`
+                      `Directed → ${{claude:'◈ Claude',chatgpt:'◇ ChatGPT',gemini:'△ Gemini'}[turn.target] || turn.target}`
                     }
                   </div>
                   <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
