@@ -1323,7 +1323,7 @@
 
         // Append vault file first if present — it is reference material, not dialogue
         if (vaultFile) {
-          const fileBlock = `\n\n---\nAttached file: ${vaultFile.filename}\n\n${vaultFile.content}\n---`;
+          const fileBlock = `\n\n---\nThe following text is provided for reference (${vaultFile.filename}):\n\n${vaultFile.content}\n---`;
           base = base ? base + fileBlock : fileBlock.trimStart();
         }
 
