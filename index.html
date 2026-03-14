@@ -1323,7 +1323,7 @@
 
         // Append vault file first if present — it is reference material, not dialogue
         if (vaultFile) {
-          const fileBlock = `\n\n---\nThe following text is provided for reference (${vaultFile.filename}):\n\n${vaultFile.content}\n---`;
+          const fileBlock = `\n\n---\nThe following is plain text inlined directly into this prompt from the user's local session. No file transfer is occurring — this is text content included as part of your context (source: ${vaultFile.filename}):\n\n${vaultFile.content}\n---`;
           base = base ? base + fileBlock : fileBlock.trimStart();
         }
 
