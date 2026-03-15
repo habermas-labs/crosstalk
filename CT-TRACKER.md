@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 095
+**Latest entry:** 096
 
 **Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
@@ -154,6 +154,7 @@ ZK notes and whitepaper sections proposed but not yet drafted. Status legend spe
 | 083 | `[CT]` | Session vault UI | Chip-based display in input band above textarea; each chip shows ▪/◻ icon (md vs txt), filename, ✕ to remove; chip bar hidden when vault is empty, appears with subtle divider when files present; vault upload button in controls row shows "⊕ Vault" when empty, "⊕ N files" when loaded; hidden file input accepts .txt and .md, multiple selection supported; files loaded from IndexedDB on page mount; deleting a file that is currently selected in Forward resets vaultForward to null | Session discussion | 2026-03-13 |
 | 084 | `[CT]` | Forward menu — vault integration | Vault files available as Forward sources alongside model responses; Forward dropdown now visible when vault has files even before any model has responded; vault options appear below a disabled `── vault ──` divider with ▪/◻ icon; selecting a vault file sets vaultForward and clears includeResponse; selecting a model response clears vaultForward; vault file inlined into prompt as labeled text block with explicit no-file-transfer framing to avoid ChatGPT safeguard trigger; vaultForward resets to null after each send | Session discussion | 2026-03-13 |
 | 092 | `[CT]` | History panel — directed turn target label | "Directed" turn label in history panel now includes target model name and icon, e.g. "Directed → ◇ ChatGPT"; turn.target was already in schema — pure display change in HistoryPanel render | Session discussion | 2026-03-13 |
+| 096 | [CT] | Transcript export metadata block — Pandoc/PDF compatibility fix | Replace headerless two-column markdown table in exportTranscript with bold key-value pairs (trailing hard line breaks). Headerless tables trigger No counter 'none' defined in xelatex via Pandoc, breaking PDF export from Zettlr and similar tools. No visible change in standard markdown viewers. | Neph beta test | 2026-03-15 |
 
 ---
 
