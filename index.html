@@ -1620,17 +1620,18 @@
         // Modes used across turns
         const modesUsed = [...new Set(turnHistory.map(t => t.mode))].join(', ');
 
-        let md = \# Crosstalk Lab — Session Transcript\n\n`; 
-        md += `Session ID: \`${sessionMeta.sessionId}\`  \n`; 
-        md += `Started: ${new Date(sessionMeta.startedAt).toLocaleDateString('en-CA')} at ${new Date(sessionMeta.startedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}  \n`; 
-        md += `Exported: ${dateStr} at ${timeStr}  \n`; 
-        md += `Duration: ${durationStr}  \n`; 
-        md += `Models: ${activeModelsStr}  \n`; 
-        md += `Turns: ${turnHistory.length}  \n`; 
-        md += `Modes used: ${modesUsed}  \n`; if (sessionMeta.verbosity)        md += `Verbosity: ${sessionMeta.verbosity}  \n`; 
-        if (sessionMeta.readabilityTarget) md += `Readability target: ${sessionMeta.readabilityTarget}  \n`; 
-        md += `\n---\n\n`;`
-
+        let md = `# Crosstalk Lab — Session Transcript\n\n`;
+        md += `**Session ID:** \`${sessionMeta.sessionId}\`  \n`;
+        md += `**Started:** ${new Date(sessionMeta.startedAt).toLocaleDateString('en-CA')} at ${new Date(sessionMeta.startedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}  \n`;
+        md += `**Exported:** ${dateStr} at ${timeStr}  \n`;
+        md += `**Duration:** ${durationStr}  \n`;
+        md += `**Models:** ${activeModelsStr}  \n`;
+        md += `**Turns:** ${turnHistory.length}  \n`;
+        md += `**Modes used:** ${modesUsed}  \n`;
+        if (sessionMeta.verbosity)        md += `**Verbosity:** ${sessionMeta.verbosity}  \n`;
+        if (sessionMeta.readabilityTarget) md += `**Readability target:** ${sessionMeta.readabilityTarget}  \n`;
+        md += `\n---\n\n`;
+        
         turnHistory.forEach((turn, i) => {
           // Turn header
           let turnLabel = '';
