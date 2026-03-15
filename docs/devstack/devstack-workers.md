@@ -34,18 +34,30 @@ The runtime environment is intentionally constrained. Workers don't have access 
 
 ## The Crosstalk Worker
 
-The Worker you built serves one function: retrieve the encrypted `.ctk` file from R2 and return it to the browser.
+The Worker serves one function: retrieve the encrypted `.ctk` file from R2 and return it to the browser. It handles both the preflight OPTIONS request (required because CT fetches with `credentials: 'include'`) and the actual GET request.
 
 ```javascript
 export default {
   async fetch(request, env) {
+    // Handle CORS preflight — required because CT fetches with credentials: 'include'
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': 'https://yourcrosstalklab.com',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Allow-Credentials': 'true',
+        }
+      });
+    }
+
     // Only allow GET
     if (request.method !== 'GET') {
       return new Response('Method not allowed', { status: 405 });
     }
 
     // Retrieve the file from R2
-    const object = await env.BUCKET.get('crosstalk-keys.ctk');
+    const object = await env.KEYS_BUCKET.get('crosstalk-keys.ctk');
     if (!object) {
       return new Response('Not found', { status: 404 });
     }
@@ -62,7 +74,11 @@ export default {
 };
 ```
 
-`env.BUCKET` is not a variable you define — it's a *binding*, a named connection between your Worker code and an R2 bucket that you configure in the Cloudflare dashboard. The Worker never knows the bucket's internal credentials; Cloudflare handles the connection.
+`env.KEYS_BUCKET` is not a variable you define — it's a *binding*, a named connection between your Worker code and an R2 bucket that you configure in the Cloudflare dashboard. The Worker never knows the bucket's internal credentials; Cloudflare handles the connection.
+
+**Binding configuration:** In the Worker's Settings → Bindings, add an R2 bucket binding with variable name `KEYS_BUCKET` pointing at the `crosstalk-keys` bucket. The variable name must match exactly — a hyphen instead of an underscore will cause a runtime exception (Error 1101).
+
+**Deployed Worker:** `keys-crosstalk.skooterca.workers.dev`
 
 ---
 
@@ -83,6 +99,8 @@ Browser request
 
 None of these layers knows everything. Access doesn't know what's in R2. The Worker doesn't know your passphrase. R2 doesn't know who's asking. The system is secure because each layer only handles what it needs to.
 
+For demo use (sharing a URL + passphrase with a remote user), Cloudflare Access can be omitted — the `.ctk` encryption is doing the real security work. The CORS origin restriction ensures only requests from `yourcrosstalklab.com` can receive the file.
+
 ---
 
 ## The `wrangler` CLI
@@ -101,9 +119,11 @@ For Crosstalk, you've been deploying through the Cloudflare dashboard rather tha
 
 ## CORS and Workers
 
-When a browser fetches a resource from a different domain, it sends a preflight OPTIONS request first, asking "is this allowed?" Your Worker has to respond correctly to both the preflight and the actual request.
+When a browser fetches a resource from a different domain, it sends a preflight OPTIONS request first, asking "is this allowed?" Your Worker must respond correctly to both the preflight and the actual request.
 
-The `Access-Control-Allow-Origin` header in the Worker response tells the browser which origin is permitted to read the response. Setting it to your exact domain rather than `*` (wildcard) is a deliberate security choice — only requests from your Crosstalk deployment can receive the file.
+CT's fetch uses `credentials: 'include'`, which triggers a preflight on every cross-origin request. The OPTIONS handler must return `Access-Control-Allow-Credentials: 'true'` or the browser will block the response even if the GET succeeds.
+
+The `Access-Control-Allow-Origin` header tells the browser which origin is permitted to read the response. Setting it to your exact domain rather than `*` (wildcard) is a deliberate security choice — only requests from your Crosstalk deployment can receive the file. Note that `*` and `credentials: 'include'` are mutually exclusive — the browser rejects wildcard origins on credentialed requests.
 
 This CORS interaction is covered in detail in the API / CORS layer.
 
@@ -128,6 +148,7 @@ Neither is in use for Crosstalk currently. If the project ever adds a server-sid
 | Worker | A JS function deployed to Cloudflare's edge |
 | `fetch` handler | The entry point — receives request, returns response |
 | Binding | A named connection to a resource (R2, KV, etc.) — configured in dashboard, accessed via `env` |
+| `KEYS_BUCKET` | The R2 binding name for the `crosstalk-keys` bucket |
 | `wrangler` | CLI tool for deploying and testing Workers |
 | Edge execution | Code runs geographically close to the user, not in a central server |
-| CORS headers | Required on responses to cross-origin requests |
+| CORS headers | Required on responses to cross-origin requests; preflight OPTIONS handler required when fetch uses `credentials: 'include'` |
