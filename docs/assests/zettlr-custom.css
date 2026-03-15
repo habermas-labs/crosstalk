@@ -1,0 +1,231 @@
+/* ============================================================
+   Zettlr Custom CSS — Skooter / Crosstalk Project
+   Targets: Editor preview & Sneak Peek pane
+   Formatting baseline: Calibri 11pt feel, 1.15 leading,
+   Letter page, generous margins
+   ============================================================ */
+
+/* --- Google Fonts import (Carlito ≈ Calibri metric clone) --- */
+@import url('https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* ============================================================
+   BASE BODY / PROSE
+   ============================================================ */
+
+.cm-scroller,
+#editor .CodeMirror,
+.CodeMirror-scroll,
+body {
+  font-family: 'Carlito', 'Calibri', 'Trebuchet MS', sans-serif;
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #1a1a1a;
+}
+
+/* Preview / Sneak Peek rendered output */
+.preview,
+.editor .preview-container,
+.sneak-peek,
+#editor-content,
+.markdown-body {
+  font-family: 'Carlito', 'Calibri', 'Trebuchet MS', sans-serif;
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #1a1a1a;
+  max-width: 6.5in;       /* Letter minus 1in margins each side */
+  margin: 0 auto;
+  padding: 0.75in 0;
+}
+
+/* ============================================================
+   PARAGRAPHS
+   ============================================================ */
+
+.markdown-body p,
+.preview p {
+  margin-top: 0;
+  margin-bottom: 0.3em;    /* +0.3in paragraph spacing approximation */
+  text-indent: 0.3in;
+}
+
+/* Remove indent from first paragraph after a heading */
+.markdown-body h1 + p,
+.markdown-body h2 + p,
+.markdown-body h3 + p,
+.markdown-body h4 + p,
+.preview h1 + p,
+.preview h2 + p,
+.preview h3 + p,
+.preview h4 + p {
+  text-indent: 0;
+}
+
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6,
+.preview h1,
+.preview h2,
+.preview h3,
+.preview h4,
+.preview h5,
+.preview h6 {
+  font-family: 'Carlito', 'Calibri', 'Trebuchet MS', sans-serif;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-top: 1.1em;
+  margin-bottom: 0.25em;
+  line-height: 1.2;
+  text-indent: 0;
+}
+
+.markdown-body h1, .preview h1 { font-size: 1.6em; border-bottom: 2px solid #cccccc; padding-bottom: 0.15em; }
+.markdown-body h2, .preview h2 { font-size: 1.3em; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.1em; }
+.markdown-body h3, .preview h3 { font-size: 1.1em; }
+.markdown-body h4, .preview h4 { font-size: 1em; font-style: italic; }
+
+/* ============================================================
+   LISTS
+   ============================================================ */
+
+.markdown-body ul,
+.markdown-body ol,
+.preview ul,
+.preview ol {
+  padding-left: 1.4em;
+  margin: 0.3em 0 0.5em;
+}
+
+.markdown-body li,
+.preview li {
+  margin-bottom: 0.15em;
+  text-indent: 0;
+  line-height: 1.25;
+}
+
+/* ============================================================
+   BLOCKQUOTES
+   ============================================================ */
+
+.markdown-body blockquote,
+.preview blockquote {
+  border-left: 3px solid #aaaaaa;
+  margin: 0.75em 0 0.75em 0.3in;
+  padding: 0.2em 0.75em;
+  color: #444444;
+  font-style: italic;
+}
+
+/* ============================================================
+   CODE
+   ============================================================ */
+
+.markdown-body code,
+.preview code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.88em;
+  background: #f4f4f4;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  color: #333;
+}
+
+.markdown-body pre,
+.preview pre {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.markdown-body pre code,
+.preview pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.87em;
+}
+
+/* ============================================================
+   HORIZONTAL RULES
+   ============================================================ */
+
+.markdown-body hr,
+.preview hr {
+  border: none;
+  border-top: 1px solid #cccccc;
+  margin: 1.25em 0;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+
+.markdown-body table,
+.preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75em 0;
+  font-size: 0.95em;
+}
+
+.markdown-body th,
+.markdown-body td,
+.preview th,
+.preview td {
+  border: 1px solid #cccccc;
+  padding: 0.3em 0.6em;
+  text-align: left;
+}
+
+.markdown-body th,
+.preview th {
+  background-color: #eeeeee;
+  font-weight: 700;
+}
+
+.markdown-body tr:nth-child(even),
+.preview tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* ============================================================
+   LINKS
+   ============================================================ */
+
+.markdown-body a,
+.preview a {
+  color: #2255aa;
+  text-decoration: none;
+}
+
+.markdown-body a:hover,
+.preview a:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   STRONG / EM
+   ============================================================ */
+
+.markdown-body strong, .preview strong { font-weight: 700; }
+.markdown-body em, .preview em { font-style: italic; }
+
+/* ============================================================
+   CALLOUT / NOTE BLOCKS (custom class support)
+   Use in markdown as: > **Note:** text
+   ============================================================ */
+
+.markdown-body blockquote p strong:first-child,
+.preview blockquote p strong:first-child {
+  color: #334;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+}

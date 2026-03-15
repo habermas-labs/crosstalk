@@ -1,0 +1,252 @@
+% ============================================================
+% Pandoc / XeLaTeX Template — Skooter / Crosstalk Project
+% Engine: XeLaTeX (Zettlr → XeLaTeX PDF)
+% Formatting baseline:
+%   Letter paper, 1.25in margins
+%   Carlito 11pt (metric-compatible Calibri clone)
+%   1.15 line spacing, +0.3in first-line paragraph indent
+% ============================================================
+
+\documentclass[11pt, letterpaper]{article}
+
+% ============================================================
+% FONTS — XeLaTeX / fontspec
+% Carlito must be installed as a system font.
+% Download free: fonts.google.com/specimen/Carlito
+% ============================================================
+\usepackage{fontspec}
+
+\setmainfont{Carlito}[
+  BoldFont       = {Carlito Bold},
+  ItalicFont     = {Carlito Italic},
+  BoldItalicFont = {Carlito Bold Italic},
+  Ligatures      = TeX
+]
+
+\setmonofont{Consolas}[
+  Scale = 0.88
+]
+
+\usepackage{polyglossia}
+\setdefaultlanguage[variant=american]{english}
+
+% ============================================================
+% GEOMETRY — Letter, 1.25in margins all sides
+% ============================================================
+\usepackage[
+  letterpaper,
+  top    = 1.25in,
+  bottom = 1.25in,
+  left   = 1.25in,
+  right  = 1.25in
+]{geometry}
+
+% ============================================================
+% LINE SPACING & PARAGRAPH FORMATTING
+% ============================================================
+\usepackage{setspace}
+\setstretch{1.15}
+
+\setlength{\parindent}{0.3in}
+\setlength{\parskip}{0.3\baselineskip}
+
+% ============================================================
+% MICROTYPE
+% ============================================================
+\usepackage[final, tracking=true]{microtype}
+
+% ============================================================
+% COLORS
+% ============================================================
+\usepackage[dvipsnames, svgnames]{xcolor}
+
+\definecolor{linkblue}{HTML}{2255AA}
+\definecolor{rulecolor}{HTML}{CCCCCC}
+\definecolor{quotecolor}{HTML}{666666}
+\definecolor{codebg}{HTML}{F4F4F4}
+\definecolor{headingcolor}{HTML}{1A1A1A}
+
+% ============================================================
+% HEADINGS — titlesec
+% ============================================================
+\usepackage{titlesec}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries\color{headingcolor}}
+  {\thesection}{1em}{}
+  [\vspace{0.1em}\textcolor{rulecolor}{\rule{\linewidth}{0.6pt}}]
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\color{headingcolor}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\itshape\color{headingcolor}}
+  {\thesubsubsection}{1em}{}
+
+\titleformat{\paragraph}[runin]
+  {\normalfont\normalsize\bfseries}
+  {\theparagraph}{1em}{}[.\enspace]
+
+\titlespacing*{\section}      {0pt}{1.1em}{0.4em}
+\titlespacing*{\subsection}   {0pt}{0.9em}{0.3em}
+\titlespacing*{\subsubsection}{0pt}{0.75em}{0.25em}
+
+% ============================================================
+% HYPERLINKS
+% ============================================================
+\usepackage[
+  colorlinks = true,
+  linkcolor  = linkblue,
+  urlcolor   = linkblue,
+  citecolor  = linkblue,
+  pdfborder  = {0 0 0}
+]{hyperref}
+
+% ============================================================
+% LISTS
+% ============================================================
+\usepackage{enumitem}
+\setlist[itemize]  {itemsep=0.15em, topsep=0.3em, parsep=0pt, leftmargin=1.4em}
+\setlist[enumerate]{itemsep=0.15em, topsep=0.3em, parsep=0pt, leftmargin=1.4em}
+\setlist{before=\setlength{\parindent}{0pt}}
+
+% ============================================================
+% TABLES
+% ============================================================
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+\setlength{\LTpre}{0.5em}
+\setlength{\LTpost}{0.5em}
+\setlength{\tabcolsep}{6pt}
+
+% ============================================================
+% CODE BLOCKS
+% ============================================================
+\usepackage{fancyvrb}
+\usepackage{fvextra}
+\usepackage{framed}
+
+\newenvironment{Shaded}{%
+  \setlength{\fboxsep}{0.5em}%
+  \colorbox{codebg}\bgroup\minipage{\linewidth}%
+  \vspace{0.3em}%
+}{%
+  \vspace{0.3em}\endminipage\egroup%
+}
+
+\fvset{
+  fontsize     = \small,
+  breaklines   = true,
+  breakanywhere = true
+}
+
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
+
+% ============================================================
+% BLOCKQUOTES
+% ============================================================
+\usepackage{mdframed}
+
+\renewenvironment{quote}{%
+  \begin{mdframed}[
+    leftline          = true,
+    rightline         = false,
+    topline           = false,
+    bottomline        = false,
+    linewidth         = 2.5pt,
+    linecolor         = rulecolor,
+    innerleftmargin   = 0.6em,
+    innerrightmargin  = 0em,
+    innertopmargin    = 0.25em,
+    innerbottommargin = 0.25em,
+    backgroundcolor   = white,
+    skipabove         = 0.5em,
+    skipbelow         = 0.5em
+  ]
+  \itshape\color{quotecolor}
+}{%
+  \end{mdframed}
+}
+
+% ============================================================
+% IMAGES
+% ============================================================
+\usepackage{graphicx}
+\usepackage{float}
+
+\makeatletter
+\def\maxwidth {\ifdim\Gin@nat@width >\linewidth\linewidth\else\Gin@nat@width \fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+
+\setkeys{Gin}{width=\maxwidth, height=\maxheight, keepaspectratio}
+
+% ============================================================
+% TITLE BLOCK
+% ============================================================
+\usepackage{titling}
+
+\pretitle {\begin{center}\LARGE\bfseries}
+\posttitle{\end{center}\vspace{0.2em}}
+\preauthor {\begin{center}\normalsize}
+\postauthor{\end{center}}
+\predate  {\begin{center}\normalsize\itshape}
+\postdate {\end{center}\vspace{1.5em}}
+
+% ============================================================
+% HEADER & FOOTER
+% ============================================================
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+
+$if(title)$
+\fancyhead[L]{\small\itshape $title$}
+$endif$
+
+\fancyfoot[R]{\small\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[R]{\small\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+
+\begin{document}
+
+$if(title)$
+\maketitle
+\thispagestyle{plain}
+$if(abstract)$
+\begin{quote}
+\noindent\textbf{Abstract.}\enspace $abstract$
+\end{quote}
+$endif$
+$endif$
+
+$if(toc)$
+\tableofcontents
+\newpage
+$endif$
+
+$body$
+
+$if(bibliography)$
+\newpage
+\bibliography{$bibliography$}
+$endif$
+
+\end{document}
