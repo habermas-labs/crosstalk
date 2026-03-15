@@ -292,7 +292,7 @@
     function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, conductorOrder, setConductorOrder, onClose }) {
       const [exportPassphrase, setExportPassphrase] = useState('');
       const [importPassphrase, setImportPassphrase] = useState('');
-      const [urlKeySource, setUrlKeySource] = useState('https://keys.yourcrosstalklab.com');
+      const [urlKeySource, setUrlKeySource] = useState('');
       const [urlPassphrase, setUrlPassphrase] = useState('');
       const [cryptoStatus, setCryptoStatus] = useState(null);
       const [exportConfirm, setExportConfirm] = useState(null); // { failedLabels, exportKeys }
