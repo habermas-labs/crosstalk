@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 096
+**Latest entry:** 097
 
 **Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
@@ -27,7 +27,6 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 014 | `[CT]` | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
 | 015 | `[CT]` | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
 | 017 | `[CT]` | Cost tracking | Estimate token usage and API cost per turn | `idea` | Claude suggestion | 2026-03 |
-| 018 | `[CT]` | Model version selection | Choose specific model versions per provider in Settings | `idea` | Claude suggestion | 2026-03 |
 | 020 | `[INFRA]` | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 023 | `[CT]` | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
 | 024 | `[CT]` | Ko-fi funding integration | Crowdfunding support for ongoing development | `idea` | User insight | 2026-03 |
@@ -84,6 +83,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 093 | `[CT]` | Per-model response history | Ability to view prior responses from a given model within the current session, not just the most recent card state. Arose from a live session where a directed multi-turn conversation with ChatGPT made a prior response inaccessible once the next turn fired. Transcript export recovers the content but the gap is in-session convenience. Interface approach TBD — candidates: collapsible prior-response section at bottom of each card; per-model history drawer behind a card header button; full replay (CT-039) as the complete solution. Cards can get long so any inline approach needs careful treatment. | `idea` | Session discussion | 2026-03-13 |
 CT-094 | [CT] | In-app clipboard | Temporary single-entry store for clipping a model response for cross-model routing without losing the source card state — the workflow problem it solves: directing Model A's response to Model B wipes Model A's card, making it unavailable for further use. Distinct from vault (persistent, file-based) and OS clipboard (exits CT). Interface: standalone panel in right-side dead zone (see CT-095); contains clip state button, model dropdown, and clipped text preview. Interaction flow: default state idle — "clipped" button inactive, dropdown shows None, preview blank; user selects model from dropdown — button activates and reads "clip", dropdown activates; user confirms — text populates preview, button returns to inactive "clipped", dropdown persists showing source model. Preview populates after confirmation not before to avoid ambiguity about capture state. Clip button on individual model cards as the trigger — distinct from the existing copy button (copy = take text out of CT; clip = route text within CT). Session-scoped, not persistent. | idea | Session discussion | 2026-03-13
 CT-095 | [CT] | Input zone layout pass and right-side panel architecture | The input band is becoming crowded as features accumulate — vault chips, routing controls, and overflow on mobile already wrapping unintentionally. The right-side dead zone visible at desktop widths is productive real estate that has been identified but not yet allocated (CT-049 adjacency). This entry scopes a deliberate layout pass: define what belongs in the input band (prompt text and routing intent only), what moves to a right-side panel zone (clipboard CT-094, vault chip display, potentially others), and how the input band wraps intentionally at smaller breakpoints. Resolves vault overflow risk for users who load multiple files, resolves clipboard placement question, and establishes the panel zone as a design pattern for future dashboard widgets. | planned | Session discussion | 2026-03-13
+| 097 | [CT] | Per-slot model version selector — mid-session | Dropdown in each model card header to switch provider tier mid-session (Opus/Sonnet/Haiku for Claude, gpt-4o/gpt-4o-mini/o1 for ChatGPT, gemini-2.5-pro/flash/nano for Gemini); history survives the switch because CT owns the conversation array client-side — the API is stateless and accepts whatever messages array it receives; this is a structural differentiator from all native interfaces, where model-switching orphans the history by starting a new server-side session; supersedes CT-018 (Settings-only version selection); demo-visible: swap Claude Sonnet → Opus mid-session and show history intact | planned | Session discussion | 2026-03-16 |
 
 ---
 
