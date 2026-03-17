@@ -92,25 +92,26 @@
 
     const MODEL_VERSION_OPTIONS = {
       claude: [
-        { value: 'claude-opus-4-6',           label: 'Opus'   },
-        { value: 'claude-sonnet-4-20250514',   label: 'Sonnet' },
-        { value: 'claude-haiku-4-5-20251001',  label: 'Haiku'  },
+        { value: 'claude-opus-4-6',          label: 'Opus'   },
+        { value: 'claude-sonnet-4-6',         label: 'Sonnet' },
+        { value: 'claude-haiku-4-5-20251001', label: 'Haiku'  },
       ],
       chatgpt: [
-        { value: 'gpt-4o',      label: 'GPT-4o'      },
-        { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
-        { value: 'o1-mini',     label: 'o1-mini'     },
+        { value: 'gpt-5.2',    label: 'GPT-5.2'        },
+        { value: 'gpt-5-mini', label: 'GPT-5 mini'     },
+        { value: 'gpt-5-nano', label: 'GPT-5 nano'     },
       ],
       gemini: [
-        { value: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro'   },
-        { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-        { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+        { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro'        },
+        { value: 'gemini-2.5-pro',         label: 'Gemini 2.5 Pro'        },
+        { value: 'gemini-2.5-flash',       label: 'Gemini 2.5 Flash'      },
+        { value: 'gemini-2.5-flash-lite',  label: 'Gemini 2.5 Flash Lite' },
       ],
     };
 
     const DEFAULT_MODEL_VERSIONS = {
-      claude:  'claude-sonnet-4-20250514',
-      chatgpt: 'gpt-4o',
+      claude:  'claude-sonnet-4-6',
+      chatgpt: 'gpt-5.2',
       gemini:  'gemini-2.5-flash',
     };
 
@@ -373,7 +374,7 @@
                 'Authorization': `Bearer ${key}`
               },
               body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'gpt-5-nano',
                 max_tokens: 10,
                 messages: [{ role: 'user', content: 'Hi' }]
               })
@@ -1085,7 +1086,7 @@
           </div>
 
           {/* Content */}
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0, fontSize: '14px', lineHeight: 1.7 }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', minWidth: 0, fontSize: '14px', lineHeight: 1.7 }}>
             {error && (
               <div style={{
                 color: '#f47068', fontFamily: 'JetBrains Mono', fontSize: '12px',
@@ -2354,7 +2355,7 @@
             }
             .prose pre {
               background: var(--bg-input); padding: 12px; border-radius: 6px;
-              overflow-x: auto; margin: 12px 0;
+              overflow-x: auto; margin: 12px 0; max-width: 100%; white-space: pre;
             }
             .prose pre code { background: none; padding: 0; }
             .prose blockquote {
