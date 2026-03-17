@@ -1133,11 +1133,11 @@
                     {isExpanded ? fullText : `${fullText.slice(0, 120)}${isLong ? '…' : ''}`}
                   </div>
                   {/* Expand / copy controls */}
-                  {(isLong || isExpanded) && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      marginTop: '8px'
-                    }} onClick={e => e.stopPropagation()}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginTop: '8px'
+                  }} onClick={e => e.stopPropagation()}>
+                    {isLong && (
                       <button onClick={e => toggleExpand(i, e)} style={{
                         fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
                         background: 'transparent', border: '1px solid var(--border-subtle)',
@@ -1145,20 +1145,18 @@
                       }}>
                         {isExpanded ? '▲ collapse' : '▼ expand'}
                       </button>
-                      {isExpanded && (
-                        <button onClick={e => copyText(i, fullText, e)} style={{
-                          fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
-                          background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
-                          border: '1px solid var(--border-subtle)',
-                          borderRadius: 'var(--radius)', cursor: 'pointer',
-                          color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
-                          transition: 'color 0.15s, background 0.15s'
-                        }}>
-                          {copied[i] ? '✓ copied' : '⎘ copy'}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                    <button onClick={e => copyText(i, fullText, e)} style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
+                      background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius)', cursor: 'pointer',
+                      color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
+                      transition: 'color 0.15s, background 0.15s'
+                    }}>
+                      {copied[i] ? '✓ copied' : '⎘ copy'}
+                    </button>
+                  </div>
                 </div>
               );
             })}
