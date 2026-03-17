@@ -87,6 +87,34 @@
     const { useState, useRef, useEffect, useCallback } = React;
 
     // ─────────────────────────────────────────────
+    // Model Version Options (CT-097)
+    // ─────────────────────────────────────────────
+
+    const MODEL_VERSION_OPTIONS = {
+      claude: [
+        { value: 'claude-opus-4-6',           label: 'Opus'   },
+        { value: 'claude-sonnet-4-20250514',   label: 'Sonnet' },
+        { value: 'claude-haiku-4-5-20251001',  label: 'Haiku'  },
+      ],
+      chatgpt: [
+        { value: 'gpt-4o',      label: 'GPT-4o'      },
+        { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
+        { value: 'o1-mini',     label: 'o1-mini'     },
+      ],
+      gemini: [
+        { value: 'gemini-2.5-pro',   label: 'Gemini 2.5 Pro'   },
+        { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+        { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+      ],
+    };
+
+    const DEFAULT_MODEL_VERSIONS = {
+      claude:  'claude-sonnet-4-20250514',
+      chatgpt: 'gpt-4o',
+      gemini:  'gemini-2.5-flash',
+    };
+
+    // ─────────────────────────────────────────────
     // Encryption Utilities (Web Crypto API)
     // ─────────────────────────────────────────────
 
@@ -200,7 +228,7 @@
     // ─────────────────────────────────────────────
 
     const apiAdapters = {
-      claude: async (messages, systemPrompt, apiKey) => {
+      claude: async (messages, systemPrompt, apiKey, modelVersion) => {
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -210,7 +238,7 @@
             'anthropic-dangerous-direct-browser-access': 'true'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: modelVersion || DEFAULT_MODEL_VERSIONS.claude,
             max_tokens: 4096,
             system: systemPrompt || 'You are a helpful assistant participating in a multi-model triangulation discussion.',
             messages: messages.map(m => ({ role: m.role, content: m.content }))
@@ -221,7 +249,7 @@
         return data.content.map(b => b.text).join('\n');
       },
 
-      chatgpt: async (messages, systemPrompt, apiKey) => {
+      chatgpt: async (messages, systemPrompt, apiKey, modelVersion) => {
         const msgs = [];
         if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
         msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
@@ -232,7 +260,7 @@
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: modelVersion || DEFAULT_MODEL_VERSIONS.chatgpt,
             max_tokens: 4096,
             messages: msgs
           })
@@ -242,7 +270,8 @@
         return data.choices[0].message.content;
       },
 
-      gemini: async (messages, systemPrompt, apiKey) => {
+      gemini: async (messages, systemPrompt, apiKey, modelVersion) => {
+        const version = modelVersion || DEFAULT_MODEL_VERSIONS.gemini;
         const contents = messages.map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }]
@@ -252,7 +281,7 @@
           body.systemInstruction = { parts: [{ text: systemPrompt }] };
         }
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${version}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -995,7 +1024,7 @@
     // Model Response Card
     // ─────────────────────────────────────────────
 
-    function ModelCard({ model, response, isLoading, error, enabled, onToggle }) {
+    function ModelCard({ model, response, isLoading, error, enabled, onToggle, modelVersion, onVersionChange }) {
       const config = {
         claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
@@ -1020,6 +1049,21 @@
               <span style={{
                 fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 700, color: config.accent
               }}>{config.label}</span>
+              {/* Version selector — CT-097 */}
+              <select
+                value={modelVersion}
+                onChange={e => onVersionChange(e.target.value)}
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px',
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: '4px', color: config.accent, padding: '2px 4px',
+                  cursor: 'pointer', outline: 'none'
+                }}
+              >
+                {MODEL_VERSION_OPTIONS[model].map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
               {isLoading && (
                 <span style={{
                   display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%',
@@ -1133,11 +1177,11 @@
                     {isExpanded ? fullText : `${fullText.slice(0, 120)}${isLong ? '…' : ''}`}
                   </div>
                   {/* Expand / copy controls */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    marginTop: '8px'
-                  }} onClick={e => e.stopPropagation()}>
-                    {isLong && (
+                  {(isLong || isExpanded) && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      marginTop: '8px'
+                    }} onClick={e => e.stopPropagation()}>
                       <button onClick={e => toggleExpand(i, e)} style={{
                         fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
                         background: 'transparent', border: '1px solid var(--border-subtle)',
@@ -1145,18 +1189,20 @@
                       }}>
                         {isExpanded ? '▲ collapse' : '▼ expand'}
                       </button>
-                    )}
-                    <button onClick={e => copyText(i, fullText, e)} style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
-                      background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius)', cursor: 'pointer',
-                      color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
-                      transition: 'color 0.15s, background 0.15s'
-                    }}>
-                      {copied[i] ? '✓ copied' : '⎘ copy'}
-                    </button>
-                  </div>
+                      {isExpanded && (
+                        <button onClick={e => copyText(i, fullText, e)} style={{
+                          fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
+                          background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius)', cursor: 'pointer',
+                          color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
+                          transition: 'color 0.15s, background 0.15s'
+                        }}>
+                          {copied[i] ? '✓ copied' : '⎘ copy'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1178,6 +1224,7 @@
       const [loading, setLoading] = useState({ claude: false, chatgpt: false, gemini: false });
       const [errors, setErrors] = useState({ claude: null, chatgpt: null, gemini: null });
       const [enabled, setEnabled] = useState({ claude: true, chatgpt: true, gemini: true });
+      const [modelVersions, setModelVersions] = useState({ ...DEFAULT_MODEL_VERSIONS }); // CT-097
       const [conversationHistory, setConversationHistory] = useState({
         claude: [], chatgpt: [], gemini: []
       });
@@ -1381,7 +1428,7 @@
         await Promise.allSettled(models.map(async (model) => {
           try {
             const response = await apiAdapters[model](
-              newHistories[model], systemPrompts[model], keys[model]
+              newHistories[model], systemPrompts[model], keys[model], modelVersions[model]
             );
             results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -1464,7 +1511,7 @@
           const newHistory = [...conversationHistory[model], { role: 'user', content: contextualPrompt }];
 
           try {
-            const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model]);
+            const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model], modelVersions[model]);
             results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             priorResponses.push({ model, response });
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -1531,7 +1578,7 @@
         setConversationHistory(prev => ({ ...prev, [targetModel]: newHistory }));
 
         try {
-          const response = await apiAdapters[targetModel](newHistory, systemPrompts[targetModel], keys[targetModel]);
+          const response = await apiAdapters[targetModel](newHistory, systemPrompts[targetModel], keys[targetModel], modelVersions[targetModel]);
           setResponses(prev => ({ ...prev, [targetModel]: response }));
           setConversationHistory(prev => ({
             ...prev,
@@ -1738,7 +1785,8 @@
           const response = await apiAdapters[targetModel](
             [{ role: 'user', content: summaryPrompt }],
             '', // no system prompt — the prompt itself is fully framed
-            keys[targetModel]
+            keys[targetModel],
+            modelVersions[targetModel]
           );
 
           const now = new Date();
@@ -2268,6 +2316,8 @@
                 error={errors[model]}
                 enabled={enabled[model]}
                 onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
+                modelVersion={modelVersions[model]}
+                onVersionChange={v => setModelVersions(prev => ({ ...prev, [model]: v }))}
               />
             ))}
           </div>
