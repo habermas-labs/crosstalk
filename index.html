@@ -102,10 +102,9 @@
         { value: 'gpt-5-nano', label: 'GPT-5 nano'     },
       ],
       gemini: [
-        { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro'        },
-        { value: 'gemini-2.5-pro',         label: 'Gemini 2.5 Pro'        },
-        { value: 'gemini-2.5-flash',       label: 'Gemini 2.5 Flash'      },
-        { value: 'gemini-2.5-flash-lite',  label: 'Gemini 2.5 Flash Lite' },
+        { value: 'gemini-2.5-pro',        label: 'Gemini 2.5 Pro'        },
+        { value: 'gemini-2.5-flash',      label: 'Gemini 2.5 Flash'      },
+        { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite' },
       ],
     };
 
@@ -262,7 +261,7 @@
           },
           body: JSON.stringify({
             model: modelVersion || DEFAULT_MODEL_VERSIONS.chatgpt,
-            max_tokens: 4096,
+            max_completion_tokens: 4096,
             messages: msgs
           })
         });
@@ -375,7 +374,7 @@
               },
               body: JSON.stringify({
                 model: 'gpt-5-nano',
-                max_tokens: 10,
+                max_completion_tokens: 10,
                 messages: [{ role: 'user', content: 'Hi' }]
               })
             });
