@@ -1813,6 +1813,11 @@
           e.preventDefault();
           if (directTo !== 'all') sendDirect(directTo);
           else if (sendArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none')) {
+            if (activeModels.length === 0) {
+              setNoKeyWarning(true);
+              setTimeout(() => setNoKeyWarning(false), 4000);
+              return;
+            }
             if (sendMode === 'conductor') sendConductor();
             else sendParallel();
           }
@@ -2287,7 +2292,7 @@
                   >Send ↵</button>
                   {noKeyWarning && (
                     <div style={{
-                      position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
+                      position: 'absolute', top: 'calc(100% + 4px)', right: 0,
                       background: 'var(--bg-card)', border: '1px solid #f47068',
                       borderRadius: 'var(--radius)', padding: '8px 12px',
                       fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#f47068',
