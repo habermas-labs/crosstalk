@@ -579,7 +579,7 @@
         fileInputRef.current.value = '';
       };
 
-      const statusColors = { error: '#f47068', success: '#6bcf8e', info: 'var(--gemini-accent)' };
+      const statusColors = { error: '#f47068', success: 'var(--chatgpt-accent)', info: 'var(--gemini-accent)' };
 
       const selectStyle = {
         padding: '6px 10px',
@@ -1089,8 +1089,8 @@
               <button onClick={() => navigator.clipboard.writeText(response)}
                 style={{
                   fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
-                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                  borderRadius: '4px', cursor: 'pointer', color: 'var(--text-secondary)'
+                  background: 'var(--bg-input)', border: '1px solid var(--border-hover)',
+                  borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)'
                 }}
               >
                 Copy
@@ -1155,11 +1155,11 @@
                     {isExpanded ? fullText : `${fullText.slice(0, 120)}${isLong ? '…' : ''}`}
                   </div>
                   {/* Expand / copy controls */}
-                  {(isLong || isExpanded) && (
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: '10px',
-                      marginTop: '8px'
-                    }} onClick={e => e.stopPropagation()}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginTop: '8px'
+                  }} onClick={e => e.stopPropagation()}>
+                    {isLong && (
                       <button onClick={e => toggleExpand(i, e)} style={{
                         fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
                         background: 'transparent', border: '1px solid var(--border-subtle)',
@@ -1167,20 +1167,18 @@
                       }}>
                         {isExpanded ? '▲ collapse' : '▼ expand'}
                       </button>
-                      {isExpanded && (
-                        <button onClick={e => copyText(i, fullText, e)} style={{
-                          fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
-                          background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
-                          border: '1px solid var(--border-subtle)',
-                          borderRadius: 'var(--radius)', cursor: 'pointer',
-                          color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
-                          transition: 'color 0.15s, background 0.15s'
-                        }}>
-                          {copied[i] ? '✓ copied' : '⎘ copy'}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                    <button onClick={e => copyText(i, fullText, e)} style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '3px 8px',
+                      background: copied[i] ? 'var(--chatgpt-border)' : 'transparent',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius)', cursor: 'pointer',
+                      color: copied[i] ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
+                      transition: 'color 0.15s, background 0.15s'
+                    }}>
+                      {copied[i] ? '✓ copied' : '⎘ copy'}
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -1242,7 +1240,6 @@
         setExcludeModel(val);
         if (val !== 'none') {
           setDirectTo('all');
-          setSendMode('parallel');
           setModeArmed(true);
         }
       };
@@ -1456,6 +1453,7 @@
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
         const baseContent = buildPromptContent(userText, included, vaultFile);
+        const activeExclude = excludeModel;
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
@@ -1463,7 +1461,7 @@
         setVaultForward(null);
         setModeArmed(false);
 
-        const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
+        const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== activeExclude);
         if (models.length === 0) return;
 
         // Record active models on first send
@@ -1869,7 +1867,7 @@
                 background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)',
                 title: darkMode ? 'Switch to light mode' : 'Switch to dark mode'
-              }}>{darkMode ? '☀' : '☾'}</button>
+              }}>{darkMode ? 'Light' : 'Dark'}</button>
               <button onClick={clearConversation} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
                 background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
@@ -2243,7 +2241,7 @@
                 <>
                   <select
                     value={modeArmed || sendMode !== 'parallel' || turnHistory.length > 0 ? sendMode : ''}
-                    onChange={e => { if (e.target.value) { setSendMode(e.target.value); setModeArmed(true); setExcludeModel('none'); } }}
+                    onChange={e => { if (e.target.value) { setSendMode(e.target.value); setModeArmed(true); } }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 10px',
                       background: sendArmed ? 'var(--bg-card)' : turnHistory.length > 0 ? 'var(--bg-input)' : 'transparent',
