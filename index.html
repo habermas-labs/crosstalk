@@ -1017,7 +1017,7 @@
     // Model Response Card
     // ─────────────────────────────────────────────
 
-    function ModelCard({ model, response, isLoading, error, enabled, onToggle }) {
+    function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle }) {
       const config = {
         claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
@@ -1078,7 +1078,7 @@
             {response && <RenderedMarkdown text={response} />}
             {!response && !isLoading && !error && (
               <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>
-                Waiting for prompt...
+                {hasKey ? 'Waiting for prompt...' : 'No API key loaded.'}
               </div>
             )}
           </div>
@@ -1806,6 +1806,7 @@
       // Keyboard handler
       // Send is armed if mode explicitly selected OR Exclude active OR session already underway
       const sendArmed = modeArmed || excludeModel !== 'none' || turnHistory.length > 0;
+      const [noKeyWarning, setNoKeyWarning] = useState(false);
 
       const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -2257,9 +2258,17 @@
                     <option value="parallel">Parallel</option>
                     <option value="conductor">Conductor</option>
                   </select>
+                  <div style={{ position: 'relative' }}>
                   <button
                     disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none') || conductorActive}
-                    onClick={() => sendMode === 'parallel' ? sendParallel() : sendConductor()}
+                    onClick={() => {
+                      if (activeModels.length === 0) {
+                        setNoKeyWarning(true);
+                        setTimeout(() => setNoKeyWarning(false), 4000);
+                        return;
+                      }
+                      sendMode === 'parallel' ? sendParallel() : sendConductor();
+                    }}
                     style={{
                       fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
                       background: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
@@ -2276,6 +2285,18 @@
                       opacity: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive ? 1 : 0.4,
                     }}
                   >Send ↵</button>
+                  {noKeyWarning && (
+                    <div style={{
+                      position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
+                      background: 'var(--bg-card)', border: '1px solid #f47068',
+                      borderRadius: 'var(--radius)', padding: '8px 12px',
+                      fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#f47068',
+                      whiteSpace: 'nowrap', zIndex: 10
+                    }}>
+                      No API keys loaded — open Settings to add keys.
+                    </div>
+                  )}
+                  </div>
                 </>
               ) : (
                 <button
@@ -2308,6 +2329,7 @@
                 isLoading={loading[model]}
                 error={errors[model]}
                 enabled={enabled[model]}
+                hasKey={!!(keys[model]?.trim())}
                 onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
               />
             ))}
