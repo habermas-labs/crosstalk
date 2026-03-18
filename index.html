@@ -1470,8 +1470,11 @@
           : prev
         );
 
-        setResponses({ claude: null, chatgpt: null, gemini: null });
-        setErrors({ claude: null, chatgpt: null, gemini: null });
+        const resetResponses = {};
+        const resetErrors = {};
+        models.forEach(m => { resetResponses[m] = null; resetErrors[m] = null; });
+        setResponses(prev => ({ ...prev, ...resetResponses }));
+        setErrors(prev => ({ ...prev, ...resetErrors }));
         setConductorActive(true);
 
         const results = {};
