@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 101
+**Latest entry:** 102
 
 **Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
@@ -86,6 +86,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 098 | `[CT]` | Worker hardening for proxied key architecture | Rate limiting, auth checks, abuse detection on Worker side; not required for BYOK launch but becomes non-optional if/when CT moves to Anthropic/Google/OpenAI keys behind the Worker | `idea` | Session discussion | 2026-03-17 |
 | 099 | `[CT]` | Expanded model support — Grok, Mistral, DeepSeek | User-configurable model chips; priority candidates by distinct epistemic provenance: Grok (live web access), Mistral (European open-weights), DeepSeek (Chinese provenance); model chip color system must follow brand palette logic — research established brand color before assigning, then darken for light mode legibility; see fleeting note ct-fleeting-model-expansion-candidates.md | `idea` | Session discussion | 2026-03-17 |
 | 100 | `[CT]` | Role-context experiment series | Test whether defensive/performative self-reflection is emergent (context-activated) or a stable model difference; Version A: stable subject role with unspecified others; Version B: subject plus explicit Observer framing (vnenakhodimost'); Version C: role rotation across models — cleanest test of emergent vs stable; see ZK note role-context-mimicry-self-reflection.md | `idea` | Session discussion | 2026-03-17 |
+| 102 | [CT] | Code-heavy layout degradation — desktop stacked mode trigger | Three-column layout produces unreadable code block columns in code-heavy sessions; full-width card stacking (CT-050) solves this for the same reason it works for mobile thumb navigation — one card gets the full viewport width at a time; adds desktop-triggered stacked mode as a design requirement alongside the existing mobile/breakpoint trigger; stacked layout is not a separate mobile design but a mode the user can invoke deliberately when content density demands it; links CT-011 (mobile accordion), CT-050 (unified responsive layout), CT-051 (card collapse/focus mode) | idea | Live session observation | 2026-03-22 |
 
 ---
 
