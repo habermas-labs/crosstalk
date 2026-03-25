@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 104
+**Latest entry:** 105
 
 **Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
@@ -29,7 +29,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 017 | `[CT]` | Cost tracking | Estimate token usage and API cost per turn | `idea` | Claude suggestion | 2026-03 |
 | 020 | `[INFRA]` | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 023 | `[CT]` | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
-| 024 | `[CT]` | Ko-fi funding integration | Crowdfunding support for ongoing development | `idea` | User insight | 2026-03 |
+| 024 | `[CT]` | Ko-fi funding integration | Develop strategy to use Ko-fi to help fund development | `idea` | User insight | 2026-03 |
 | 025 | `[CT]` | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
 | 026 | `[INFRA]` | Static site generator decision | Select and document SSG for CT; decision should be consistent with CK choice as both repos share infrastructure philosophy | `planned` | Cross-project coordination | 2026-03 |
 | 027 | `[INFRA]` | Frontmatter schema v1 | Canonical required/optional fields for content entries; to be decided in coordination with CK to maintain cross-project consistency | `planned` | Cross-project coordination | 2026-03 |
@@ -89,6 +89,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 102 | [CT] | Code-heavy layout degradation — desktop stacked mode trigger | Three-column layout produces unreadable code block columns in code-heavy sessions; full-width card stacking (CT-050) solves this for the same reason it works for mobile thumb navigation — one card gets the full viewport width at a time; adds desktop-triggered stacked mode as a design requirement alongside the existing mobile/breakpoint trigger; stacked layout is not a separate mobile design but a mode the user can invoke deliberately when content density demands it; links CT-011 (mobile accordion), CT-050 (unified responsive layout), CT-051 (card collapse/focus mode) | idea | Live session observation | 2026-03-22 |
 | 103 | [CT] | Focus Thread — turn selection and curated export | User marks turns via persistent checkboxes on turn chips (see CT-103) as session advances; checked turns form a Focus Thread exportable at any point. Checking a turn chip highlights corresponding response cards in main three-column view. Export harvests checked turns chronologically with gaps intact. Optional focus label at export time. Requires CT-103. → see note | idea | Session discussion | 2026-03-24 |
 | 104 | [CT] | History chips → Turn chips | Rename and reconceptualize history chips as turn chips representing every turn in the session, not just user prompts. AI-only turns (Conductor/Forward moves) get a compact indicator showing routing, e.g. → ◈ Claude → ◇ ChatGPT, with subdued styling distinct from user prompt chips. Turn number always visible. Complete timeline is prerequisite for CT-102 checkbox selection — a turn that has no chip cannot be flagged. | idea | Session discussion | 2026-03-24 |
+| 105 | [CT] | Footer + Settings support links | Add a minimal one-line footer with MDReader and Ko-fi links; mirror both at the bottom of the Settings panel (MDReader above Ko-fi). Ko-fi sits last in both surfaces for clean future removal. | planned | User insight | 2026-03-25 |
 
 ---
 
