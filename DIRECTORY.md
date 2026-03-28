@@ -46,8 +46,8 @@ Cross-repository index of project files not held in Claude project knowledge. Us
 | D-30 | ct-session-20260305-b901f7-ai-political-topics.md | CT/docs/sessions | Session transcript: AI engagement with politically divisive topics; baseline/third-tier annotated example; useful for training guide as contrast with later sessions |
 | D-31 | ct-session-20260306-956108-water-is-wet.md | CT/docs/sessions | Session transcript: "water is wet" — koan session; provenance preservation demonstration; ChatGPT correctly attributed Claude-authored questions to Claude across handoff; Turn 8 landing: wetness as relational/boundary phenomenon, Bakhtin-adjacent |
 | D-32 | ct-session-20260307-ce45a5-the-in-between.md | CT/docs/sessions | Session transcript: the-in-between — anti-convergence/RIFF design session; Gemini self-generated RIFF-adjacent protocol unprompted (Turn 3); tension map export framing emerged (Turn 6); primary annotated example for training guide |
-D-33 | theoretical-sources-annotated.md | ZK/literature | Living annotated bibliography of CT theoretical sources; alphabetical by theorist; CT-relevance framing; 15 initial entries including Austin, Bakhtin, Clark & Chalmers, Grice, Habermas, Searle, Vygotsky and others; discipline tags descriptive not categorical|
-
+| D-33 | theoretical-sources-annotated.md | ZK/literature | Living annotated bibliography of CT theoretical sources; alphabetical by theorist; CT-relevance framing; 15 initial entries including Austin, Bakhtin, Clark & Chalmers, Grice, Habermas, Searle, Vygotsky and others; discipline tags descriptive not categorical|
+| D-34 | role-commitment-as-structural-requirement.md | ZK/permanent | Role assignment as performative speech act; fourth-vertex commitment as structural requirement; phantom vertex failure mode; Gricean violation at conversation-structure level; sycophancy mirror located at the human vertex; workload outsourcing parallel |
 ---
 
 ## Notes
