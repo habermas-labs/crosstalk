@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 109
+**Latest entry:** 110
 
 **Project tags:** `[CT]` Crosstalk Lab · `[INFRA]` shared infrastructure
 
@@ -91,6 +91,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 107 | `[CT]` | Right sidebar — accumulative zone | Collapsible right panel housing session-artifact controls: file vault (migrates from input band chip display), clipboard/forwarded content, future cost tracker; Reset moves here as the last item, placed at the bottom because it is the last thing a user should reach for — its position encodes deliberateness; right sidebar is accumulative — it holds what gathers during a session as a result of the work; vault migration resolves the chip overflow problem and clarifies the Forward dropdown, which reverts to models-only; Vault button in Attach zone becomes a status indicator (⊕ 2 files) and focus-jump shortcut to the sidebar rather than a standalone control; see CT-083/084 (vault UI), CT-094 (clipboard) | `planned` | Via Nagi | 2026-03-29 |
 | 108 | `[CT]` | Routing chip — Target / Attach / Dispatch | Dedicated routing zone at input band level, sitting between the prompt box (left) and the right sidebar (right); replaces the current bottom-of-input-band control strip; three named sections within one chip: Target (Direct to, Exclude — who receives), Attach (Forward, Vault button/status — what accompanies), Dispatch (mode selector, Active readout, Send — how and go); Active readout is pure signal, not a control — pre-flight confirmation of resolved routing state living in the Dispatch section; Forward reverts to models-only once vault contents migrate to right sidebar; Attach controls visible from session start rather than appearing after first send — teaches the interface before use; routing is flow control (session momentum with handles for redirection) not static configuration; see CT-086 (Exclude), CT-096 (input band layout pass) → see note | `planned` | Via Nagi | 2026-03-29 |
 | 109 | `[CT]` | Header as HUD | Active Tetra name displayed in the header alongside CT branding once a Tetra is selected; no Tetra active = branding only (welcome state); Tetra name turns the nameplate into a persistent orientation layer — user always knows the current interaction geometry without a sidebar trip; creates a natural visual hierarchy: header tells you what shape you're in, left sidebar is where you configure it, columns are where it happens; also opens the header as a surface for future session-state signals; dark/light toggle moves to left sidebar settings, leaving header space clean for branding + HUD; see CT-073 (Tetras), CT-076 (welcome carousel) | `planned` | Via Nagi | 2026-03-29 |
+| 110 | [CT] | Code block floating panel | Collapsed inline token replaces code blocks inside model chips; click opens a floating fixed-position panel for display; panel is independent of chip geometry and can be as wide as needed; simple modal pattern (click outside to close) as v1; no drag, no multi-panel; test against a real code-heavy CT session before adding features | planned | User insight | 2026-04-09 |
 
 ---
 
