@@ -96,6 +96,186 @@
       0%   { opacity: 0; }
       100% { opacity: 1; }
     }
+
+    /* ── Left Sidebar ── */
+    .ct-layout {
+      display: flex;
+      min-height: 100vh;
+      align-items: stretch;
+    }
+    .ct-sidebar-left {
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: width 0.22s ease, min-width 0.22s ease, opacity 0.18s ease;
+      flex-shrink: 0;
+    }
+    .ct-sidebar-left.collapsed {
+      width: 40px;
+      min-width: 40px;
+      overflow: hidden;
+    }
+    .ct-sidebar-left.collapsed .sidebar-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .sidebar-content {
+      opacity: 1;
+      transition: opacity 0.15s ease;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px;
+      min-width: 216px; /* prevents content from reflowing during collapse */
+    }
+    .ct-main {
+      flex: 1;
+      min-width: 0;
+      padding: 24px;
+      max-width: 1400px;
+    }
+    .sidebar-toggle {
+      position: absolute;
+      top: 14px;
+      right: 10px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-hover);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text-secondary);
+      z-index: 10;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+    .ct-sidebar-left.collapsed .sidebar-toggle {
+      position: relative;
+      top: auto;
+      right: auto;
+      margin: 12px auto 0;
+    }
+    .sidebar-section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      padding: 0 2px;
+    }
+    .sidebar-stub {
+      background: var(--bg-input);
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.6;
+      cursor: default;
+      margin-bottom: 6px;
+    }
+    .sidebar-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      margin-bottom: 4px;
+    }
+    .sidebar-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+    .sidebar-btn.active-export {
+      color: var(--chatgpt-accent);
+    }
+    .sidebar-btn.disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .sidebar-btn.disabled:hover {
+      background: transparent;
+      border-color: var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 12px 0;
+    }
+    .sidebar-spacer { flex: 1; }
+
+    /* prose (markdown output) */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .prose { color: var(--text-primary); overflow-wrap: break-word; word-break: break-word; }
+    .prose h1, .prose h2, .prose h3 { font-family: 'JetBrains Mono'; margin: 16px 0 8px; }
+    .prose h1 { font-size: 18px; }
+    .prose h2 { font-size: 16px; }
+    .prose h3 { font-size: 14px; }
+    .prose p { margin-bottom: 12px; }
+    .prose ul, .prose ol { margin: 8px 0 12px 20px; }
+    .prose li { margin-bottom: 4px; }
+    .prose code {
+      background: var(--bg-input); padding: 2px 6px; border-radius: 3px;
+      font-family: 'JetBrains Mono'; font-size: 13px;
+    }
+    .prose pre {
+      background: var(--bg-input); padding: 12px; border-radius: 6px;
+      overflow-x: auto; margin: 12px 0;
+    }
+    .prose pre code { background: none; padding: 0; }
+    .prose blockquote {
+      border-left: 3px solid var(--border-hover); padding-left: 12px;
+      color: var(--text-secondary); margin: 12px 0;
+    }
+    .prose strong { color: var(--text-primary); }
+    .prose a { color: var(--gemini-accent); }
+    select option { background: var(--bg-secondary); color: var(--text-primary); }
+
+    /* responsive: collapse sidebar and stack model grid on narrow viewports */
+    @media (max-width: 1100px) {
+      .ct-sidebar-left { width: 40px; min-width: 40px; }
+      .ct-sidebar-left .sidebar-content { opacity: 0; pointer-events: none; }
+    }
+    @media (max-width: 900px) {
+      .ct-model-grid { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
 <body>
@@ -1223,6 +1403,9 @@
         localStorage.setItem('ct-theme', darkMode ? 'dark' : 'light');
       }, [darkMode]);
 
+      // Left sidebar open/collapsed state — auto-open on wide viewports
+      const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1100);
+
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [modeArmed, setModeArmed] = useState(false);
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
@@ -1829,7 +2012,190 @@
       const conductorOrderLabels = { claude: '◈', chatgpt: '◇', gemini: '△' };
 
       return (
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+        <div className="ct-layout">
+
+          {/* ── Left Sidebar (constitutive zone) ── */}
+          <aside className={`ct-sidebar-left${sidebarOpen ? '' : ' collapsed'}`} style={{ position: 'relative' }}>
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarOpen(o => !o)}
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >{sidebarOpen ? '‹' : '›'}</button>
+
+            <div className="sidebar-content">
+
+              {/* Identity mark */}
+              <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 700, letterSpacing: '-0.3px', marginBottom: '2px' }}>
+                  <span style={{ color: 'var(--claude-accent)' }}>◈</span>
+                  <span style={{ color: 'var(--chatgpt-accent)' }}>◇</span>
+                  <span style={{ color: 'var(--gemini-accent)' }}>△</span>
+                  {' '}CT
+                </div>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+                  Crosstalk Lab
+                </div>
+              </div>
+
+              {/* Tetras — stub */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Tetras</div>
+                <div className="sidebar-stub">
+                  <span style={{ opacity: 0.7 }}>⊘</span> No Tetra active
+                </div>
+                <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
+                  CT-101 · planned
+                </div>
+              </div>
+
+              {/* Hedras — stub */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Hedras</div>
+                <div className="sidebar-stub">
+                  <span style={{ opacity: 0.7 }}>⊘</span> No Hedra active
+                </div>
+                <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
+                  CT-102 · planned
+                </div>
+              </div>
+
+              <div className="sidebar-divider" />
+
+              {/* Export */}
+              <div className="sidebar-section-label">Session</div>
+              <div ref={exportMenuRef} style={{ position: 'relative', marginBottom: '4px' }}>
+                <button
+                  className={`sidebar-btn${turnHistory.length > 0 ? ' active-export' : ' disabled'}`}
+                  onClick={() => {
+                    if (turnHistory.length > 0) {
+                      if (exportMenuOpen) setSummarizeMenuOpen(false);
+                      setExportMenuOpen(o => !o);
+                    }
+                  }}
+                >
+                  <span>↓</span>
+                  {summarizing ? 'Summarizing…' : 'Export'}
+                  <span style={{ fontSize: '9px', marginLeft: 'auto', opacity: 0.6 }}>▾</span>
+                </button>
+                {exportMenuOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 2px)', left: 0,
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
+                    borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
+                    minWidth: '210px', zIndex: 50,
+                  }}>
+                    <button onClick={() => { exportTranscript(); setExportMenuOpen(false); }} style={{
+                      width: '100%', textAlign: 'left', padding: '10px 14px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-primary)',
+                      display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                      <span style={{ color: 'var(--chatgpt-accent)' }}>↓</span> Full Transcript
+                    </button>
+
+                    <div style={{ position: 'relative' }}>
+                      <button onClick={() => setSummarizeMenuOpen(v => !v)} style={{
+                        width: '100%', textAlign: 'left', padding: '10px 14px',
+                        background: summarizeMenuOpen ? 'var(--bg-card)' : 'none', border: 'none',
+                        cursor: summarizing ? 'default' : 'pointer',
+                        fontFamily: 'JetBrains Mono', fontSize: '12px', color: summarizing ? 'var(--text-muted)' : 'var(--text-primary)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                      }}
+                        onMouseEnter={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'var(--bg-card)'; }}
+                        onMouseLeave={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'none'; }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ color: 'var(--chatgpt-accent)' }}>◎</span>
+                          {summarizing ? 'Summarizing…' : 'Summarize with'}
+                        </span>
+                        <span style={{ fontSize: '10px', opacity: 0.5 }}>{summarizeMenuOpen ? '▼' : '▶'}</span>
+                      </button>
+                      {summarizeMenuOpen && (
+                        <div style={{
+                          position: 'absolute', top: 'calc(100% + 1px)', left: 0,
+                          background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
+                          borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
+                          minWidth: '100%', overflow: 'hidden', zIndex: 51
+                        }}>
+                          {['claude', 'chatgpt', 'gemini'].map(model => {
+                            const labels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+                            const icons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
+                            const accents = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
+                            const available = !!keys[model]?.trim();
+                            return (
+                              <button key={model}
+                                disabled={!available}
+                                onClick={() => { if (available) { setSummarizeMenuOpen(false); setExportMenuOpen(false); summarizeWith(model); } }}
+                                style={{
+                                  width: '100%', textAlign: 'left', padding: '10px 14px',
+                                  background: 'none', border: 'none',
+                                  cursor: available ? 'pointer' : 'default',
+                                  fontFamily: 'JetBrains Mono', fontSize: '12px',
+                                  color: available ? 'var(--text-primary)' : 'var(--text-muted)',
+                                  opacity: available ? 1 : 0.4,
+                                  display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                                onMouseEnter={e => { if (available) e.currentTarget.style.background = 'var(--bg-card)'; }}
+                                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                              >
+                                <span style={{ color: available ? accents[model] : 'inherit' }}>{icons[model]}</span>
+                                {labels[model]}
+                                {!available && <span style={{ fontSize: '10px', marginLeft: 'auto' }}>no key</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 0' }} />
+                    {[
+                      { label: 'Idea Log', note: 'requires CT-041' },
+                      { label: 'Replay',   note: 'requires CT-039' },
+                    ].map(({ label, note }) => (
+                      <button key={label} disabled style={{
+                        width: '100%', textAlign: 'left', padding: '10px 14px',
+                        background: 'none', border: 'none', cursor: 'default',
+                        fontFamily: 'JetBrains Mono', fontSize: '12px',
+                        color: 'var(--text-muted)', opacity: 0.4,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                      }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>⊘</span> {label}
+                        </span>
+                        <span style={{ fontSize: '10px' }}>{note}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Clear / Reset */}
+              <button className="sidebar-btn" onClick={clearConversation}>
+                <span style={{ fontSize: '11px' }}>↺</span> Clear session
+              </button>
+
+              <div className="sidebar-spacer" />
+              <div className="sidebar-divider" />
+
+              {/* Settings + Theme at bottom */}
+              <div className="sidebar-section-label">Interface</div>
+              <button className="sidebar-btn" onClick={() => setShowSettings(true)}>
+                <span>⚙</span> Settings
+              </button>
+              <button className="sidebar-btn" onClick={() => setDarkMode(m => !m)}>
+                <span>{darkMode ? '☀' : '☾'}</span> {darkMode ? 'Light mode' : 'Dark mode'}
+              </button>
+
+            </div>
+          </aside>
+
+          {/* ── Main content ── */}
+          <div className="ct-main">
+          <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
           {/* Header */}
           <header style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1871,147 +2237,13 @@
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setDarkMode(m => !m)} style={{
-                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 12px',
-                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)',
-                title: darkMode ? 'Switch to light mode' : 'Switch to dark mode'
-              }}>{darkMode ? 'Light' : 'Dark'}</button>
-              <button onClick={clearConversation} style={{
-                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-secondary)'
-              }}>Clear</button>
-
-              {/* Export dropdown */}
-              <div ref={exportMenuRef} style={{ position: 'relative' }}>
-                <button
-                  onClick={() => { if (turnHistory.length > 0) { if (exportMenuOpen) setSummarizeMenuOpen(false); setExportMenuOpen(o => !o); } }}
-                  disabled={turnHistory.length === 0}
-                  style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                    background: exportMenuOpen ? 'var(--bg-secondary)' : 'var(--bg-input)',
-                    border: `1px solid ${exportMenuOpen ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
-                    borderRadius: 'var(--radius)',
-                    cursor: turnHistory.length > 0 ? 'pointer' : 'default',
-                    color: turnHistory.length > 0 ? 'var(--chatgpt-accent)' : 'var(--text-muted)',
-                    display: 'flex', alignItems: 'center', gap: '6px'
-                  }}
-                >
-                  {summarizing ? 'Summarizing…' : 'Export'}
-                  <span style={{ fontSize: '10px', opacity: 0.7 }}>▾</span>
-                </button>
-
-                {exportMenuOpen && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 4px)', right: 0,
-                    background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
-                    borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
-                    minWidth: '200px', zIndex: 50, overflow: 'visible'
-                  }}>
-
-                    {/* Full Transcript */}
-                    <button onClick={() => { exportTranscript(); setExportMenuOpen(false); }} style={{
-                      width: '100%', textAlign: 'left', padding: '10px 14px',
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-primary)',
-                      display: 'flex', alignItems: 'center', gap: '8px'
-                    }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                    >
-                      <span style={{ color: 'var(--chatgpt-accent)' }}>↓</span> Full Transcript
-                    </button>
-
-                    {/* Summarize with — click-toggle submenu */}
-                    <div style={{ position: 'relative' }}>
-                      <button onClick={() => setSummarizeMenuOpen(v => !v)} style={{
-                        width: '100%', textAlign: 'left', padding: '10px 14px',
-                        background: summarizeMenuOpen ? 'var(--bg-card)' : 'none', border: 'none',
-                        cursor: summarizing ? 'default' : 'pointer',
-                        fontFamily: 'JetBrains Mono', fontSize: '12px', color: summarizing ? 'var(--text-muted)' : 'var(--text-primary)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                      }}
-                        onMouseEnter={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'var(--bg-card)'; }}
-                        onMouseLeave={e => { if (!summarizeMenuOpen) e.currentTarget.style.background = 'none'; }}
-                      >
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ color: 'var(--chatgpt-accent)' }}>◎</span>
-                          {summarizing ? 'Summarizing…' : 'Summarize with'}
-                        </span>
-                        <span style={{ fontSize: '10px', opacity: 0.5 }}>{summarizeMenuOpen ? '▼' : '▶'}</span>
-                      </button>
-
-                      {/* Submenu — click-toggled, renders below trigger */}
-                      {summarizeMenuOpen && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 1px)', left: 0,
-                        background: 'var(--bg-secondary)', border: '1px solid var(--border-hover)',
-                        borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
-                        minWidth: '100%', overflow: 'hidden', zIndex: 51
-                      }}>
-                        {['claude', 'chatgpt', 'gemini'].map(model => {
-                          const labels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
-                          const icons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
-                          const accents = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
-                          const available = !!keys[model]?.trim();
-                          return (
-                            <button key={model}
-                              disabled={!available}
-                              onClick={() => { if (available) { setSummarizeMenuOpen(false); setExportMenuOpen(false); summarizeWith(model); } }}
-                              style={{
-                                width: '100%', textAlign: 'left', padding: '10px 14px',
-                                background: 'none', border: 'none',
-                                cursor: available ? 'pointer' : 'default',
-                                fontFamily: 'JetBrains Mono', fontSize: '12px',
-                                color: available ? 'var(--text-primary)' : 'var(--text-muted)',
-                                opacity: available ? 1 : 0.4,
-                                display: 'flex', alignItems: 'center', gap: '8px'
-                              }}
-                              onMouseEnter={e => { if (available) e.currentTarget.style.background = 'var(--bg-card)'; }}
-                              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                            >
-                              <span style={{ color: available ? accents[model] : 'inherit' }}>{icons[model]}</span>
-                              {labels[model]}
-                              {!available && <span style={{ fontSize: '10px', marginLeft: 'auto' }}>no key</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      )}
-                    </div>
-
-                    {/* Divider */}
-                    <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 0' }} />
-
-                    {/* Disabled future export types */}
-                    {[
-                      { label: 'Idea Log', note: 'requires CT-041' },
-                      { label: 'Replay',   note: 'requires CT-039' },
-                    ].map(({ label, note }) => (
-                      <button key={label} disabled style={{
-                        width: '100%', textAlign: 'left', padding: '10px 14px',
-                        background: 'none', border: 'none', cursor: 'default',
-                        fontFamily: 'JetBrains Mono', fontSize: '12px',
-                        color: 'var(--text-muted)', opacity: 0.4,
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                      }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span>⊘</span> {label}
-                        </span>
-                        <span style={{ fontSize: '10px' }}>{note}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button onClick={() => setShowSettings(true)} style={{
-                fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--text-primary)'
-              }}>⚙ Settings</button>
+            {/* HUD placeholder — CT-109 */}
+            <div style={{
+              fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
+              padding: '6px 12px', border: '1px dashed var(--border-subtle)',
+              borderRadius: 'var(--radius)', opacity: 0.5
+            }}>
+              — no active Tetra —
             </div>
           </header>
 
@@ -2354,41 +2586,8 @@
             />
           )}
 
-          <style>{`
-            @keyframes pulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.3; }
-            }
-            .prose { color: var(--text-primary); overflow-wrap: break-word; word-break: break-word; }
-            .prose h1, .prose h2, .prose h3 { font-family: 'JetBrains Mono'; margin: 16px 0 8px; }
-            .prose h1 { font-size: 18px; }
-            .prose h2 { font-size: 16px; }
-            .prose h3 { font-size: 14px; }
-            .prose p { margin-bottom: 12px; }
-            .prose ul, .prose ol { margin: 8px 0 12px 20px; }
-            .prose li { margin-bottom: 4px; }
-            .prose code {
-              background: var(--bg-input); padding: 2px 6px; border-radius: 3px;
-              font-family: 'JetBrains Mono'; font-size: 13px;
-            }
-            .prose pre {
-              background: var(--bg-input); padding: 12px; border-radius: 6px;
-              overflow-x: auto; margin: 12px 0;
-            }
-            .prose pre code { background: none; padding: 0; }
-            .prose blockquote {
-              border-left: 3px solid var(--border-hover); padding-left: 12px;
-              color: var(--text-secondary); margin: 12px 0;
-            }
-            .prose strong { color: var(--text-primary); }
-            .prose a { color: var(--gemini-accent); }
-            select option { background: var(--bg-secondary); color: var(--text-primary); }
-            @media (max-width: 900px) {
-              div[style*="grid-template-columns: repeat(3"] {
-                grid-template-columns: 1fr !important;
-              }
-            }
-          `}</style>
+          </div>{/* /inner max-width wrapper */}
+          </div>{/* /ct-main */}
         </div>
       );
     }
