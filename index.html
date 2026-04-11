@@ -1482,7 +1482,7 @@
     // Model Response Card
     // ─────────────────────────────────────────────
 
-    function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle, onOpenPanel }) {
+    function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle, onOpenPanel, onClip }) {
       const config = {
         claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
@@ -1548,9 +1548,9 @@
             )}
           </div>
 
-          {/* Copy button — stays at bottom, only when there's a response */}
+          {/* Copy + Clip buttons — only when there's a response */}
           {response && (
-            <div style={{ marginTop: '12px' }}>
+            <div style={{ marginTop: '12px', display: 'flex', gap: '6px' }}>
               <button onClick={() => navigator.clipboard.writeText(response)}
                 style={{
                   fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
@@ -1559,6 +1559,17 @@
                 }}
               >
                 Copy
+              </button>
+              <button
+                onClick={() => onClip && onClip(model, response)}
+                title="Clip to in-app clipboard"
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
+                  background: 'var(--bg-input)', border: `1px solid ${config.border}`,
+                  borderRadius: '4px', cursor: 'pointer', color: config.accent
+                }}
+              >
+                ✂ Clip
               </button>
             </div>
           )}
@@ -1791,6 +1802,33 @@
       const [sessionVault, setSessionVault] = useState([]);
       const [vaultForward, setVaultForward] = useState([]); // array of selected vault entry ids
 
+      // CT-094 — In-app clipboard: one slot per model, replace on re-clip
+      // { claude: { text, clippedAt } | null, chatgpt: ..., gemini: ... }
+      const [clippedResponses, setClippedResponses] = useState({ claude: null, chatgpt: null, gemini: null });
+      // Which clipped slots are selected for include in next prompt
+      const [clipInclude, setClipInclude] = useState({ claude: false, chatgpt: false, gemini: false });
+
+      const clipResponse = (model, text) => {
+        setClippedResponses(prev => ({ ...prev, [model]: { text, clippedAt: new Date().toISOString() } }));
+      };
+
+      const clearClip = (model) => {
+        setClippedResponses(prev => ({ ...prev, [model]: null }));
+        setClipInclude(prev => ({ ...prev, [model]: false }));
+      };
+
+      const toggleClipInclude = (model) => {
+        if (!clippedResponses[model]) return;
+        setClipInclude(prev => ({ ...prev, [model]: !prev[model] }));
+      };
+
+      const clearAllClips = () => {
+        setClippedResponses({ claude: null, chatgpt: null, gemini: null });
+        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+      };
+
+      const anyClipIncluded = Object.values(clipInclude).some(Boolean);
+
       const toggleVaultForward = (id) => {
         setVaultForward(prev =>
           prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -1916,7 +1954,7 @@
       const hasAnyKey = Object.values(keys).some(k => k.trim());
 
       // Build the full prompt content, optionally appending vault file and/or included model response
-      const buildPromptContent = (userText, includeModel, vaultFiles) => {
+      const buildPromptContent = (userText, includeModel, vaultFiles, clippedItems) => {
         let base = userText;
 
         // Append vault files first — reference material, not dialogue
@@ -1927,7 +1965,16 @@
           base = base ? base + fileBlocks : fileBlocks.trimStart();
         }
 
-        // No model response to include — return base (prompt + optional files)
+        // Append clipped responses — in-app clipboard inclusions
+        if (clippedItems && clippedItems.length > 0) {
+          const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+          const clipBlocks = clippedItems.map(({ model, text }) =>
+            `\n\n---\nThe following is a clipped response from ${modelLabels[model]} included from the in-app clipboard:\n\n${text}\n---`
+          ).join('');
+          base = base ? base + clipBlocks : clipBlocks.trimStart();
+        }
+
+        // No model response to include — return base
         if (!includeModel || includeModel === 'none' || !responses[includeModel]) return base || userText;
 
         const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
@@ -1947,12 +1994,14 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const content = buildPromptContent(userText, included, vaultFiles);
+        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const content = buildPromptContent(userText, included, vaultFiles, clippedItems);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
+        setClipInclude({ claude: false, chatgpt: false, gemini: false });
         setModeArmed(false);
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
@@ -2021,13 +2070,15 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const baseContent = buildPromptContent(userText, included, vaultFiles);
+        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const baseContent = buildPromptContent(userText, included, vaultFiles, clippedItems);
         const activeExclude = excludeModel;
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
+        setClipInclude({ claude: false, chatgpt: false, gemini: false });
         setModeArmed(false);
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== activeExclude);
@@ -2114,12 +2165,14 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const content = buildPromptContent(userText, included, vaultFiles);
+        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const content = buildPromptContent(userText, included, vaultFiles, clippedItems);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
+        setClipInclude({ claude: false, chatgpt: false, gemini: false });
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -2195,6 +2248,7 @@
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
+        setClipInclude({ claude: false, chatgpt: false, gemini: false });
         setModeArmed(false);
       };
 
@@ -2835,6 +2889,23 @@
                 </button>
               )}
 
+              {/* Clip status indicator */}
+              {anyClipIncluded && (
+                <button
+                  onClick={() => { setSidebarRightOpen(true); rightSidebarRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                  title="Clipped content selected for include — click to open sidebar"
+                  style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 10px',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-hover)',
+                    borderRadius: 'var(--radius)', cursor: 'pointer',
+                    color: 'var(--text-primary)', whiteSpace: 'nowrap',
+                  }}
+                >
+                  ✂ {Object.values(clipInclude).filter(Boolean).length} clipped
+                </button>
+              )}
+
             </div>
 
             {/* ── Row 2: Dispatch (how and go) ── */}
@@ -2963,6 +3034,7 @@
                 hasKey={!!(keys[model]?.trim())}
                 onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
                 onOpenPanel={openCodePanel}
+                onClip={clipResponse}
               />
             ))}
           </div>
@@ -3085,15 +3157,66 @@
 
               <div className="sidebar-divider" />
 
-              {/* Clipboard — stub */}
+              {/* Clipboard — CT-094 */}
               <div style={{ marginBottom: '16px' }}>
                 <div className="sidebar-section-label">Clipboard</div>
-                <div className="sidebar-stub">
-                  <span style={{ opacity: 0.7 }}>⊘</span> Nothing clipped
-                </div>
-                <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
-                  CT-094 · idea
-                </div>
+                {['claude', 'chatgpt', 'gemini'].map(m => {
+                  const META = {
+                    claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  border: 'var(--claude-border)',  icon: '◈' },
+                    chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', border: 'var(--chatgpt-border)', icon: '◇' },
+                    gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  border: 'var(--gemini-border)',  icon: '△' },
+                  }[m];
+                  const clip = clippedResponses[m];
+                  const selected = clipInclude[m];
+                  return (
+                    <div
+                      key={m}
+                      onClick={() => toggleClipInclude(m)}
+                      style={{
+                        marginBottom: '4px',
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius)',
+                        border: `1px solid ${selected ? META.border : clip ? 'var(--border-subtle)' : 'var(--border-subtle)'}`,
+                        background: selected ? 'var(--bg-card)' : 'var(--bg-input)',
+                        cursor: clip ? 'pointer' : 'default',
+                        opacity: clip ? 1 : 0.4,
+                        transition: 'background 0.12s, border-color 0.12s',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: clip ? '3px' : 0 }}>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: META.accent, fontWeight: 700 }}>
+                          {META.icon} {META.label}
+                        </span>
+                        {clip && (
+                          <button
+                            onClick={e => { e.stopPropagation(); clearClip(m); }}
+                            style={{
+                              marginLeft: 'auto', background: 'none', border: 'none',
+                              cursor: 'pointer', color: 'var(--text-muted)', fontSize: '11px',
+                              lineHeight: 1, padding: '0 2px', transition: 'color 0.12s'
+                            }}
+                            title={`Clear ${META.label} clip`}
+                          >✕</button>
+                        )}
+                      </div>
+                      {clip ? (
+                        <div style={{
+                          fontFamily: 'JetBrains Mono', fontSize: '10px',
+                          color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          fontWeight: selected ? 600 : 400,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {clip.text.trim().split('\n')[0].slice(0, 60) || '(empty)'}
+                        </div>
+                      ) : (
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)' }}>
+                          nothing clipped
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="sidebar-divider" />
