@@ -2446,7 +2446,7 @@
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           if (directTo !== 'all') sendDirect(directTo);
-          else if (sendArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none')) {
+          else if (sendArmed && !conductorActive && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0)) {
             if (activeModels.length === 0) {
               setNoKeyWarning(true);
               setTimeout(() => setNoKeyWarning(false), 4000);
@@ -2742,9 +2742,9 @@
               }}
             />
 
-            {/* Controls row */}
+            {/* ── Row 1: Target (who gets what) ── */}
             <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap'
+              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'nowrap'
             }}>
 
               {/* Direct to dropdown */}
@@ -2826,7 +2826,7 @@
                 </div>
               )}
 
-              {/* Vault status indicator — shows selected count, click jumps to right sidebar */}
+              {/* Vault status indicator */}
               {sessionVault.length > 0 && (
                 <button
                   onClick={() => { setSidebarRightOpen(true); rightSidebarRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
@@ -2846,10 +2846,14 @@
                 </button>
               )}
 
-              {/* Spacer */}
-              <div style={{ flex: 1 }} />
+            </div>
 
-              {/* Status */}
+            {/* ── Row 2: Dispatch (how and go) ── */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px'
+            }}>
+
+              {/* Active status */}
               <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)' }}>
                 {conductorActive
                   ? <span style={{ color: 'var(--gemini-accent)' }}>
@@ -2879,7 +2883,7 @@
                 }
               </div>
 
-              {/* Send controls — mode dropdown + send button when directTo=all, single Send when directed */}
+              {/* Mode + Send — or directed Send */}
               {directTo === 'all' ? (
                 <>
                   <select
@@ -2898,57 +2902,56 @@
                     <option value="conductor">Conductor</option>
                   </select>
                   <div style={{ position: 'relative' }}>
-                  <button
-                    disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none') || conductorActive}
-                    onClick={() => {
-                      if (activeModels.length === 0) {
-                        setNoKeyWarning(true);
-                        setTimeout(() => setNoKeyWarning(false), 4000);
-                        return;
-                      }
-                      sendMode === 'parallel' ? sendParallel() : sendConductor();
-                    }}
-                    style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
-                      background: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
-                        ? 'var(--bg-card)' : 'transparent',
-                      border: `1px solid ${sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
-                        ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
-                      borderRadius: 'var(--radius)',
-                      cursor: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
-                        ? 'pointer' : 'default',
-                      color: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive
-                        ? 'var(--text-primary)'
-                        : turnHistory.length > 0 ? 'var(--text-muted)' : 'var(--text-muted)',
-                      fontWeight: 600,
-                      opacity: sendArmed && (prompt.trim() || includeResponse !== 'none') && !conductorActive ? 1 : 0.4,
-                    }}
-                  >Send ↵</button>
-                  {noKeyWarning && (
-                    <div style={{
-                      position: 'absolute', top: 'calc(100% + 4px)', right: 0,
-                      background: 'var(--bg-card)', border: '1px solid #f47068',
-                      borderRadius: 'var(--radius)', padding: '8px 12px',
-                      fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#f47068',
-                      whiteSpace: 'nowrap', zIndex: 10
-                    }}>
-                      No API keys loaded — open Settings to add keys.
-                    </div>
-                  )}
+                    <button
+                      disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) || conductorActive}
+                      onClick={() => {
+                        if (activeModels.length === 0) {
+                          setNoKeyWarning(true);
+                          setTimeout(() => setNoKeyWarning(false), 4000);
+                          return;
+                        }
+                        sendMode === 'parallel' ? sendParallel() : sendConductor();
+                      }}
+                      style={{
+                        fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
+                        background: sendArmed && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0) && !conductorActive
+                          ? 'var(--bg-card)' : 'transparent',
+                        border: `1px solid ${sendArmed && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0) && !conductorActive
+                          ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                        borderRadius: 'var(--radius)',
+                        cursor: sendArmed && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0) && !conductorActive
+                          ? 'pointer' : 'default',
+                        color: sendArmed && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0) && !conductorActive
+                          ? 'var(--text-primary)' : 'var(--text-muted)',
+                        fontWeight: 600,
+                        opacity: sendArmed && (prompt.trim() || includeResponse !== 'none' || vaultForward.length > 0) && !conductorActive ? 1 : 0.4,
+                      }}
+                    >Send ↵</button>
+                    {noKeyWarning && (
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                        background: 'var(--bg-card)', border: '1px solid #f47068',
+                        borderRadius: 'var(--radius)', padding: '8px 12px',
+                        fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#f47068',
+                        whiteSpace: 'nowrap', zIndex: 10
+                      }}>
+                        No API keys loaded — open Settings to add keys.
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
                 <button
-                  disabled={!prompt.trim() && includeResponse === 'none'}
+                  disabled={!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0}
                   onClick={() => sendDirect(directTo)}
                   style={{
                     fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
                     background: {claude:'var(--claude-border)',chatgpt:'var(--chatgpt-border)',gemini:'var(--gemini-border)'}[directTo],
                     border: 'none', borderRadius: 'var(--radius)',
-                    cursor: (!prompt.trim() && includeResponse === 'none') ? 'default' : 'pointer',
+                    cursor: (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) ? 'default' : 'pointer',
                     color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo],
                     fontWeight: 600,
-                    opacity: (!prompt.trim() && includeResponse === 'none') ? 0.4 : 1
+                    opacity: (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) ? 0.4 : 1
                   }}
                 >Send ↵</button>
               )}
