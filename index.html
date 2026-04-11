@@ -1514,17 +1514,47 @@
                 }} />
               )}
             </div>
-            <button
-              onClick={onToggle}
-              style={{
-                fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '4px 10px',
-                background: enabled ? config.border : 'var(--border-subtle)',
-                border: 'none', borderRadius: '4px', cursor: 'pointer',
-                color: enabled ? config.accent : 'var(--text-muted)'
-              }}
-            >
-              {enabled ? 'ON' : 'OFF'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {response && (
+                <>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(response)}
+                    title="Copy to clipboard"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1,
+                      padding: '2px 4px', borderRadius: '3px',
+                      transition: 'color 0.12s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  >⎘</button>
+                  <button
+                    onClick={() => onClip && onClip(model, response)}
+                    title="Clip to CT clipboard"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1,
+                      padding: '2px 4px', borderRadius: '3px',
+                      transition: 'color 0.12s'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.color = config.accent}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  >✂</button>
+                </>
+              )}
+              <button
+                onClick={onToggle}
+                style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '4px 10px',
+                  background: enabled ? config.border : 'var(--border-subtle)',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer',
+                  color: enabled ? config.accent : 'var(--text-muted)'
+                }}
+              >
+                {enabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
           </div>
 
           {/* Content */}
@@ -1547,32 +1577,6 @@
               </div>
             )}
           </div>
-
-          {/* Copy + Clip buttons — only when there's a response */}
-          {response && (
-            <div style={{ marginTop: '12px', display: 'flex', gap: '6px' }}>
-              <button onClick={() => navigator.clipboard.writeText(response)}
-                style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
-                  background: 'var(--bg-input)', border: '1px solid var(--border-hover)',
-                  borderRadius: '4px', cursor: 'pointer', color: 'var(--text-primary)'
-                }}
-              >
-                Copy
-              </button>
-              <button
-                onClick={() => onClip && onClip(model, response)}
-                title="Clip to in-app clipboard"
-                style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '10px', padding: '4px 8px',
-                  background: 'var(--bg-input)', border: `1px solid ${config.border}`,
-                  borderRadius: '4px', cursor: 'pointer', color: config.accent
-                }}
-              >
-                ✂ Clip
-              </button>
-            </div>
-          )}
         </div>
       );
     }
@@ -3159,7 +3163,10 @@
 
               {/* Clipboard — CT-094 */}
               <div style={{ marginBottom: '16px' }}>
-                <div className="sidebar-section-label">Clipboard</div>
+                <div className="sidebar-section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Clipboard</span>
+                  <span style={{ fontSize: '11px', opacity: 0.5 }}>✂</span>
+                </div>
                 {['claude', 'chatgpt', 'gemini'].map(m => {
                   const META = {
                     claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  border: 'var(--claude-border)',  icon: '◈' },
@@ -3189,6 +3196,11 @@
                           {META.icon} {META.label}
                         </span>
                         {clip && (
+                          <span style={{ fontFamily: 'JetBrains Mono', fontSize: '9px', color: 'var(--text-muted)', marginLeft: '2px' }}>
+                            {new Date(clip.clippedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </span>
+                        )}
+                        {clip && (
                           <button
                             onClick={e => { e.stopPropagation(); clearClip(m); }}
                             style={{
@@ -3207,7 +3219,7 @@
                           fontWeight: selected ? 600 : 400,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         }}>
-                          {clip.text.trim().split('\n')[0].slice(0, 60) || '(empty)'}
+                          {clip.text.trim().split('\n').find(l => l.trim()) ? clip.text.trim().split('\n').find(l => l.trim()).slice(0, 60) : '(empty)'}
                         </div>
                       ) : (
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)' }}>
