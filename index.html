@@ -238,6 +238,126 @@
     }
     .sidebar-spacer { flex: 1; }
 
+    /* ── Code Block Floating Panels (CT-110) ── */
+    .ct-code-token {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-hover);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      margin: 4px 0;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      user-select: none;
+    }
+    .ct-code-token:hover {
+      background: var(--bg-card);
+      border-color: var(--text-muted);
+      color: var(--text-primary);
+    }
+    .ct-code-token .token-icon { font-size: 12px; opacity: 0.7; }
+    .ct-code-panel {
+      position: fixed;
+      background: var(--bg-card);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      max-width: 58vw;
+      max-height: 62vh;
+      min-width: 320px;
+      min-height: 120px;
+      overflow: hidden;
+      user-select: none;
+    }
+    .ct-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: grab;
+      flex-shrink: 0;
+    }
+    .ct-panel-header:active { cursor: grabbing; }
+    .ct-panel-header .panel-model {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .ct-panel-header .panel-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .ct-panel-header .panel-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+      flex-shrink: 0;
+      transition: color 0.12s;
+    }
+    .ct-panel-header .panel-close:hover { color: var(--text-primary); }
+    .ct-panel-body {
+      flex: 1;
+      overflow: auto;
+      padding: 12px;
+    }
+    .ct-panel-body pre {
+      margin: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      white-space: pre;
+    }
+    .ct-panel-limit-warning {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg-card);
+      border: 1px solid #f47068;
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #f47068;
+      z-index: 10000;
+      box-shadow: var(--shadow);
+      pointer-events: none;
+    }
+    .ct-close-all {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .ct-close-all:hover {
+      color: #f47068;
+      border-color: #f47068;
+    }
+
     /* prose (markdown output) */
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -395,6 +515,16 @@
             req.onerror   = (e) => reject(e.target.error);
           });
         },
+
+        async clear() {
+          const db = await open();
+          return new Promise((resolve, reject) => {
+            const tx  = db.transaction(STORE, 'readwrite');
+            const req = tx.objectStore(STORE).clear();
+            req.onsuccess = () => resolve();
+            req.onerror   = (e) => reject(e.target.error);
+          });
+        },
       };
     })();
 
@@ -486,6 +616,155 @@
     function RenderedMarkdown({ text }) {
       const html = marked.parse(text || '', { breaks: true, gfm: true });
       return <div dangerouslySetInnerHTML={{ __html: html }} className="prose" />;
+    }
+
+    // ─────────────────────────────────────────────
+    // CT-110 — Code Block Floating Panels
+    // ─────────────────────────────────────────────
+
+    const MAX_PANELS = 3;
+    const CASCADE_OFFSET = 24;
+
+    // Parse code blocks out of markdown text, return mixed array of {type:'text'|'code', ...}
+    function parseCodeBlocks(text) {
+      const segments = [];
+      const regex = /```(\w*)\n?([\s\S]*?)```/g;
+      let lastIndex = 0;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+        }
+        const lang = match[1] || 'code';
+        const code = match[2];
+        const lines = code.split('\n').length;
+        segments.push({ type: 'code', lang, code, lines });
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        segments.push({ type: 'text', content: text.slice(lastIndex) });
+      }
+      return segments;
+    }
+
+    // Draggable floating code panel
+    function CodePanel({ panel, onClose, onFocus }) {
+      const panelRef = useRef(null);
+      const dragState = useRef(null);
+
+      const MODEL_META = {
+        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  icon: '◈' },
+        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', icon: '◇' },
+        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  icon: '△' },
+      };
+      const meta = MODEL_META[panel.model];
+
+      const handleMouseDown = (e) => {
+        if (e.target.classList.contains('panel-close')) return;
+        onFocus(panel.id);
+        const rect = panelRef.current.getBoundingClientRect();
+        dragState.current = {
+          startX: e.clientX - rect.left,
+          startY: e.clientY - rect.top,
+        };
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        e.preventDefault();
+      };
+
+      const handleMouseMove = (e) => {
+        if (!dragState.current || !panelRef.current) return;
+        const pw = panelRef.current.offsetWidth;
+        const ph = panelRef.current.offsetHeight;
+        let x = e.clientX - dragState.current.startX;
+        let y = e.clientY - dragState.current.startY;
+        // Clamp to viewport
+        x = Math.max(0, Math.min(window.innerWidth - pw, x));
+        y = Math.max(0, Math.min(window.innerHeight - ph, y));
+        panelRef.current.style.left = x + 'px';
+        panelRef.current.style.top  = y + 'px';
+        panelRef.current.style.right = 'auto';
+      };
+
+      const handleMouseUp = (e) => {
+        dragState.current = null;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        // Save position to panel origin memory
+        if (panelRef.current) {
+          const rect = panelRef.current.getBoundingClientRect();
+          panel.onPositionSave && panel.onPositionSave(panel.model, { x: rect.left, y: rect.top });
+        }
+      };
+
+      const firstLine = panel.code.split('\n').find(l => l.trim()) || '';
+      const preview = firstLine.length > 40 ? firstLine.slice(0, 40) + '…' : firstLine;
+
+      return (
+        <div
+          ref={panelRef}
+          className="ct-code-panel"
+          style={{
+            left: panel.anchor === 'right'
+              ? 'auto'
+              : panel.x + 'px',
+            right: panel.anchor === 'right'
+              ? (window.innerWidth - panel.x - (window.innerWidth * 0.58)) + 'px'
+              : 'auto',
+            top: panel.y + 'px',
+            zIndex: panel.zIndex,
+          }}
+          onMouseDown={() => onFocus(panel.id)}
+        >
+          <div className="ct-panel-header" onMouseDown={handleMouseDown}>
+            <span className="panel-model" style={{ color: meta.accent }}>
+              {meta.icon} {meta.label}
+            </span>
+            <span className="panel-meta">
+              {panel.lang} · {panel.lines} lines · {preview}
+            </span>
+            <button className="panel-close" onClick={() => onClose(panel.id)}>✕</button>
+          </div>
+          <div className="ct-panel-body">
+            <pre>{panel.code}</pre>
+          </div>
+        </div>
+      );
+    }
+
+    // Rendered markdown with code blocks replaced by tokens
+    function RenderedMarkdownWithCodePanels({ text, model, onOpenPanel }) {
+      const segments = parseCodeBlocks(text || '');
+      if (segments.length === 0) return null;
+      // If no code blocks, fall through to standard renderer
+      const hasCode = segments.some(s => s.type === 'code');
+      if (!hasCode) {
+        const html = marked.parse(text || '', { breaks: true, gfm: true });
+        return <div dangerouslySetInnerHTML={{ __html: html }} className="prose" />;
+      }
+      return (
+        <div className="prose">
+          {segments.map((seg, i) => {
+            if (seg.type === 'text') {
+              const html = marked.parse(seg.content, { breaks: true, gfm: true });
+              return <div key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+            }
+            return (
+              <div
+                key={i}
+                className="ct-code-token"
+                onClick={() => onOpenPanel({ lang: seg.lang, code: seg.code, lines: seg.lines, model })}
+                title="Click to open code panel"
+              >
+                <span className="token-icon">⌥</span>
+                <span style={{ fontWeight: 600 }}>{seg.lang || 'code'}</span>
+                <span style={{ color: 'var(--text-muted)' }}>{seg.lines} lines</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>↗ open</span>
+              </div>
+            );
+          })}
+        </div>
+      );
     }
 
     // ─────────────────────────────────────────────
@@ -1198,7 +1477,7 @@
     // Model Response Card
     // ─────────────────────────────────────────────
 
-    function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle }) {
+    function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle, onOpenPanel }) {
       const config = {
         claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
         chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
@@ -1256,7 +1535,7 @@
             {isLoading && !response && (
               <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Thinking...</div>
             )}
-            {response && <RenderedMarkdown text={response} />}
+            {response && <RenderedMarkdownWithCodePanels text={response} model={model} onOpenPanel={onOpenPanel} />}
             {!response && !isLoading && !error && (
               <div style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '13px' }}>
                 {hasKey ? 'Waiting for prompt...' : 'No API key loaded.'}
@@ -1406,6 +1685,79 @@
       // Left sidebar open/collapsed state — auto-open on wide viewports
       const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1100);
 
+      // ── CT-110 Code Panel state ──
+      const [codePanels, setCodePanels] = useState([]);
+      const [panelZCounter, setPanelZCounter] = useState(100);
+      const [panelLimitWarning, setPanelLimitWarning] = useState(false);
+      // Position memory per model origin: { claude: {x,y}, chatgpt: {x,y}, gemini: {x,y} }
+      const panelPositionMemory = useRef({});
+      // Track last opened panel position for cascade
+      const lastPanelPos = useRef(null);
+      const panelIdCounter = useRef(0);
+
+      const getInitialPanelPos = (model) => {
+        const isFirst = codePanels.length === 0 && lastPanelPos.current === null;
+        if (isFirst) {
+          // Snap to column anchor
+          const vw = window.innerWidth;
+          const sidebarW = sidebarOpen ? 240 : 40;
+          const contentW = vw - sidebarW;
+          const colW = contentW / 3;
+          if (model === 'gemini') {
+            // Right edge anchor — panel right aligns to gemini column right
+            return { x: Math.min(vw - 100, sidebarW + contentW - 40), y: 80, anchor: 'right' };
+          } else {
+            const colIndex = model === 'claude' ? 0 : 1;
+            return { x: sidebarW + colIndex * colW + 8, y: 80, anchor: 'left' };
+          }
+        }
+        // Cascade from last opened or from position memory
+        const base = panelPositionMemory.current[model] || lastPanelPos.current || { x: 120, y: 80 };
+        return {
+          x: Math.min(base.x + CASCADE_OFFSET, window.innerWidth - 400),
+          y: Math.min(base.y + CASCADE_OFFSET, window.innerHeight - 200),
+          anchor: 'left'
+        };
+      };
+
+      const openCodePanel = ({ lang, code, lines, model }) => {
+        if (codePanels.length >= MAX_PANELS) {
+          setPanelLimitWarning(true);
+          setTimeout(() => setPanelLimitWarning(false), 2500);
+          return;
+        }
+        const newZ = panelZCounter + 1;
+        setPanelZCounter(newZ);
+        const pos = getInitialPanelPos(model);
+        lastPanelPos.current = pos;
+        const id = ++panelIdCounter.current;
+        const panel = {
+          id, model, lang, code, lines,
+          x: pos.x, y: pos.y, anchor: pos.anchor || 'left',
+          zIndex: newZ,
+          onPositionSave: (m, p) => {
+            panelPositionMemory.current[m] = p;
+            lastPanelPos.current = p;
+          },
+        };
+        setCodePanels(prev => [...prev, panel]);
+      };
+
+      const closeCodePanel = (id) => {
+        setCodePanels(prev => prev.filter(p => p.id !== id));
+      };
+
+      const closeAllCodePanels = () => {
+        setCodePanels([]);
+        lastPanelPos.current = null;
+      };
+
+      const focusCodePanel = (id) => {
+        const newZ = panelZCounter + 1;
+        setPanelZCounter(newZ);
+        setCodePanels(prev => prev.map(p => p.id === id ? { ...p, zIndex: newZ } : p));
+      };
+
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [modeArmed, setModeArmed] = useState(false);
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
@@ -1432,9 +1784,18 @@
       const [vaultForward, setVaultForward] = useState(null); // null | vault entry id (number)
       const vaultInputRef = useRef(null);
 
-      // Load vault from IndexedDB on mount
+      // Load vault from IndexedDB on mount.
+      // On a fresh navigation (not a reload), clear the vault first — this handles
+      // crashes, sleep, and any other session termination that bypasses beforeunload.
+      // Reloads preserve the vault so accidental F5 doesn't wipe in-progress work.
       useEffect(() => {
-        vaultDB.getAll().then(entries => setSessionVault(entries)).catch(() => {});
+        const navType = performance?.getEntriesByType?.('navigation')?.[0]?.type;
+        const isFreshLoad = navType === 'navigate' || navType === 'back_forward';
+        if (isFreshLoad) {
+          vaultDB.clear().then(() => setSessionVault([])).catch(() => {});
+        } else {
+          vaultDB.getAll().then(entries => setSessionVault(entries)).catch(() => {});
+        }
       }, []);
 
       const handleVaultUpload = (e) => {
@@ -2238,12 +2599,19 @@
               </div>
             </div>
             {/* HUD placeholder — CT-109 */}
-            <div style={{
-              fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
-              padding: '6px 12px', border: '1px dashed var(--border-subtle)',
-              borderRadius: 'var(--radius)', opacity: 0.5
-            }}>
-              — no active Tetra —
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {codePanels.length > 0 && (
+                <button className="ct-close-all" onClick={closeAllCodePanels} title="Close all code panels">
+                  ⌥ Close all panels ({codePanels.length})
+                </button>
+              )}
+              <div style={{
+                fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
+                padding: '6px 12px', border: '1px dashed var(--border-subtle)',
+                borderRadius: 'var(--radius)', opacity: 0.5
+              }}>
+                — no active Tetra —
+              </div>
             </div>
           </header>
 
@@ -2569,9 +2937,25 @@
                 enabled={enabled[model]}
                 hasKey={!!(keys[model]?.trim())}
                 onToggle={() => setEnabled(prev => ({ ...prev, [model]: !prev[model] }))}
+                onOpenPanel={openCodePanel}
               />
             ))}
           </div>
+
+          {/* CT-110 — Floating code panels */}
+          {codePanels.map(panel => (
+            <CodePanel
+              key={panel.id}
+              panel={panel}
+              onClose={closeCodePanel}
+              onFocus={focusCodePanel}
+            />
+          ))}
+          {panelLimitWarning && (
+            <div className="ct-panel-limit-warning">
+              Max {MAX_PANELS} panels open — close one to open another
+            </div>
+          )}
 
           {/* History */}
           <HistoryPanel history={turnHistory} onLoadTurn={() => {}} />
