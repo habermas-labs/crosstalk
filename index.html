@@ -238,6 +238,75 @@
     }
     .sidebar-spacer { flex: 1; }
 
+    .ct-sidebar-right {
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: width 0.22s ease, min-width 0.22s ease, opacity 0.18s ease;
+      flex-shrink: 0;
+    }
+    .ct-sidebar-right.collapsed {
+      width: 40px;
+      min-width: 40px;
+      overflow: hidden;
+    }
+    .ct-sidebar-right.collapsed .sidebar-content {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ct-sidebar-right .sidebar-toggle {
+      left: 10px;
+      right: auto;
+    }
+    .ct-sidebar-right.collapsed .sidebar-toggle {
+      position: relative;
+      left: auto;
+      top: auto;
+      margin: 12px auto 0;
+    }
+    .vault-file-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .vault-file-row .vault-filename {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .vault-file-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1;
+      padding: 0 2px;
+      flex-shrink: 0;
+      transition: color 0.12s;
+    }
+    .vault-file-remove:hover { color: #f47068; }
+    @media (max-width: 1200px) {
+      .ct-sidebar-right { width: 40px; min-width: 40px; }
+      .ct-sidebar-right .sidebar-content { opacity: 0; pointer-events: none; }
+    }
+
     /* ── Code Block Floating Panels (CT-110) ── */
     .ct-code-token {
       display: inline-flex;
@@ -1684,6 +1753,9 @@
 
       // Left sidebar open/collapsed state — auto-open on wide viewports
       const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1100);
+      // Right sidebar open/collapsed state
+      const [sidebarRightOpen, setSidebarRightOpen] = useState(() => window.innerWidth >= 1200);
+      const rightSidebarRef = useRef(null);
 
       // ── CT-110 Code Panel state ──
       const [codePanels, setCodePanels] = useState([]);
@@ -1781,7 +1853,13 @@
       };
       // Session vault (CT-083 / CT-019 / CT-084)
       const [sessionVault, setSessionVault] = useState([]);
-      const [vaultForward, setVaultForward] = useState(null); // null | vault entry id (number)
+      const [vaultForward, setVaultForward] = useState([]); // array of selected vault entry ids
+
+      const toggleVaultForward = (id) => {
+        setVaultForward(prev =>
+          prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+      };
       const vaultInputRef = useRef(null);
 
       // Load vault from IndexedDB on mount.
@@ -1828,9 +1906,19 @@
         try {
           await vaultDB.remove(id);
           setSessionVault(prev => prev.filter(f => f.id !== id));
-          if (vaultForward === id) setVaultForward(null);
+          setVaultForward(prev => prev.filter(x => x !== id));
         } catch (err) {
           console.error('Vault remove failed:', err);
+        }
+      };
+
+      const clearVault = async () => {
+        try {
+          await vaultDB.clear();
+          setSessionVault([]);
+          setVaultForward([]);
+        } catch (err) {
+          console.error('Vault clear failed:', err);
         }
       };
 
@@ -1892,25 +1980,25 @@
       const hasAnyKey = Object.values(keys).some(k => k.trim());
 
       // Build the full prompt content, optionally appending vault file and/or included model response
-      const buildPromptContent = (userText, includeModel, vaultFile) => {
+      const buildPromptContent = (userText, includeModel, vaultFiles) => {
         let base = userText;
 
-        // Append vault file first if present — it is reference material, not dialogue
-        if (vaultFile) {
-          const fileBlock = `\n\n---\nThe following is plain text inlined directly into this prompt from the user's local session. No file transfer is occurring — this is text content included as part of your context (source: ${vaultFile.filename}):\n\n${vaultFile.content}\n---`;
-          base = base ? base + fileBlock : fileBlock.trimStart();
+        // Append vault files first — reference material, not dialogue
+        if (vaultFiles && vaultFiles.length > 0) {
+          const fileBlocks = vaultFiles.map(vaultFile =>
+            `\n\n---\nThe following is plain text inlined directly into this prompt from the user's local session. No file transfer is occurring — this is text content included as part of your context (source: ${vaultFile.filename}):\n\n${vaultFile.content}\n---`
+          ).join('');
+          base = base ? base + fileBlocks : fileBlocks.trimStart();
         }
 
-        // No model response to include — return base (prompt + optional file)
+        // No model response to include — return base (prompt + optional files)
         if (!includeModel || includeModel === 'none' || !responses[includeModel]) return base || userText;
 
         const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
         const included = responses[includeModel];
         if (!base.trim()) {
-          // Move 2: pure response routing, no new user text
           return `Here is ${modelLabels[includeModel]}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${included}\n---`;
         }
-        // Move 3: combined — user prompt (+ optional file) + included response
         return `${base}\n\n---\nFor context, here is ${modelLabels[includeModel]}'s response to our previous discussion:\n\n${included}\n---`;
       };
 
@@ -1922,13 +2010,13 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
-        const content = buildPromptContent(userText, included, vaultFile);
+        const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
+        const content = buildPromptContent(userText, included, vaultFiles);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
-        setVaultForward(null);
+        setVaultForward([]);
         setModeArmed(false);
 
         const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
@@ -1996,14 +2084,14 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
-        const baseContent = buildPromptContent(userText, included, vaultFile);
+        const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
+        const baseContent = buildPromptContent(userText, included, vaultFiles);
         const activeExclude = excludeModel;
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
-        setVaultForward(null);
+        setVaultForward([]);
         setModeArmed(false);
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== activeExclude);
@@ -2089,13 +2177,13 @@
 
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
-        const vaultFile = vaultForward !== null ? sessionVault.find(f => f.id === vaultForward) || null : null;
-        const content = buildPromptContent(userText, included, vaultFile);
+        const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
+        const content = buildPromptContent(userText, included, vaultFiles);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
-        setVaultForward(null);
+        setVaultForward([]);
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -2170,6 +2258,7 @@
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
+        setVaultForward([]);
         setModeArmed(false);
       };
 
@@ -2534,11 +2623,6 @@
                 )}
               </div>
 
-              {/* Clear / Reset */}
-              <button className="sidebar-btn" onClick={clearConversation}>
-                <span style={{ fontSize: '11px' }}>↺</span> Clear session
-              </button>
-
               <div className="sidebar-spacer" />
               <div className="sidebar-divider" />
 
@@ -2638,46 +2722,7 @@
             background: 'var(--bg-secondary)', borderRadius: '12px',
             border: '1px solid var(--border-subtle)', padding: '16px', marginBottom: '24px'
           }}>
-            {/* Vault chip bar — only shown when vault has files */}
-            {sessionVault.length > 0 && (
-              <div style={{
-                display: 'flex', flexWrap: 'wrap', gap: '6px',
-                marginBottom: '10px', paddingBottom: '10px',
-                borderBottom: '1px solid var(--border-subtle)'
-              }}>
-                {sessionVault.map(f => (
-                  <span key={f.id} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '5px',
-                    padding: '3px 8px', borderRadius: '4px',
-                    background: 'var(--bg-input)', border: '1px solid var(--border-hover)',
-                    fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)',
-                    maxWidth: '200px',
-                  }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {f.filename.endsWith('.md') ? '▪ ' : '◻ '}{f.filename}
-                    </span>
-                    <button
-                      onClick={() => removeFromVault(f.id)}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px',
-                        color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1, flexShrink: 0
-                      }}
-                      title={`Remove ${f.filename} from vault`}
-                    >✕</button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Hidden file input for vault uploads */}
-            <input
-              ref={vaultInputRef}
-              type="file"
-              accept=".txt,.md"
-              multiple
-              style={{ display: 'none' }}
-              onChange={handleVaultUpload}
-            />
+            {/* Hidden file input moved to right sidebar */}
 
             <textarea
               ref={textareaRef}
@@ -2754,29 +2799,19 @@
                 </div>
               )}
 
-              {/* Forward dropdown — shown when a model has a response or vault has files */}
-              {(['claude','chatgpt','gemini'].some(m => responses[m]) || sessionVault.length > 0) && (
+              {/* Forward dropdown — shown only when a model has a response */}
+              {['claude','chatgpt','gemini'].some(m => responses[m]) && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{
                     fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
                   }}>Forward</label>
                   <select
-                    value={vaultForward !== null ? `vault:${vaultForward}` : includeResponse}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (val.startsWith('vault:')) {
-                        setVaultForward(Number(val.slice(6)));
-                        setIncludeResponse('none');
-                      } else {
-                        setIncludeResponse(val);
-                        setVaultForward(null);
-                      }
-                    }}
+                    value={includeResponse}
+                    onChange={e => setIncludeResponse(e.target.value)}
                     style={{
                       padding: '5px 8px', background: 'var(--bg-input)',
                       border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: vaultForward !== null ? 'var(--text-secondary)'
-                        : includeResponse === 'none' ? 'var(--text-secondary)'
+                      color: includeResponse === 'none' ? 'var(--text-secondary)'
                         : includeResponse === 'claude' ? 'var(--claude-accent)'
                         : includeResponse === 'chatgpt' ? 'var(--chatgpt-accent)'
                         : 'var(--gemini-accent)',
@@ -2787,31 +2822,29 @@
                     {responses['claude']  && <option value="claude">◈ Claude</option>}
                     {responses['chatgpt'] && <option value="chatgpt">◇ ChatGPT</option>}
                     {responses['gemini']  && <option value="gemini">△ Gemini</option>}
-                    {sessionVault.length > 0 && <option disabled>── vault ──</option>}
-                    {sessionVault.map(f => (
-                      <option key={f.id} value={`vault:${f.id}`}>
-                        {f.filename.endsWith('.md') ? '▪' : '◻'} {f.filename}
-                      </option>
-                    ))}
                   </select>
                 </div>
               )}
 
-              {/* Vault upload button */}
-              <button
-                onClick={() => vaultInputRef.current?.click()}
-                title="Upload .txt or .md files to session vault"
-                style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 10px',
-                  background: sessionVault.length > 0 ? 'var(--bg-input)' : 'transparent',
-                  border: `1px solid ${sessionVault.length > 0 ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
-                  borderRadius: 'var(--radius)', cursor: 'pointer',
-                  color: sessionVault.length > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                ⊕ {sessionVault.length > 0 ? `${sessionVault.length} file${sessionVault.length > 1 ? 's' : ''}` : 'Vault'}
-              </button>
+              {/* Vault status indicator — shows selected count, click jumps to right sidebar */}
+              {sessionVault.length > 0 && (
+                <button
+                  onClick={() => { setSidebarRightOpen(true); rightSidebarRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                  title="File vault — click to open sidebar"
+                  style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 10px',
+                    background: vaultForward.length > 0 ? 'var(--bg-card)' : 'var(--bg-input)',
+                    border: `1px solid ${vaultForward.length > 0 ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                    borderRadius: 'var(--radius)', cursor: 'pointer',
+                    color: vaultForward.length > 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ⊕ {vaultForward.length > 0
+                    ? `${vaultForward.length} of ${sessionVault.length} selected`
+                    : `${sessionVault.length} file${sessionVault.length > 1 ? 's' : ''}`}
+                </button>
+              )}
 
               {/* Spacer */}
               <div style={{ flex: 1 }} />
@@ -2972,6 +3005,134 @@
 
           </div>{/* /inner max-width wrapper */}
           </div>{/* /ct-main */}
+
+          {/* ── Right Sidebar (accumulative zone) CT-107 ── */}
+          <aside
+            ref={rightSidebarRef}
+            className={`ct-sidebar-right${sidebarRightOpen ? '' : ' collapsed'}`}
+            style={{ position: 'relative' }}
+          >
+            <button
+              className="sidebar-toggle"
+              onClick={() => setSidebarRightOpen(o => !o)}
+              title={sidebarRightOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >{sidebarRightOpen ? '›' : '‹'}</button>
+
+            <div className="sidebar-content">
+
+              {/* Top spacer — matches left sidebar identity block height so File Vault aligns with Tetras */}
+              <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)', visibility: 'hidden', flexShrink: 0 }}>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 700 }}>CT</div>
+                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '9px' }}>Crosstalk Lab</div>
+              </div>
+
+              {/* Vault section */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">File Vault</div>
+
+                {/* Hidden file input */}
+                <input
+                  ref={vaultInputRef}
+                  type="file"
+                  accept=".txt,.md"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleVaultUpload}
+                />
+
+                {sessionVault.length === 0 ? (
+                  <div className="sidebar-stub" style={{ marginBottom: '6px' }}>
+                    <span style={{ opacity: 0.6 }}>⊘</span> No files loaded
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '6px' }}>
+                    {sessionVault.map(f => {
+                      const selected = vaultForward.includes(f.id);
+                      return (
+                        <div
+                          key={f.id}
+                          className="vault-file-row"
+                          onClick={() => toggleVaultForward(f.id)}
+                          style={{
+                            cursor: 'pointer',
+                            background: selected ? 'var(--bg-card)' : 'var(--bg-input)',
+                            border: `1px solid ${selected ? 'var(--border-hover)' : 'var(--border-subtle)'}`,
+                            fontWeight: selected ? 600 : 400,
+                            color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          }}
+                        >
+                          <span className="vault-filename" title={f.filename}>{f.filename}</span>
+                          <button
+                            className="vault-file-remove"
+                            onClick={e => { e.stopPropagation(); removeFromVault(f.id); }}
+                            title={`Remove ${f.filename}`}
+                          >✕</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <button
+                  className="sidebar-btn"
+                  onClick={() => vaultInputRef.current?.click()}
+                >
+                  <span>⊕</span> Add files
+                </button>
+
+                {sessionVault.length > 0 && (
+                  <button
+                    className="sidebar-btn"
+                    onClick={clearVault}
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span>↺</span> Clear vault
+                  </button>
+                )}
+              </div>
+
+              <div className="sidebar-divider" />
+
+              {/* Clipboard — stub */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Clipboard</div>
+                <div className="sidebar-stub">
+                  <span style={{ opacity: 0.7 }}>⊘</span> Nothing clipped
+                </div>
+                <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
+                  CT-094 · idea
+                </div>
+              </div>
+
+              <div className="sidebar-divider" />
+
+              {/* Cost tracker — stub */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Cost</div>
+                <div className="sidebar-stub">
+                  <span style={{ opacity: 0.7 }}>⊘</span> Not tracked
+                </div>
+                <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
+                  CT-017 · idea
+                </div>
+              </div>
+
+              <div className="sidebar-spacer" />
+              <div className="sidebar-divider" />
+
+              {/* Reset — deliberately last */}
+              <div className="sidebar-section-label">Session</div>
+              <button
+                className="sidebar-btn"
+                onClick={clearConversation}
+                style={{ color: 'var(--text-muted)' }}
+              >
+                <span>↺</span> Reset session
+              </button>
+
+            </div>
+          </aside>
+
         </div>
       );
     }
