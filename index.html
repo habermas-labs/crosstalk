@@ -792,6 +792,17 @@
             <span className="panel-meta">
               {panel.lang} · {panel.lines} lines · {preview}
             </span>
+            <button
+              onClick={() => navigator.clipboard.writeText(panel.code)}
+              title="Copy code to clipboard"
+              className="panel-close"
+              style={{ marginRight: '2px' }}
+            >
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="4" width="8" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                <path d="M2 10V2.8C2 2.08 2.08 2 2.8 2H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+              </svg>
+            </button>
             <button className="panel-close" onClick={() => onClose(panel.id)}>✕</button>
           </div>
           <div className="ct-panel-body">
@@ -1522,13 +1533,18 @@
                     title="Copy to clipboard"
                     style={{
                       background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1,
+                      color: 'var(--text-muted)', lineHeight: 1,
                       padding: '2px 4px', borderRadius: '3px',
-                      transition: 'color 0.12s'
+                      transition: 'color 0.12s', display: 'flex', alignItems: 'center'
                     }}
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                  >⎘</button>
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="8" height="9" rx="1.2" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+                      <path d="M2 10V2.8C2 2.08 2.08 2 2.8 2H9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  </button>
                   <button
                     onClick={() => onClip && onClip(model, response)}
                     title="Clip to CT clipboard"
