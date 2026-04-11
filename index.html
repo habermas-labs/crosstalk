@@ -1464,69 +1464,6 @@
               )}
             </div>
 
-            {/* ── Conductor Order ── */}
-            <div style={{
-              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
-              border: '1px solid var(--border-subtle)', marginBottom: '16px'
-            }}>
-              <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
-                Conductor Order
-              </h3>
-              <p style={{
-                fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)',
-                marginBottom: '14px', lineHeight: 1.5
-              }}>
-                Opening cycle sequence — each model sees the responses of models before it.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {conductorOrder.map((modelId, position) => (
-                  <React.Fragment key={position}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
-                      <label style={{
-                        fontFamily: 'JetBrains Mono', fontSize: '10px',
-                        color: 'var(--text-muted)', textAlign: 'center'
-                      }}>
-                        {position === 0 ? '1st' : position === 1 ? '2nd' : '3rd'}
-                      </label>
-                      <select
-                        value={modelId}
-                        onChange={e => handleOrderChange(position, e.target.value)}
-                        style={{
-                          ...selectStyle,
-                          color: MODEL_META[modelId].accent,
-                          borderColor: modelId === 'claude' ? 'var(--claude-border)'
-                            : modelId === 'chatgpt' ? 'var(--chatgpt-border)'
-                            : 'var(--gemini-border)',
-                        }}
-                      >
-                        <option value="claude">◈ Claude</option>
-                        <option value="chatgpt">◇ ChatGPT</option>
-                        <option value="gemini">△ Gemini</option>
-                      </select>
-                    </div>
-                    {position < 2 && (
-                      <span style={{
-                        color: 'var(--text-muted)', fontFamily: 'JetBrains Mono',
-                        fontSize: '14px', marginTop: '18px', flexShrink: 0
-                      }}>→</span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-              {/* Preview */}
-              <div style={{
-                marginTop: '12px', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                color: 'var(--text-muted)', textAlign: 'center'
-              }}>
-                {conductorOrder.map((m, i) => (
-                  <span key={m}>
-                    <span style={{ color: MODEL_META[m].accent }}>{MODEL_META[m].icon} {MODEL_META[m].label}</span>
-                    {i < conductorOrder.length - 1 && <span> → </span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-
             <div style={{
               padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
               border: '1px solid var(--border-subtle)', fontSize: '13px', color: 'var(--text-secondary)',
@@ -1534,8 +1471,7 @@
             }}>
               <strong style={{ color: 'var(--text-primary)' }}>Security:</strong> API keys exist only in browser
               session memory and are never stored on disk unless you explicitly export them. Exported .ctk files
-              are encrypted with AES-256-GCM — without your passphrase, the contents are unrecoverable. Keep the
-              .ctk file on your USB drive alongside the app.
+              are encrypted with AES-256-GCM — without your passphrase, the contents are unrecoverable.
             </div>
           </div>
         </div>
@@ -2509,6 +2445,59 @@
                 </div>
               </div>
 
+              {/* Conducting — Conductor Order */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Conducting</div>
+                <div style={{
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius)', padding: '10px 12px',
+                }}>
+                  <div style={{
+                    fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)',
+                    marginBottom: '8px'
+                  }}>Order</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {conductorOrder.map((modelId, position) => {
+                      const MODEL_LABELS = { claude: '◈ Claude', chatgpt: '◇ ChatGPT', gemini: '△ Gemini' };
+                      const MODEL_ACCENTS = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
+                      return (
+                        <div key={position} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{
+                            fontFamily: 'JetBrains Mono', fontSize: '9px', color: 'var(--text-muted)',
+                            width: '20px', flexShrink: 0
+                          }}>{position + 1}.</span>
+                          <select
+                            value={modelId}
+                            onChange={e => {
+                              const newModel = e.target.value;
+                              const current = [...conductorOrder];
+                              const existingPos = current.indexOf(newModel);
+                              const displaced = current[position];
+                              current[existingPos] = displaced;
+                              current[position] = newModel;
+                              setConductorOrder(current);
+                            }}
+                            style={{
+                              flex: 1, padding: '4px 6px',
+                              background: 'var(--bg-secondary)',
+                              border: `1px solid ${modelId === 'claude' ? 'var(--claude-border)' : modelId === 'chatgpt' ? 'var(--chatgpt-border)' : 'var(--gemini-border)'}`,
+                              borderRadius: '4px',
+                              color: MODEL_ACCENTS[modelId],
+                              fontFamily: 'JetBrains Mono', fontSize: '11px',
+                              outline: 'none', cursor: 'pointer',
+                            }}
+                          >
+                            <option value="claude">◈ Claude</option>
+                            <option value="chatgpt">◇ ChatGPT</option>
+                            <option value="gemini">△ Gemini</option>
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
               <div className="sidebar-divider" />
 
               {/* Export */}
@@ -2629,7 +2618,7 @@
               {/* Settings + Theme at bottom */}
               <div className="sidebar-section-label">Interface</div>
               <button className="sidebar-btn" onClick={() => setShowSettings(true)}>
-                <span>⚙</span> Settings
+                <span>⚙</span> Configuration
               </button>
               <button className="sidebar-btn" onClick={() => setDarkMode(m => !m)}>
                 <span>{darkMode ? '☀' : '☾'}</span> {darkMode ? 'Light mode' : 'Dark mode'}
@@ -2707,13 +2696,13 @@
               display: 'flex', flexDirection: 'column', alignItems: 'center'
             }}>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
-                Add your API keys in Settings to start querying models.
+                Configure your API keys to start querying models.
               </p>
               <button onClick={() => setShowSettings(true)} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '10px 24px',
                 background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
                 cursor: 'pointer', color: 'var(--claude-accent)'
-              }}>Open Settings</button>
+              }}>Configure keys</button>
             </div>
           )}
 
@@ -2935,7 +2924,7 @@
                         fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#f47068',
                         whiteSpace: 'nowrap', zIndex: 10
                       }}>
-                        No API keys loaded — open Settings to add keys.
+                        No API keys loaded — open Configuration to add keys.
                       </div>
                     )}
                   </div>
