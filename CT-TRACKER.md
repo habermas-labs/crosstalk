@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 112
+**Latest entry:** 113
 
 ---
 
@@ -32,11 +32,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 026 | Static site generator decision | Select and document SSG for CT | `planned` | Session discussion | 2026-03 |
 | 027 | Frontmatter schema v1 | Canonical required/optional fields for content entries | `planned` | Session discussion | 2026-03 |
 | 028 | CI validation | Markdown lint + frontmatter schema enforcement on PRs; tooling depends on SSG decision | `idea` | Session discussion | 2026-03 |
-| 029 | Obsidian / Zettelkasten flow direction | Single vault is decided; flow direction must be resolved before tooling is selected | `idea` | Session discussion | 2026-03 |
 | 032 | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
-| 033 | Password manager for credential workflow | Recommend and document a credential management approach in onboarding documentation | `idea` | Session discussion | 2026-03 |
-| 035 | Drag-and-drop conductor ordering | Reorder model cards dynamically to set Conductor sequence; always conducts left to right | `idea` | Session discussion | 2026-03 |
-| 036 | Conductor mid-conversation reordering | Ability to change the Conductor sequence order dynamically mid-session | `idea` | Session discussion | 2026-03 |
+| 033 | Credential management for hosted-key subscribers | Strategy and tooling for managing user credentials in a subscriber/hosted-key scenario; not applicable to BYOK-only deployment; revisit if CT moves to hosted keys | `idea` | Session discussion | 2026-03 |
 | 037 | File/attachment support — stage two | Stage one (vault, .txt/.md, FileReader) implemented as CT-019/083/084. Stage two (deferred): per-provider file APIs, binary formats, base64 encoding | `deferred` | Session discussion | 2026-03-03 |
 | 039 | Playback mode | Turn viewer: clicking a turn chip renders that turn's full state into the three-column layout; input field locked during playback; checkbox on turn chips flags turns for re-entry; requires CT-104 (turn chips) | `planned` | Session discussion | 2026-03-03 |
 | 040 | RIP mode (Rapid Idea Prototyping) | Divergent, generative mode that lowers friction to maximize idea branching; models have ambient visibility into all first-pass outputs in second pass; roles counterproductive in this mode; see also idea coordinate system (041) | `idea` | User insight | 2026-03-03 |
@@ -47,12 +44,9 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 045 | Focus mode | Single-model interface mode; eliminates the need to switch browser tabs; viable onboarding path for users who have only configured one API key | `idea` | User insight | 2026-03-03 |
 | 046 | RIFF mode | Structured dialogue mode where role presets are load-bearing; models assigned distinct epistemic roles engage in productive friction; grounded in Bakhtin's dialogism; see role presets (043) and mode meta-structure (044) | `idea` | Session discussion | 2026-03-03 |
 | 047 | Exit scaffold export | Forward-looking export artifact for re-instantiating the session's epistemic context in a new session; distinct from summary export; natural handoff from focus into RIFF | `idea` | Session discussion | 2026-03-03 |
-| 049 | Configurable dashboard widgets | Peripheral space on wide screens as productive real estate for repositionable panels; deferred pending session knowledge architecture stabilization | `deferred` | Session discussion | 2026-03-04 |
-| 050 | Unified responsive layout | Stacked single-column layout as the one design that adapts across breakpoints; accordion collapse on mobile is the same layout with collapse behavior added | `idea` | Session discussion | 2026-03-04 |
 | 051 | Card collapse and focus mode layout | Single full-width card in focus mode; non-participating cards collapse or dim during directed engagement | `idea` | Session discussion | 2026-03-04 |
 | 052 | Reverse chronological history display | Reverse chron default for history panel; toggle to chronological available | `idea` | Session discussion | 2026-03-04 |
-| 054 | History panel as dashboard widget | Conversation history panel as a repositionable widget; deferred pending session knowledge architecture stabilization | `deferred` | Session discussion | 2026-03-04 |
-| 055 | Per-model response history navigation | Per-column prev/next arrows scoped to each model's response sequence; resolves as part of CT-039 playback implementation | `idea` | Session discussion | 2026-03-04 |
+| 055 | Per-model response history navigation | Per-column prev/next arrows scoped to each model's response sequence; likely absorbed into CT-039 playback if that ships | `deferred` | Session discussion | 2026-03-04 |
 | 060 | Bullet minimal summary export | Lightweight bullet-point summary as an alternative to the narrative summary export; format option on the summary flyout | `idea` | User insight | 2026-03-04 |
 | 062 | Text-to-speech (TTS) output | Read model responses aloud via Web Speech API; distinctive voice assigned per model; trigger modes: auto-read on response arrival vs manual per-response button | `idea` | User insight | 2026-03-04 |
 | 063 | Verbosity / response length control | Per-session setting instructing models to target a specific response length: Concise / Standard / Detailed; implemented as system prompt instruction | `idea` | User insight | 2026-03-04 |
@@ -82,6 +76,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 105 | Footer + support links | Minimal one-line footer with MDReader and Ko-fi links; mirror both at the bottom of the Configuration panel | `planned` | User insight | 2026-03-25 |
 | 108 | Routing chip — Target / Attach / Dispatch | Dedicated routing zone at input band level replacing the current two-row control strip; three named sections: Target, Attach, Dispatch; routing is flow control not static configuration | `planned` | Via Nagi | 2026-03-29 |
 | 109 | Header as HUD | Active Tetra name displayed in the header alongside CT branding once a Tetra is selected; placeholder stub currently implemented | `planned` | Via Nagi | 2026-03-29 |
+| 113 | Recent turns — right sidebar navigation section | Recency-scoped turn history in the right sidebar showing the last 4–5 turns; avoids requiring the user to scroll to the history panel at page bottom; prerequisite: CT-104 (turn chips) | `idea` | Session discussion | 2026-04-16 |
 
 ---
 
@@ -142,6 +137,21 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 110 | Code block floating panels | Collapsed inline token replaces code blocks in model chips; draggable fixed-position panels clamped to viewport; first panel snaps to column edge, subsequent panels cascade 24px; max three panels with warning; z-index focus management; SVG copy button in panel header; position memory per model origin | User insight | 2026-04-11 |
 | 111 | Conducting section — left sidebar | Conductor Order controls migrated from Configuration modal to dedicated Conducting section in left sidebar | Session discussion | 2026-04-11 |
 | 112 | Configuration rename + UI text cleanup | Settings modal and all UI references renamed to Configuration; getting-started notice updated; security note trimmed | Session discussion | 2026-04-11 |
+
+---
+
+## Deprecated
+
+*Items formally retired from the backlog. Numbers preserved for reference. Reason column captures why.*
+
+| # | Feature / Idea | Reason | Notes | Date |
+|---|---------------|--------|-------|------|
+| 029 | Obsidian / Zettelkasten flow direction | `decision-made` | Single vault decided; flow direction resolved: vault-originated content lives in vault, project-originated in repo with vault holding references. Encoded in project conventions. | 2026-04-16 |
+| 035 | Drag-and-drop conductor ordering | `superseded` | Motivating problem (conductor order buried in settings) solved by CT-111; Conducting section in left sidebar provides visible, accessible ordering without drag-and-drop overhead | 2026-04-16 |
+| 036 | Conductor mid-conversation reordering | `superseded` | Same resolution as CT-035; left sidebar Conducting section is available between turns; drag-and-drop marginal UX gain does not justify code overhead | 2026-04-16 |
+| 049 | Configurable dashboard widgets | `superseded` | Left/right sidebar zone architecture (CT-106/107) encodes the same spatial intent as fixed constitutive/accumulative zones; repositionable widgets no longer fit the design commitment | 2026-04-16 |
+| 050 | Unified responsive layout | `superseded` | Interface has evolved substantially since this was logged; mobile work will restart from current architecture when the time comes, not from this framing | 2026-04-16 |
+| 054 | History panel as dashboard widget | `superseded` | Sidebar zone architecture (CT-106/107) forecloses repositionable widgets; recency-scoped turn history in the right sidebar captured as CT-113 | 2026-04-16 |
 
 ---
 
@@ -231,4 +241,4 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W009 | Session knowledge architecture | ZK permanent | proposed | 031, 039, 047, 103 |
 
 ---
-*Last updated: 2026-04-11*
+*Last updated: 2026-04-16*
