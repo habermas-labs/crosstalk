@@ -21,33 +21,29 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | # | Feature / Idea | Description | Status | Origin | Date |
 |---|---------------|-------------|--------|--------|------|
 | 011 | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
-| 013 | Synthesis mode | Designate one model as synthesizer — summarizes points of convergence and divergence | `idea` | Claude suggestion | 2026-03 |
-| 014 | Adversarial mode | Models prompted to challenge and stress-test each other's responses | `idea` | Triangulation philosophy | 2026-03 |
-| 015 | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation | `idea` | User insight | 2026-03 |
+| 015 | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation; one of four planned export modes alongside full transcript, bullet summary, and handoff-by-model | `planned` | User insight | 2026-03 |
 | 017 | Cost tracking | Estimate token usage and API cost per turn; stub in right sidebar accumulative zone (CT-107) | `idea` | Claude suggestion | 2026-03 |
 | 020 | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 023 | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
 | 024 | Ko-fi funding strategy | Develop strategy to use Ko-fi to help fund development; Ko-fi page framing and tier/support structure; UI link surface handled separately in CT-105 | `idea` | User insight | 2026-03 |
 | 025 | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
-| 026 | Static site generator decision | Select and document SSG for CT | `planned` | Session discussion | 2026-03 |
-| 027 | Frontmatter schema v1 | Canonical required/optional fields for content entries | `planned` | Session discussion | 2026-03 |
-| 028 | CI validation | Markdown lint + frontmatter schema enforcement on PRs; tooling depends on SSG decision | `idea` | Session discussion | 2026-03 |
+| 026 | Static site generator decision | Select and document SSG for CT public web presence; not the app itself | `deferred` | Session discussion | 2026-03 |
+| 027 | Frontmatter schema v1 | Canonical required/optional fields for content entries; depends on SSG decision (CT-026) | `deferred` | Session discussion | 2026-03 |
+| 028 | CI validation | Markdown lint + frontmatter schema enforcement on PRs; tooling depends on SSG decision (CT-026) | `deferred` | Session discussion | 2026-03 |
 | 032 | Backend agent layer / MCP server architecture | Server-side agent intermediating between client and model APIs via MCP; enables multi-user scenarios; natural evolution when single-file architecture becomes a constraint | `idea` | External suggestion | 2026-03 |
 | 033 | Credential management for hosted-key subscribers | Strategy and tooling for managing user credentials in a subscriber/hosted-key scenario; not applicable to BYOK-only deployment; revisit if CT moves to hosted keys | `idea` | Session discussion | 2026-03 |
-| 037 | File/attachment support — stage two | Stage one (vault, .txt/.md, FileReader) implemented as CT-019/083/084. Stage two (deferred): per-provider file APIs, binary formats, base64 encoding | `deferred` | Session discussion | 2026-03-03 |
+| 037 | File/attachment support — stage two | Stage one (vault, .txt/.md, FileReader) implemented as CT-019/083/084. Stage two: per-provider file APIs, binary formats, base64 encoding | `planned` | Session discussion | 2026-03-03 |
 | 039 | Playback mode | Turn viewer: clicking a turn chip renders that turn's full state into the three-column layout; input field locked during playback; checkbox on turn chips flags turns for re-entry; requires CT-104 (turn chips) | `planned` | Session discussion | 2026-03-03 |
 | 040 | RIP mode (Rapid Idea Prototyping) | Divergent, generative mode that lowers friction to maximize idea branching; models have ambient visibility into all first-pass outputs in second pass; roles counterproductive in this mode; see also idea coordinate system (041) | `idea` | User insight | 2026-03-03 |
 | 041 | Idea coordinate system | Labeling schema for RIP output (A1, A2, B1, B2 etc.); master index enables user to call back any specific idea by coordinate; index is the natural export artifact from a RIP session | `idea` | Session discussion | 2026-03-03 |
-| 042 | Pause state for models | Distinct from disable/toggle off; paused model remains in session state and maintains index awareness but does not generate in the current turn; necessary for RIP session integrity | `idea` | Session discussion | 2026-03-03 |
-| 043 | Role presets | Predefined system prompt configurations for individual models: Presenter/Developer, Critical Reader, External Observer, Synthesizer, Steelman; roles are building blocks for modes, not modes themselves; load-bearing in RIFF, counterproductive in RIP | `idea` | Session discussion | 2026-03-03 |
 | 044 | Mode meta-structure | Modes have session-level behavioral rules enforced at the application level; meta-structure governs turn sequencing, index management, inter-model awareness rules, and mode exit conditions; mode exit is user-triggered | `idea` | Session discussion | 2026-03-03 |
 | 045 | Focus mode | Single-model interface mode; eliminates the need to switch browser tabs; viable onboarding path for users who have only configured one API key | `idea` | User insight | 2026-03-03 |
-| 046 | RIFF mode | Structured dialogue mode where role presets are load-bearing; models assigned distinct epistemic roles engage in productive friction; grounded in Bakhtin's dialogism; see role presets (043) and mode meta-structure (044) | `idea` | Session discussion | 2026-03-03 |
-| 047 | Exit scaffold export | Forward-looking export artifact for re-instantiating the session's epistemic context in a new session; distinct from summary export; natural handoff from focus into RIFF | `idea` | Session discussion | 2026-03-03 |
+| 046 | RIFF mode | Structured dialogue mode where role presets are load-bearing; models assigned distinct epistemic roles engage in productive friction; grounded in Bakhtin's dialogism; see mode meta-structure (044) | `idea` | Session discussion | 2026-03-03 |
+| 047 | Exit scaffold export | Forward-looking export artifact for re-instantiating the session's epistemic context in a new session; distinct from summary export; natural handoff from focus into RIFF; depends on CT-015 (handoff summaries) | `deferred` | Session discussion | 2026-03-03 |
 | 051 | Card collapse and focus mode layout | Single full-width card in focus mode; non-participating cards collapse or dim during directed engagement | `idea` | Session discussion | 2026-03-04 |
 | 052 | Reverse chronological history display | Reverse chron default for history panel; toggle to chronological available | `idea` | Session discussion | 2026-03-04 |
 | 055 | Per-model response history navigation | Per-column prev/next arrows scoped to each model's response sequence; likely absorbed into CT-039 playback if that ships | `deferred` | Session discussion | 2026-03-04 |
-| 060 | Bullet minimal summary export | Lightweight bullet-point summary as an alternative to the narrative summary export; format option on the summary flyout | `idea` | User insight | 2026-03-04 |
+| 060 | Bullet minimal summary export | Lightweight bullet-point summary as an alternative to the narrative summary export; one of four planned export modes alongside full transcript, handoff summary, and handoff-by-model | `planned` | User insight | 2026-03-04 |
 | 062 | Text-to-speech (TTS) output | Read model responses aloud via Web Speech API; distinctive voice assigned per model; trigger modes: auto-read on response arrival vs manual per-response button | `idea` | User insight | 2026-03-04 |
 | 063 | Verbosity / response length control | Per-session setting instructing models to target a specific response length: Concise / Standard / Detailed; implemented as system prompt instruction | `idea` | User insight | 2026-03-04 |
 | 064 | Readability level targeting | Per-session setting specifying target reading level; implemented as system prompt instruction | `idea` | User insight | 2026-03-04 |
@@ -68,12 +64,11 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 091 | Session Brief — pre-session context intake | Optional context intake mechanism triggered on Tetra selection; two intake paths: direct text entry or guided intake via a selected model; produces a Session Brief dispatched in parallel to all models | `idea` | Session discussion | 2026-03-12 |
 | 097 | Per-slot model version selector — mid-session | Dropdown in each model card header to switch provider tier mid-session; history survives the switch because CT owns the conversation array client-side; structural differentiator from all native interfaces | `planned` | Session discussion | 2026-03-16 |
 | 098 | Worker hardening for proxied key architecture | Rate limiting, auth checks, abuse detection on Worker side; not required for BYOK launch but becomes non-optional if CT moves to hosted keys | `idea` | Session discussion | 2026-03-17 |
-| 099 | Expanded model support — Grok, Mistral, DeepSeek | User-configurable model chips; priority candidates by distinct epistemic provenance: Grok (live web access), Mistral (European open-weights), DeepSeek (Chinese provenance) | `idea` | Session discussion | 2026-03-17 |
+| 099 | Expanded model support — Grok, Mistral, DeepSeek | User-configurable model chips; priority candidates by distinct epistemic provenance: Grok (live web access), Mistral (European open-weights), DeepSeek (Chinese provenance) | `planned` | Session discussion | 2026-03-17 |
 | 100 | Role-context experiment series | Test whether defensive/performative self-reflection is emergent (context-activated) or a stable model difference; Version C role rotation is the priority experiment | `idea` | Session discussion | 2026-03-17 |
-| 102 | Code-heavy layout degradation — desktop stacked mode trigger | Three-column layout produces unreadable code block columns in code-heavy sessions; desktop-triggered stacked mode as deliberate user invocation | `idea` | Live session observation | 2026-03-22 |
 | 103 | Focus Thread — turn selection and curated export | Live annotation layer — user checks turn chips as the session advances; export harvests checked turns in chronological order with gaps intact; requires CT-104 (turn chips) | `idea` | Session discussion | 2026-03-24 |
 | 104 | History chips → Turn chips | Rename and reconceptualize history chips as turn chips representing every turn in the session; prerequisite for CT-103 and CT-039 | `idea` | Session discussion | 2026-03-24 |
-| 105 | Footer + support links | Minimal one-line footer with MDReader and Ko-fi links; mirror both at the bottom of the Configuration panel | `planned` | User insight | 2026-03-25 |
+| 105 | Left sidebar — support and about links | Ko-fi, MDReader, and About links surfaced in the left sidebar; persistent above-the-fold placement preferred over footer given unbounded page growth from turn history | `planned` | User insight | 2026-03-25 |
 | 108 | Routing chip — Target / Attach / Dispatch | Dedicated routing zone at input band level replacing the current two-row control strip; three named sections: Target, Attach, Dispatch; routing is flow control not static configuration | `planned` | Via Nagi | 2026-03-29 |
 | 109 | Header as HUD | Active Tetra name displayed in the header alongside CT branding once a Tetra is selected; placeholder stub currently implemented | `planned` | Via Nagi | 2026-03-29 |
 | 113 | Recent turns — right sidebar navigation section | Recency-scoped turn history in the right sidebar showing the last 4–5 turns; avoids requiring the user to scroll to the history panel at page bottom; prerequisite: CT-104 (turn chips) | `idea` | Session discussion | 2026-04-16 |
@@ -146,12 +141,17 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 | # | Feature / Idea | Reason | Notes | Date |
 |---|---------------|--------|-------|------|
+| 013 | Synthesis mode | `absorbed` | Absorbed into Hedra/Tetra framework (CT-073, CT-079, CT-082); synthesis is one of many configurable epistemic orientations, not a discrete mode | 2026-04-16 |
+| 014 | Adversarial mode | `absorbed` | Absorbed into Hedra/Tetra framework (CT-073, CT-079, CT-082); adversarial facing is a Hedra configuration, not a standalone mode | 2026-04-16 |
 | 029 | Obsidian / Zettelkasten flow direction | `decision-made` | Single vault decided; flow direction resolved: vault-originated content lives in vault, project-originated in repo with vault holding references. Encoded in project conventions. | 2026-04-16 |
 | 035 | Drag-and-drop conductor ordering | `superseded` | Motivating problem (conductor order buried in settings) solved by CT-111; Conducting section in left sidebar provides visible, accessible ordering without drag-and-drop overhead | 2026-04-16 |
 | 036 | Conductor mid-conversation reordering | `superseded` | Same resolution as CT-035; left sidebar Conducting section is available between turns; drag-and-drop marginal UX gain does not justify code overhead | 2026-04-16 |
+| 042 | Pause state for models | `superseded` | Per-model on/off toggle in model card header covers the practical use case; toggle is frictionless to re-engage; distinction between pause and off does not justify a separate mechanism | 2026-05-01 |
+| 043 | Role presets | `absorbed` | Absorbed into Tetra/Hedra framework (CT-073, CT-079, CT-082); roles are now building blocks of named Tetra presets rather than standalone configurable items | 2026-04-16 |
 | 049 | Configurable dashboard widgets | `superseded` | Left/right sidebar zone architecture (CT-106/107) encodes the same spatial intent as fixed constitutive/accumulative zones; repositionable widgets no longer fit the design commitment | 2026-04-16 |
 | 050 | Unified responsive layout | `superseded` | Interface has evolved substantially since this was logged; mobile work will restart from current architecture when the time comes, not from this framing | 2026-04-16 |
 | 054 | History panel as dashboard widget | `superseded` | Sidebar zone architecture (CT-106/107) forecloses repositionable widgets; recency-scoped turn history in the right sidebar captured as CT-113 | 2026-04-16 |
+| 102 | Code-heavy layout degradation — desktop stacked mode trigger | `superseded` | Floating code panels (CT-110) solve the column-width problem through a better mechanism; stacked mode trigger no longer needed | 2026-05-01 |
 
 ---
 
@@ -197,6 +197,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - The theoretical foundation for triangulation as an epistemic practice is Bakhtin's outsideness (vnenakhodimost') and surplus of seeing, connected to sociocultural hermeneutics. See permanent note: vnenakhodimost-surplus-of-seeing.md
 - The three moderated dialogue moves (directed prompt, response routing, combined move) are usage patterns that emerge from the Direct to / Forward controls, not discrete features. The taxonomy belongs in documentation, not in the implementation. (048)
 - Handoff summaries (015) must preserve authorship and voice, not just content; models receiving their own prior output lose co-author status — provenance tracking is essential for intellectual integrity of the session record.
+- Four-mode export system: full transcript (CT-016), bullet summary (CT-060), handoff summary (CT-015), handoff-by-model (CT-015). Spans raw archival through structured capture to forward-looking re-entry; see W009 session knowledge architecture.
 - TTS (062), verbosity control (063), and readability targeting (064) compound in value together — particularly for ADHD users where concise + spoken is a meaningfully different experience than long + visual.
 - Voice conductor mode (067) and voice command intent parsing (068) are separable — TTS output (062) can ship independently of voice input.
 - Zoom caption layer integration (069) has a non-obvious archival benefit: captions pushed to Zoom's caption layer are captured in meeting recordings with model attribution intact. Both (069) and (070) are gated behind backend agent layer (032).
@@ -241,4 +242,4 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W009 | Session knowledge architecture | ZK permanent | proposed | 031, 039, 047, 103 |
 
 ---
-*Last updated: 2026-04-16*
+*Last updated: 2026-05-01*
