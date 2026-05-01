@@ -102,9 +102,6 @@
       display: flex;
       min-height: 100vh;
       align-items: stretch;
-      max-width: 1880px;
-      margin: 0 auto;
-      width: 100%;
     }
     .ct-sidebar-left {
       width: 240px;
@@ -604,8 +601,66 @@
     // API Adapters
     // ─────────────────────────────────────────────
 
+    // Default model strings — used on first load before dynamic fetch
+    const DEFAULT_MODELS = {
+      claude:  'claude-sonnet-4-20250514',
+      chatgpt: 'gpt-4o',
+      gemini:  'gemini-2.5-flash',
+    };
+
+    // Fetch available models from each provider using the user's API key.
+    // Returns array of { id, label } objects, or [{id:'default',label:'Default'}] on failure.
+    const fetchProviderModels = async (provider, apiKey) => {
+      try {
+        if (provider === 'claude') {
+          const res = await fetch('https://api.anthropic.com/v1/models', {
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'anthropic-dangerous-direct-browser-access': 'true',
+            }
+          });
+          const data = await res.json();
+          if (!data.data) return [{ id: 'default', label: 'Default' }];
+          // Filter to text models only, sort newest first
+          return data.data
+            .filter(m => m.type === 'model')
+            .sort((a, b) => b.created_at - a.created_at)
+            .map(m => ({ id: m.id, label: m.display_name || m.id }));
+        }
+        if (provider === 'chatgpt') {
+          const res = await fetch('https://api.openai.com/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+          const data = await res.json();
+          if (!data.data) return [{ id: 'default', label: 'Default' }];
+          // Filter to GPT chat models only, sort newest first
+          return data.data
+            .filter(m => m.id.startsWith('gpt-') && !m.id.includes('instruct'))
+            .sort((a, b) => b.created - a.created)
+            .map(m => ({ id: m.id, label: m.id }));
+        }
+        if (provider === 'gemini') {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+          );
+          const data = await res.json();
+          if (!data.models) return [{ id: 'default', label: 'Default' }];
+          return data.models
+            .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+            .map(m => ({
+              id: m.name.replace('models/', ''),
+              label: m.displayName || m.name.replace('models/', '')
+            }));
+        }
+      } catch (_) {
+        return [{ id: 'default', label: 'Default' }];
+      }
+      return [{ id: 'default', label: 'Default' }];
+    };
+
     const apiAdapters = {
-      claude: async (messages, systemPrompt, apiKey) => {
+      claude: async (messages, systemPrompt, apiKey, modelString) => {
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -615,7 +670,7 @@
             'anthropic-dangerous-direct-browser-access': 'true'
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model: modelString || DEFAULT_MODELS.claude,
             max_tokens: 4096,
             system: systemPrompt || 'You are a helpful assistant participating in a multi-model triangulation discussion.',
             messages: messages.map(m => ({ role: m.role, content: m.content }))
@@ -626,7 +681,7 @@
         return data.content.map(b => b.text).join('\n');
       },
 
-      chatgpt: async (messages, systemPrompt, apiKey) => {
+      chatgpt: async (messages, systemPrompt, apiKey, modelString) => {
         const msgs = [];
         if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
         msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
@@ -637,7 +692,7 @@
             'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: modelString || DEFAULT_MODELS.chatgpt,
             max_tokens: 4096,
             messages: msgs
           })
@@ -647,7 +702,8 @@
         return data.choices[0].message.content;
       },
 
-      gemini: async (messages, systemPrompt, apiKey) => {
+      gemini: async (messages, systemPrompt, apiKey, modelString) => {
+        const model = modelString || DEFAULT_MODELS.gemini;
         const contents = messages.map(m => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }]
@@ -657,7 +713,7 @@
           body.systemInstruction = { parts: [{ text: systemPrompt }] };
         }
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1800,6 +1856,56 @@
         setCodePanels(prev => prev.map(p => p.id === id ? { ...p, zIndex: newZ } : p));
       };
 
+      // CT-097 — per-slot model version selector
+      const [selectedModels, setSelectedModels] = useState({ ...DEFAULT_MODELS });
+      const [pendingModels, setPendingModels]   = useState({ ...DEFAULT_MODELS });
+      const [availableModels, setAvailableModels] = useState({
+        claude:  [{ id: DEFAULT_MODELS.claude,  label: 'claude-sonnet-4-20250514' }],
+        chatgpt: [{ id: DEFAULT_MODELS.chatgpt, label: 'gpt-4o' }],
+        gemini:  [{ id: DEFAULT_MODELS.gemini,  label: 'gemini-2.5-flash' }],
+      });
+      const [modelsFetching, setModelsFetching] = useState({ claude: false, chatgpt: false, gemini: false });
+      const [modelConfirmOpen, setModelConfirmOpen] = useState(false);
+      const [modelConfirmWarning, setModelConfirmWarning] = useState(false);
+      const pendingHasChanges = ['claude','chatgpt','gemini'].some(m => pendingModels[m] !== selectedModels[m]);
+      const pendingVals = ['claude','chatgpt','gemini'].map(m => pendingModels[m]);
+      const pendingHasDupe = pendingVals.some((v, i) => pendingVals.indexOf(v) !== i);
+
+      // Fetch model lists once per provider when a key becomes available
+      const fetchedRef = React.useRef({ claude: false, chatgpt: false, gemini: false });
+      useEffect(() => {
+        ['claude', 'chatgpt', 'gemini'].forEach(async (provider) => {
+          const key = keys[provider]?.trim();
+          if (!key || fetchedRef.current[provider]) return;
+          fetchedRef.current[provider] = true;
+          setModelsFetching(prev => ({ ...prev, [provider]: true }));
+          const models = await fetchProviderModels(provider, key);
+          setAvailableModels(prev => ({ ...prev, [provider]: models }));
+          setSelectedModels(prev => {
+            const ids = models.map(m => m.id);
+            if (!ids.includes(prev[provider]) && models[0]?.id !== 'default') {
+              const next = { ...prev, [provider]: models[0].id };
+              setPendingModels(p => ({ ...p, [provider]: models[0].id }));
+              return next;
+            }
+            return prev;
+          });
+          setModelsFetching(prev => ({ ...prev, [provider]: false }));
+        });
+      }, [keys]);
+
+      const applyModelChanges = () => {
+        setSelectedModels({ ...pendingModels });
+        setModelConfirmWarning(false);
+        setModelConfirmOpen(false);
+      };
+
+      const openModelConfirm = () => {
+        if (pendingHasDupe) return;
+        setModelConfirmWarning(false);
+        setModelConfirmOpen(true);
+      };
+
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [modeArmed, setModeArmed] = useState(false);
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
@@ -2053,7 +2159,7 @@
         await Promise.allSettled(models.map(async (model) => {
           try {
             const response = await apiAdapters[model](
-              newHistories[model], systemPrompts[model], keys[model]
+              newHistories[model], systemPrompts[model], keys[model], selectedModels[model]
             );
             results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -2142,7 +2248,7 @@
           const newHistory = [...conversationHistory[model], { role: 'user', content: contextualPrompt }];
 
           try {
-            const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model]);
+            const response = await apiAdapters[model](newHistory, systemPrompts[model], keys[model], selectedModels[model]);
             results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
             priorResponses.push({ model, response });
             setResponses(prev => ({ ...prev, [model]: response }));
@@ -2211,7 +2317,7 @@
         setConversationHistory(prev => ({ ...prev, [targetModel]: newHistory }));
 
         try {
-          const response = await apiAdapters[targetModel](newHistory, systemPrompts[targetModel], keys[targetModel]);
+          const response = await apiAdapters[targetModel](newHistory, systemPrompts[targetModel], keys[targetModel], selectedModels[targetModel]);
           setResponses(prev => ({ ...prev, [targetModel]: response }));
           setConversationHistory(prev => ({
             ...prev,
@@ -2420,7 +2526,8 @@
           const response = await apiAdapters[targetModel](
             [{ role: 'user', content: summaryPrompt }],
             '', // no system prompt — the prompt itself is fully framed
-            keys[targetModel]
+            keys[targetModel],
+            selectedModels[targetModel]
           );
 
           const now = new Date();
@@ -2574,6 +2681,173 @@
                   </div>
                 </div>
               </div>
+
+              {/* CT-097 — Models section */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Models</div>
+                <div style={{
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius)', padding: '10px 12px',
+                }}>
+                  {(['claude', 'chatgpt', 'gemini']).map(provider => {
+                    const ICONS   = { claude: '◈', chatgpt: '◇', gemini: '△' };
+                    const ACCENTS = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
+                    const BORDERS = { claude: 'var(--claude-border)', chatgpt: 'var(--chatgpt-border)', gemini: 'var(--gemini-border)' };
+                    const hasKey  = !!keys[provider]?.trim();
+                    const options = availableModels[provider] || [];
+                    const isDupe  = pendingVals.filter(v => v === pendingModels[provider]).length > 1;
+                    return (
+                      <div key={provider} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                        <span style={{
+                          fontFamily: 'JetBrains Mono', fontSize: '11px',
+                          color: hasKey ? ACCENTS[provider] : 'var(--text-muted)',
+                          width: '14px', flexShrink: 0, textAlign: 'center'
+                        }}>{ICONS[provider]}</span>
+                        <select
+                          disabled={!hasKey || modelsFetching[provider]}
+                          value={pendingModels[provider]}
+                          onChange={e => setPendingModels(prev => ({ ...prev, [provider]: e.target.value }))}
+                          style={{
+                            flex: 1, padding: '4px 6px',
+                            background: hasKey ? 'var(--bg-secondary)' : 'var(--bg-input)',
+                            border: `1px solid ${isDupe ? '#f47068' : hasKey ? BORDERS[provider] : 'var(--border-subtle)'}`,
+                            borderRadius: '4px',
+                            color: hasKey ? ACCENTS[provider] : 'var(--text-muted)',
+                            fontFamily: 'JetBrains Mono', fontSize: '10px',
+                            outline: 'none', cursor: hasKey ? 'pointer' : 'default',
+                            opacity: hasKey ? 1 : 0.4,
+                          }}
+                        >
+                          {modelsFetching[provider]
+                            ? <option>Loading…</option>
+                            : options.map(o => (
+                                <option key={o.id} value={o.id}>{o.label}</option>
+                              ))
+                          }
+                        </select>
+                      </div>
+                    );
+                  })}
+
+                  {pendingHasDupe && (
+                    <div style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '10px',
+                      color: '#f47068', marginTop: '4px', paddingTop: '4px',
+                      borderTop: '1px solid var(--border-subtle)'
+                    }}>
+                      Each slot must use a distinct model version.
+                    </div>
+                  )}
+
+                  {pendingHasChanges && !pendingHasDupe && (
+                    <button
+                      onClick={openModelConfirm}
+                      style={{
+                        width: '100%', marginTop: '8px', padding: '5px',
+                        background: 'var(--bg-secondary)',
+                        border: '1px solid var(--border-hover)',
+                        borderRadius: '4px', cursor: 'pointer',
+                        fontFamily: 'JetBrains Mono', fontSize: '11px',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      Confirm changes
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* CT-097 — Model confirm modal */}
+              {modelConfirmOpen && (
+                <div style={{
+                  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                  zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+                  onClick={e => { if (e.target === e.currentTarget) { setModelConfirmOpen(false); setPendingModels({ ...selectedModels }); } }}
+                >
+                  <div style={{
+                    background: 'var(--bg-card)', border: '1px solid var(--border-hover)',
+                    borderRadius: 'var(--radius)', padding: '24px', maxWidth: '400px', width: '90%',
+                    boxShadow: 'var(--shadow)',
+                  }}>
+                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 700, marginBottom: '12px' }}>
+                      Apply model changes?
+                    </div>
+
+                    {!modelConfirmWarning ? (
+                      <>
+                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.6' }}>
+                          {(['claude','chatgpt','gemini']).filter(m => pendingModels[m] !== selectedModels[m]).map(m => {
+                            const ICONS = { claude: '◈', chatgpt: '◇', gemini: '△' };
+                            const LABELS = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+                            return (
+                              <div key={m} style={{ marginBottom: '6px' }}>
+                                <span style={{ color: m === 'claude' ? 'var(--claude-accent)' : m === 'chatgpt' ? 'var(--chatgpt-accent)' : 'var(--gemini-accent)' }}>
+                                  {ICONS[m]} {LABELS[m]}
+                                </span>
+                                {' '}→ {pendingModels[m]}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => { setModelConfirmOpen(false); setPendingModels({ ...selectedModels }); }}
+                            style={{
+                              padding: '7px 16px', background: 'transparent',
+                              border: '1px solid var(--border-hover)', borderRadius: '4px',
+                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >Cancel</button>
+                          <button
+                            onClick={() => setModelConfirmWarning(true)}
+                            style={{
+                              padding: '7px 16px', background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border-hover)', borderRadius: '4px',
+                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                              color: 'var(--text-primary)',
+                            }}
+                          >Continue →</button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)',
+                          marginBottom: '16px', lineHeight: '1.7',
+                          background: 'var(--bg-input)', borderRadius: '4px', padding: '10px 12px',
+                          border: '1px solid var(--border-subtle)'
+                        }}>
+                          The most recent response from any replaced model slot will be preserved in the session transcript, but will no longer be available for copying, clipping, or forwarding.
+                          <br /><br />
+                          If you want to capture those responses first, pause now and return when ready.
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => { setModelConfirmOpen(false); setModelConfirmWarning(false); }}
+                            style={{
+                              padding: '7px 16px', background: 'transparent',
+                              border: '1px solid var(--border-hover)', borderRadius: '4px',
+                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >⏸ Pause</button>
+                          <button
+                            onClick={applyModelChanges}
+                            style={{
+                              padding: '7px 16px', background: 'var(--claude-border)',
+                              border: '1px solid var(--claude-accent)', borderRadius: '4px',
+                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                              color: 'var(--claude-accent)',
+                            }}
+                          >Apply changes</button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="sidebar-divider" />
 
