@@ -1750,6 +1750,7 @@
       const [keys, setKeys] = useState({ claude: '', chatgpt: '', gemini: '' });
       const [systemPrompts, setSystemPrompts] = useState({ claude: '', chatgpt: '', gemini: '' });
       const [showSettings, setShowSettings] = useState(false);
+      const [showAbout, setShowAbout] = useState(false);
       const [prompt, setPrompt] = useState('');
       const [responses, setResponses] = useState({ claude: null, chatgpt: null, gemini: null });
       const [loading, setLoading] = useState({ claude: false, chatgpt: false, gemini: false });
@@ -2975,6 +2976,32 @@
                 <span>{darkMode ? '☀' : '☾'}</span> {darkMode ? 'Light mode' : 'Dark mode'}
               </button>
 
+              {/* CT-105 — Support & About */}
+              <div style={{ marginTop: '8px' }} />
+              <div className="sidebar-divider" />
+              <div className="sidebar-section-label">Support</div>
+              <a
+                href="https://ko-fi.com/habermaslabs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-btn"
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span style={{ color: '#ff6b6b' }}>♥</span> Buy me a coffee
+              </a>
+              <a
+                href="https://mdreaderapp.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-btn"
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span style={{ color: 'var(--chatgpt-accent)' }}>↗</span> MDReader
+              </a>
+              <button className="sidebar-btn" onClick={() => setShowAbout(true)}>
+                <span style={{ color: 'var(--text-muted)' }}>◎</span> About CT
+              </button>
+
             </div>
           </aside>
 
@@ -3362,6 +3389,92 @@
               conductorOrder={conductorOrder} setConductorOrder={setConductorOrder}
               onClose={() => setShowSettings(false)}
             />
+          )}
+
+          {/* CT-105 — About modal */}
+          {showAbout && (
+            <div
+              style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+                zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+              onClick={e => { if (e.target === e.currentTarget) setShowAbout(false); }}
+            >
+              <div style={{
+                background: 'var(--bg-card)', border: '1px solid var(--border-hover)',
+                borderRadius: 'var(--radius)', padding: '32px', maxWidth: '480px', width: '90%',
+                boxShadow: 'var(--shadow)',
+              }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border-subtle)' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '15px', fontWeight: 700 }}>
+                    <span style={{ color: 'var(--claude-accent)' }}>◈</span>
+                    <span style={{ color: 'var(--chatgpt-accent)' }}>◇</span>
+                    <span style={{ color: 'var(--gemini-accent)' }}>△</span>
+                    {' '}Crosstalk Lab
+                  </div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)' }}>
+                    by Habermas Labs
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div style={{ fontFamily: 'Source Serif 4, Georgia, serif', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.75', marginBottom: '24px' }}>
+                  <p style={{ marginBottom: '14px' }}>
+                    Crosstalk Lab is a multi-model thinking environment built on a simple premise: epistemic diversity is structurally valuable, not just practically convenient.
+                  </p>
+                  <p style={{ marginBottom: '14px' }}>
+                    Three AI models with distinct training, architecture, and institutional provenance respond to the same prompts, react to each other's outputs, and are directed by a human conductor. The result is a form of dialogue unavailable in any single-model interface — one where difference is the instrument rather than the problem.
+                  </p>
+                  <p>
+                    CT is designed for triangulation: philosophical inquiry, research synthesis, design critique, and any domain where convergence too quickly reached is a sign something was missed.
+                  </p>
+                </div>
+
+                {/* Footer links */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+                  <a
+                    href="https://ko-fi.com/habermaslabs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px',
+                      color: '#ff6b6b', textDecoration: 'none',
+                      padding: '6px 12px', border: '1px solid rgba(255,107,107,0.3)',
+                      borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '5px',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#ff6b6b'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,107,107,0.3)'}
+                  >
+                    ♥ Support CT
+                  </a>
+                  <a
+                    href="https://mdreaderapp.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px',
+                      color: 'var(--chatgpt-accent)', textDecoration: 'none',
+                      padding: '6px 12px', border: '1px solid rgba(107,207,142,0.3)',
+                      borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '5px',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--chatgpt-accent)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(107,207,142,0.3)'}
+                  >
+                    ↗ MDReader
+                  </a>
+                  <button
+                    onClick={() => setShowAbout(false)}
+                    style={{
+                      marginLeft: 'auto', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                      padding: '6px 14px', background: 'transparent',
+                      border: '1px solid var(--border-hover)', borderRadius: '4px',
+                      cursor: 'pointer', color: 'var(--text-secondary)',
+                    }}
+                  >Close</button>
+                </div>
+              </div>
+            </div>
           )}
 
           </div>{/* /inner max-width wrapper */}
