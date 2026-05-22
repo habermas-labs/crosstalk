@@ -27,6 +27,15 @@
       --gemini-accent: #7ba4f4;
       --gemini-bg: #10141f;
       --gemini-border: #1a2a4d;
+      --grok-accent: #9ab0c4;
+      --grok-bg: #0f1418;
+      --grok-border: #1c2830;
+      --mistral-accent: #e8944a;
+      --mistral-bg: #1a1008;
+      --mistral-border: #3d2010;
+      --deepseek-accent: #4ec4b0;
+      --deepseek-bg: #081818;
+      --deepseek-border: #103030;
       --radius: 8px;
       --shadow: 0 4px 24px rgba(0,0,0,0.3);
     }
@@ -50,6 +59,15 @@
       --gemini-accent: #3a6ed4;
       --gemini-bg: #e4ecf8;
       --gemini-border: #90aee8;
+      --grok-accent: #4a6880;
+      --grok-bg: #e4edf4;
+      --grok-border: #90b0c8;
+      --mistral-accent: #b85c10;
+      --mistral-bg: #faeee0;
+      --mistral-border: #e8b080;
+      --deepseek-accent: #0a8878;
+      --deepseek-bg: #d8f4f0;
+      --deepseek-border: #70c8b8;
       --shadow: 0 4px 24px rgba(0,0,0,0.12);
     }
 
@@ -910,121 +928,106 @@
     // Settings Panel
     // ─────────────────────────────────────────────
 
-    function SettingsPanel({ keys, setKeys, systemPrompts, setSystemPrompts, conductorOrder, setConductorOrder, onClose }) {
-      const [exportPassphrase, setExportPassphrase] = useState('');
-      const [importPassphrase, setImportPassphrase] = useState('');
-      const [urlKeySource, setUrlKeySource] = useState('');
-      const [urlPassphrase, setUrlPassphrase] = useState('');
-      const [cryptoStatus, setCryptoStatus] = useState(null);
-      const [exportConfirm, setExportConfirm] = useState(null); // { failedLabels, exportKeys }
-      const fileInputRef = useRef(null);
-
-      const [showKey, setShowKey] = useState({ claude: false, chatgpt: false, gemini: false });
-      const [showPassphrase, setShowPassphrase] = useState({ export: false, import: false, url: false });
-
-      // Key test state: null | 'testing' | 'pass' | 'fail'
-      const [keyTestStatus, setKeyTestStatus] = useState({ claude: null, chatgpt: null, gemini: null });
-      const [keyTestMsg, setKeyTestMsg] = useState({ claude: '', chatgpt: '', gemini: '' });
-
-      const setTestResult = (modelId, status, msg = '') => {
-        setKeyTestStatus(prev => ({ ...prev, [modelId]: status }));
-        setKeyTestMsg(prev => ({ ...prev, [modelId]: msg }));
+    // ─────────────────────────────────────────────
+    // Generate .ctk Modal (CT-099 key management)
+    // ─────────────────────────────────────────────
+    function GenerateCtkModal({ keys, setKeys, systemPrompts, setSystemPrompts, onClose }) {
+      const ALL_PROVIDERS = ['claude', 'chatgpt', 'gemini', 'grok', 'mistral', 'deepseek'];
+      const PROVIDER_META = {
+        claude:   { label: 'Claude',   accent: 'var(--claude-accent)',   icon: '◈' },
+        chatgpt:  { label: 'ChatGPT',  accent: 'var(--chatgpt-accent)',  icon: '◇' },
+        gemini:   { label: 'Gemini',   accent: 'var(--gemini-accent)',   icon: '△' },
+        grok:     { label: 'Grok',     accent: 'var(--grok-accent)',     icon: '◉' },
+        mistral:  { label: 'Mistral',  accent: 'var(--mistral-accent)',  icon: '⬡' },
+        deepseek: { label: 'DeepSeek', accent: 'var(--deepseek-accent)', icon: '▿' },
       };
 
-      const testKey = async (modelId) => {
-        const key = keys[modelId]?.trim();
-        if (!key) {
-          setTestResult(modelId, 'fail', 'No key entered.');
-          return;
-        }
-        setTestResult(modelId, 'testing', '');
+      const [exportPassphrase, setExportPassphrase] = useState('');
+      const [showPassphraseExport, setShowPassphraseExport] = useState(false);
+      const [cryptoStatus, setCryptoStatus] = useState(null);
+      const [exportConfirm, setExportConfirm] = useState(null);
+      const [showKey, setShowKey] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
+      const [keyTestStatus, setKeyTestStatus] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+      const [keyTestMsg, setKeyTestMsg] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, ''])));
+
+      const setTestResult = (provider, status, msg = '') => {
+        setKeyTestStatus(prev => ({ ...prev, [provider]: status }));
+        setKeyTestMsg(prev => ({ ...prev, [provider]: msg }));
+      };
+
+      const testKey = async (provider) => {
+        const key = keys[provider]?.trim();
+        if (!key) { setTestResult(provider, 'fail', 'No key entered.'); return; }
+        setTestResult(provider, 'testing', '');
         try {
-          if (modelId === 'claude') {
+          if (provider === 'claude') {
             const res = await fetch('https://api.anthropic.com/v1/messages', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': key,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-              },
-              body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 10,
-                messages: [{ role: 'user', content: 'Hi' }]
-              })
+              headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+              body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] })
             });
             const data = await res.json();
             if (data.error) throw new Error(data.error.type + ': ' + data.error.message);
-            setTestResult(modelId, 'pass', 'Key validated.');
-          } else if (modelId === 'chatgpt') {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${key}`
-              },
-              body: JSON.stringify({
-                model: 'gpt-4o-mini',
-                max_tokens: 10,
-                messages: [{ role: 'user', content: 'Hi' }]
-              })
+          } else if (provider === 'gemini') {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Hi' }] }] })
             });
             const data = await res.json();
-            if (data.error) throw new Error(data.error.code + ': ' + data.error.message);
-            setTestResult(modelId, 'pass', 'Key validated.');
-          } else if (modelId === 'gemini') {
-            const res = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Hi' }] }] })
-              }
-            );
-            const data = await res.json();
             if (data.error) {
-              // Distinguish quota:0 (provisioning failure) from other errors
               const msg = data.error.message || '';
-              if (msg.includes('limit: 0') || msg.includes('free_tier') || (res.status === 429 && msg.includes('quota'))) {
-                throw new Error('Quota not provisioned — create a new key in a new Google project. See Quick Start Guide Step 3.');
-              }
+              if (msg.includes('limit: 0') || msg.includes('free_tier') || (res.status === 429 && msg.includes('quota')))
+                throw new Error('Quota not provisioned — create a new key in a new Google project.');
               throw new Error(data.error.message);
             }
-            setTestResult(modelId, 'pass', 'Key validated.');
+          } else {
+            // OpenAI-compatible: chatgpt, grok, mistral, deepseek
+            const endpoints = {
+              chatgpt: 'https://api.openai.com/v1/chat/completions',
+              grok:    'https://api.x.ai/v1/chat/completions',
+              mistral: 'https://api.mistral.ai/v1/chat/completions',
+              deepseek:'https://api.deepseek.com/v1/chat/completions',
+            };
+            const testModels = {
+              chatgpt: 'gpt-4o-mini',
+              grok:    'grok-3-latest',
+              mistral: 'mistral-small-latest',
+              deepseek:'deepseek-chat',
+            };
+            const res = await fetch(endpoints[provider], {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+              body: JSON.stringify({ model: testModels[provider], max_tokens: 10, messages: [{ role: 'user', content: 'Hi' }] })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
           }
+          setTestResult(provider, 'pass', 'Key validated.');
         } catch (err) {
           const msg = err.message || 'Unknown error.';
-          // Friendly messages for common failure modes
-          if (msg.includes('401') || msg.includes('invalid_api_key') || msg.includes('authentication')) {
-            setTestResult(modelId, 'fail', 'Invalid key — check that you copied the full key without extra spaces.');
-          } else if (msg.includes('Quota not provisioned')) {
-            setTestResult(modelId, 'fail', msg);
-          } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-            setTestResult(modelId, 'fail', 'Service unreachable — check your connection and try again.');
-          } else {
-            setTestResult(modelId, 'fail', msg);
-          }
+          if (msg.includes('401') || msg.includes('invalid_api_key') || msg.includes('authentication') || msg.includes('Unauthorized'))
+            setTestResult(provider, 'fail', 'Invalid key — check you copied the full key without extra spaces.');
+          else if (msg.includes('Quota not provisioned'))
+            setTestResult(provider, 'fail', msg);
+          else if (msg.includes('Failed to fetch') || msg.includes('NetworkError'))
+            setTestResult(provider, 'fail', 'Service unreachable — check your connection.');
+          else
+            setTestResult(provider, 'fail', msg);
         }
       };
 
       const testAll = async () => {
-        // Only test fields that have content — empty fields stay yellow
-        const ids = ['claude', 'chatgpt', 'gemini'].filter(id => keys[id]?.trim());
+        const ids = ALL_PROVIDERS.filter(id => keys[id]?.trim());
         if (ids.length === 0) return;
         await Promise.all(ids.map(id => testKey(id)));
       };
 
-      // Derive export button state from test results
-      // Empty fields count as yellow (unconfirmed), not red
       const exportState = (() => {
-        const enteredIds = ['claude', 'chatgpt', 'gemini'].filter(id => keys[id]?.trim());
-        if (enteredIds.length === 0) return 'yellow';
-        const enteredStatuses = enteredIds.map(id => keyTestStatus[id]);
-        const anyFail = enteredStatuses.some(s => s === 'fail');
-        const allPass = enteredStatuses.every(s => s === 'pass');
-        if (allPass) return 'green';
-        if (anyFail) return 'red';
+        const entered = ALL_PROVIDERS.filter(id => keys[id]?.trim());
+        if (entered.length === 0) return 'yellow';
+        const statuses = entered.map(id => keyTestStatus[id]);
+        if (statuses.every(s => s === 'pass')) return 'green';
+        if (statuses.some(s => s === 'fail')) return 'red';
         return 'yellow';
       })();
 
@@ -1033,105 +1036,32 @@
         yellow: { bg: '#2a2a10', color: '#c8b84a', border: '#3a3a18' },
         red:    { bg: '#3d1a1a', color: '#f47068', border: '#3d1a1a' },
       };
-
       const exportTooltips = {
         green:  'All keys validated — ready to export',
         yellow: 'Some keys untested — export will include only entered keys',
         red:    'One or more keys failed — click to review before exporting',
       };
 
-      // Pill color logic
-      const pillColor = (modelId) => {
-        const s = keyTestStatus[modelId];
+      const pillColor = (provider) => {
+        const s = keyTestStatus[provider];
         if (s === 'pass')    return { bg: '#1a3d24', color: '#6bcf8e', border: '#2a5a34' };
         if (s === 'fail')    return { bg: '#3d1a1a', color: '#f47068', border: '#5a2a2a' };
         if (s === 'testing') return { bg: 'var(--bg-input)', color: 'var(--text-muted)', border: 'var(--border-subtle)' };
-        // null = unconfirmed (yellow attention)
         return { bg: '#2a2a10', color: '#c8b84a', border: '#3a3a18' };
       };
 
-      const pillTooltip = (modelId) => {
-        const s = keyTestStatus[modelId];
-        if (s === 'pass')    return 'Key validated';
-        if (s === 'fail')    return 'Validation failed — check your key';
-        if (s === 'testing') return 'Testing...';
-        return 'Not yet tested';
-      };
-
-      const MODEL_META = {
-        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  icon: '◈' },
-        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', icon: '◇' },
-        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  icon: '△' },
-      };
-
-      const models = [
-        { id: 'claude',  label: 'Claude',  accent: 'var(--claude-accent)'  },
-        { id: 'chatgpt', label: 'ChatGPT', accent: 'var(--chatgpt-accent)' },
-        { id: 'gemini',  label: 'Gemini',  accent: 'var(--gemini-accent)'  }
-      ];
-
-      // Update a single position in the conductor order
-      const handleOrderChange = (position, newModel) => {
-        // Swap: if newModel is already in the order, swap it with what's currently at this position
-        const current = [...conductorOrder];
-        const existingPos = current.indexOf(newModel);
-        const displaced = current[position];
-        current[existingPos] = displaced;
-        current[position] = newModel;
-        setConductorOrder(current);
-      };
-
-      // Load keys from a remote URL (Cloudflare Worker → R2)
-      const handleLoadFromUrl = async () => {
-        if (!urlKeySource.trim()) {
-          setCryptoStatus({ type: 'error', msg: 'Enter a URL to load from.' });
-          return;
-        }
-        if (!urlPassphrase.trim()) {
-          setCryptoStatus({ type: 'error', msg: 'Enter your passphrase before loading.' });
-          return;
-        }
-        try {
-          setCryptoStatus({ type: 'info', msg: 'Fetching key file...' });
-          const res = await fetch(urlKeySource.trim(), { credentials: 'include' });
-          if (!res.ok) throw new Error(`Server returned ${res.status}`);
-          const base64 = (await res.text()).trim();
-          setCryptoStatus({ type: 'info', msg: 'Decrypting...' });
-          const data = await cryptoUtils.decrypt(base64, urlPassphrase);
-          if (data.keys) setKeys(data.keys);
-          if (data.systemPrompts) setSystemPrompts(data.systemPrompts);
-          setUrlPassphrase('');
-          setCryptoStatus({ type: 'success', msg: 'Keys loaded from URL successfully.' });
-        } catch (err) {
-          setCryptoStatus({ type: 'error', msg: 'Load failed — ' + err.message });
-        }
-      };
-
-      // Export keys to encrypted file
       const handleExport = async () => {
-        if (!exportPassphrase.trim()) {
-          setCryptoStatus({ type: 'error', msg: 'Enter a passphrase to encrypt your keys.' });
-          return;
-        }
-
-        const failedModels = ['claude', 'chatgpt', 'gemini'].filter(id => keyTestStatus[id] === 'fail');
-
-        if (failedModels.length > 0) {
-          // Show inline confirmation instead of window.confirm
-          const failedLabels = failedModels.map(id =>
-            ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[id])
-          );
+        if (!exportPassphrase.trim()) { setCryptoStatus({ type: 'error', msg: 'Enter a passphrase to encrypt your keys.' }); return; }
+        const failedProviders = ALL_PROVIDERS.filter(id => keyTestStatus[id] === 'fail');
+        if (failedProviders.length > 0) {
+          const failedLabels = failedProviders.map(id => PROVIDER_META[id].label);
           let exportKeys = { ...keys };
-          failedModels.forEach(id => { exportKeys[id] = ''; });
-          const hasValid = ['claude', 'chatgpt', 'gemini'].some(id => exportKeys[id]?.trim());
-          if (!hasValid) {
-            setCryptoStatus({ type: 'error', msg: 'No valid keys to export — all keys either failed or are empty.' });
-            return;
-          }
+          failedProviders.forEach(id => { exportKeys[id] = ''; });
+          const hasValid = ALL_PROVIDERS.some(id => exportKeys[id]?.trim());
+          if (!hasValid) { setCryptoStatus({ type: 'error', msg: 'No valid keys to export.' }); return; }
           setExportConfirm({ failedLabels, exportKeys });
           return;
         }
-
         await doExport({ ...keys });
       };
 
@@ -1144,9 +1074,7 @@
           const blob = new Blob([encrypted], { type: 'text/plain' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
-          a.href = url;
-          a.download = 'crosstalk-keys.ctk';
-          a.click();
+          a.href = url; a.download = 'crosstalk-keys.ctk'; a.click();
           URL.revokeObjectURL(url);
           setExportPassphrase('');
           setCryptoStatus({ type: 'success', msg: 'Keys exported and encrypted.' });
@@ -1155,7 +1083,135 @@
         }
       };
 
-      // Import keys from encrypted file
+      const statusColors = { error: '#f47068', success: 'var(--chatgpt-accent)', info: 'var(--gemini-accent)' };
+
+      return (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
+          onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._closeOnMouseUp = true; }}
+          onMouseUp={e => { if (e.currentTarget._closeOnMouseUp) { e.currentTarget._closeOnMouseUp = false; onClose(); } }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '12px', padding: '32px', width: '90%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)' }}
+            onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{ fontFamily: 'JetBrains Mono', fontSize: '18px', fontWeight: 700 }}>Generate .ctk</h2>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button onClick={testAll} disabled={ALL_PROVIDERS.some(id => keyTestStatus[id] === 'testing')}
+                  style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s ease', border: `1px solid ${exportColors[exportState].border}`, background: exportColors[exportState].bg, color: exportColors[exportState].color }}>
+                  {ALL_PROVIDERS.some(id => keyTestStatus[id] === 'testing') ? 'Testing...' : 'Test All'}
+                </button>
+                <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+              </div>
+            </div>
+            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: 1.5 }}>
+              Enter API keys, test them, then export an encrypted .ctk file for loading via URL.
+            </p>
+
+            {ALL_PROVIDERS.map(provider => {
+              const meta = PROVIDER_META[provider];
+              return (
+                <div key={provider} style={{ marginBottom: '20px' }}>
+                  <label style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500, color: meta.accent, display: 'block', marginBottom: '6px' }}>
+                    {meta.icon} {meta.label} API Key
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ flex: 1, position: 'relative' }}>
+                      <input type={showKey[provider] ? 'text' : 'password'} autoComplete="new-password"
+                        value={keys[provider] || ''}
+                        onChange={e => { setKeys(prev => ({ ...prev, [provider]: e.target.value })); setTestResult(provider, null, ''); }}
+                        onInput={e => { setKeys(prev => ({ ...prev, [provider]: e.target.value })); setTestResult(provider, null, ''); }}
+                        placeholder={`Enter ${meta.label} API key...`}
+                        style={{ width: '100%', padding: '10px 36px 10px 14px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px', outline: 'none' }}
+                      />
+                      <button onClick={() => setShowKey(prev => ({ ...prev, [provider]: !prev[provider] }))}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', padding: '2px', lineHeight: 1 }}>
+                        {showKey[provider] ? '🙈' : '👁'}
+                      </button>
+                    </div>
+                    <button onClick={() => testKey(provider)} disabled={keyTestStatus[provider] === 'testing'}
+                      style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '6px 12px', borderRadius: '999px', border: `1px solid ${pillColor(provider).border}`, background: pillColor(provider).bg, color: pillColor(provider).color, cursor: keyTestStatus[provider] === 'testing' ? 'default' : 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s ease', flexShrink: 0 }}>
+                      {keyTestStatus[provider] === 'testing' ? '...' : 'Test'}
+                    </button>
+                  </div>
+                  {keyTestMsg[provider] && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', fontFamily: 'JetBrains Mono', color: keyTestStatus[provider] === 'pass' ? '#6bcf8e' : '#f47068', lineHeight: 1.4 }}>
+                      {keyTestMsg[provider]}
+                    </div>
+                  )}
+                  <label style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', marginTop: '10px' }}>
+                    {meta.label} System Prompt (optional)
+                  </label>
+                  <textarea value={systemPrompts[provider] || ''} onChange={e => setSystemPrompts(prev => ({ ...prev, [provider]: e.target.value }))}
+                    placeholder={`Custom instructions for ${meta.label}...`} rows={2}
+                    style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'Source Serif 4', fontSize: '13px', outline: 'none', resize: 'vertical' }}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Export */}
+            <div style={{ paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input type={showPassphraseExport ? 'text' : 'password'} value={exportPassphrase} onChange={e => setExportPassphrase(e.target.value)}
+                    autoComplete="new-password" placeholder="Choose a passphrase..."
+                    style={{ width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none' }}
+                  />
+                  <button onClick={() => setShowPassphraseExport(p => !p)}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1 }}>
+                    {showPassphraseExport ? '🙈' : '👁'}
+                  </button>
+                </div>
+                <button onClick={handleExport} title={exportTooltips[exportState]}
+                  style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px', border: 'none', borderRadius: 'var(--radius)', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s ease', background: exportColors[exportState].bg, color: exportColors[exportState].color }}>
+                  Export .ctk
+                </button>
+              </div>
+              <div style={{ marginTop: '8px', fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)' }}>
+                🟡 Untested · 🟢 Validated · 🔴 Failed keys excluded · AES-256-GCM encrypted
+              </div>
+            </div>
+
+            {exportConfirm && (
+              <div style={{ marginTop: '12px', padding: '12px', borderRadius: 'var(--radius)', background: '#3d1a1a', border: '1px solid #5a2a2a', fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#f47068' }}>
+                <div style={{ marginBottom: '8px', fontWeight: 600 }}>
+                  The following {exportConfirm.failedLabels.length > 1 ? 'keys' : 'key'} failed and will not be included:
+                </div>
+                {exportConfirm.failedLabels.map(l => <div key={l} style={{ marginBottom: '4px' }}>• {l}</div>)}
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
+                  <button onClick={() => doExport(exportConfirm.exportKeys)}
+                    style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px', background: '#5a2a2a', border: '1px solid #7a3a3a', borderRadius: 'var(--radius)', color: '#f47068', cursor: 'pointer' }}>
+                    Proceed without {exportConfirm.failedLabels.length > 1 ? 'them' : 'it'}
+                  </button>
+                  <button onClick={() => setExportConfirm(null)}
+                    style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cryptoStatus && (
+              <div style={{ marginTop: '12px', fontSize: '12px', fontFamily: 'JetBrains Mono', color: statusColors[cryptoStatus.type] || 'var(--text-secondary)' }}>
+                {cryptoStatus.msg}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // Load Keys Modal
+    // ─────────────────────────────────────────────
+    function LoadKeysModal({ setKeys, setSystemPrompts, onClose }) {
+      const [importPassphrase, setImportPassphrase] = useState('');
+      const [urlKeySource, setUrlKeySource] = useState('');
+      const [urlPassphrase, setUrlPassphrase] = useState('');
+      const [showPassphrase, setShowPassphrase] = useState({ import: false, url: false });
+      const [cryptoStatus, setCryptoStatus] = useState(null);
+      const fileInputRef = useRef(null);
+
+      const statusColors = { error: '#f47068', success: 'var(--chatgpt-accent)', info: 'var(--gemini-accent)' };
+
       const handleImport = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -1178,376 +1234,106 @@
         fileInputRef.current.value = '';
       };
 
-      const statusColors = { error: '#f47068', success: 'var(--chatgpt-accent)', info: 'var(--gemini-accent)' };
-
-      const selectStyle = {
-        padding: '6px 10px',
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius)',
-        color: 'var(--text-primary)',
-        fontFamily: 'JetBrains Mono',
-        fontSize: '12px',
-        outline: 'none',
-        cursor: 'pointer',
-        flex: 1,
+      const handleLoadFromUrl = async () => {
+        if (!urlKeySource.trim()) { setCryptoStatus({ type: 'error', msg: 'Enter a URL to load from.' }); return; }
+        if (!urlPassphrase.trim()) { setCryptoStatus({ type: 'error', msg: 'Enter your passphrase before loading.' }); return; }
+        try {
+          setCryptoStatus({ type: 'info', msg: 'Fetching key file...' });
+          const res = await fetch(urlKeySource.trim(), { credentials: 'include' });
+          if (!res.ok) throw new Error(`Server returned ${res.status}`);
+          const base64 = (await res.text()).trim();
+          setCryptoStatus({ type: 'info', msg: 'Decrypting...' });
+          const data = await cryptoUtils.decrypt(base64, urlPassphrase);
+          if (data.keys) setKeys(data.keys);
+          if (data.systemPrompts) setSystemPrompts(data.systemPrompts);
+          setUrlPassphrase('');
+          setCryptoStatus({ type: 'success', msg: 'Keys loaded from URL successfully.' });
+        } catch (err) {
+          setCryptoStatus({ type: 'error', msg: 'Load failed — ' + err.message });
+        }
       };
 
       return (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
-        }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
           onMouseDown={e => { if (e.target === e.currentTarget) e.currentTarget._closeOnMouseUp = true; }}
-          onMouseUp={e => { if (e.currentTarget._closeOnMouseUp) { e.currentTarget._closeOnMouseUp = false; onClose(); } }}
-        >
-          <div style={{
-            background: 'var(--bg-secondary)', borderRadius: '12px', padding: '32px',
-            width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto',
-            border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)'
-          }} onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontFamily: 'JetBrains Mono', fontSize: '18px', fontWeight: 700 }}>Configuration</h2>
-              <button onClick={onClose} style={{
-                background: 'none', border: 'none', color: 'var(--text-secondary)',
-                fontSize: '20px', cursor: 'pointer'
-              }}>✕</button>
+          onMouseUp={e => { if (e.currentTarget._closeOnMouseUp) { e.currentTarget._closeOnMouseUp = false; onClose(); } }}>
+          <div style={{ background: 'var(--bg-secondary)', borderRadius: '12px', padding: '32px', width: '90%', maxWidth: '560px', border: '1px solid var(--border-subtle)', boxShadow: 'var(--shadow)' }}
+            onMouseDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h2 style={{ fontFamily: 'JetBrains Mono', fontSize: '18px', fontWeight: 700 }}>Load Keys</h2>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
+            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: 1.5 }}>
+              Load an encrypted .ctk key file from disk or from your Cloudflare Worker URL.
+            </p>
 
-            {/* API Keys + System Prompts */}
-            {models.map(m => (
-              <div key={m.id} style={{ marginBottom: '24px' }}>
-                <label style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
-                  color: m.accent, display: 'block', marginBottom: '6px'
-                }}>{m.label} API Key</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    <input
-                      type={showKey[m.id] ? 'text' : 'password'}
-                      autoComplete="new-password"
-                      value={keys[m.id] || ''}
-                      onChange={e => {
-                        setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
-                        setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
-                        setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
-                      }}
-                      onInput={e => {
-                        setKeys(prev => ({ ...prev, [m.id]: e.target.value }));
-                        setKeyTestStatus(prev => ({ ...prev, [m.id]: null }));
-                        setKeyTestMsg(prev => ({ ...prev, [m.id]: '' }));
-                      }}
-                      placeholder={`Enter ${m.label} API key...`}
-                      style={{
-                        width: '100%', padding: '10px 36px 10px 14px', background: 'var(--bg-input)',
-                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '13px',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      onClick={() => setShowKey(prev => ({ ...prev, [m.id]: !prev[m.id] }))}
-                      title={showKey[m.id] ? 'Hide key' : 'Show key'}
-                      style={{
-                        position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', fontSize: '14px', padding: '2px', lineHeight: 1
-                      }}
-                    >
-                      {showKey[m.id] ? '🙈' : '👁'}
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => testKey(m.id)}
-                    disabled={keyTestStatus[m.id] === 'testing'}
-                    title={pillTooltip(m.id)}
-                    style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '6px 12px',
-                      borderRadius: '999px', border: `1px solid ${pillColor(m.id).border}`,
-                      background: pillColor(m.id).bg, color: pillColor(m.id).color,
-                      cursor: keyTestStatus[m.id] === 'testing' ? 'default' : 'pointer',
-                      whiteSpace: 'nowrap', transition: 'all 0.2s ease', flexShrink: 0
-                    }}
-                  >
-                    {keyTestStatus[m.id] === 'testing' ? '...' : 'Test'}
+            {/* Import from file */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                Import — load keys from an encrypted file
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input type={showPassphrase.import ? 'text' : 'password'} value={importPassphrase} onChange={e => setImportPassphrase(e.target.value)}
+                    autoComplete="new-password" placeholder="Enter your passphrase..."
+                    style={{ width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none' }}
+                  />
+                  <button onClick={() => setShowPassphrase(prev => ({ ...prev, import: !prev.import }))}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1 }}>
+                    {showPassphrase.import ? '🙈' : '👁'}
                   </button>
                 </div>
-                {keyTestMsg[m.id] && (
-                  <div style={{
-                    marginTop: '4px', fontSize: '11px', fontFamily: 'JetBrains Mono',
-                    color: keyTestStatus[m.id] === 'pass' ? '#6bcf8e' : '#f47068',
-                    lineHeight: 1.4
-                  }}>
-                    {keyTestMsg[m.id]}
-                  </div>
-                )}
-                <label style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 500,
-                  color: 'var(--text-secondary)', display: 'block', marginBottom: '6px', marginTop: '12px'
-                }}>{m.label} System Prompt (optional)</label>
-                <textarea
-                  value={systemPrompts[m.id] || ''}
-                  onChange={e => setSystemPrompts(prev => ({ ...prev, [m.id]: e.target.value }))}
-                  placeholder={`Custom instructions for ${m.label}...`}
-                  rows={3}
-                  style={{
-                    width: '100%', padding: '10px 14px', background: 'var(--bg-input)',
-                    border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                    color: 'var(--text-primary)', fontFamily: 'Source Serif 4', fontSize: '14px',
-                    outline: 'none', resize: 'vertical'
-                  }}
+                <button onClick={() => fileInputRef.current?.click()}
+                  style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px', background: 'var(--gemini-border)', border: 'none', borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--gemini-accent)', whiteSpace: 'nowrap' }}>
+                  Import .ctk
+                </button>
+                <input ref={fileInputRef} type="file" accept=".ctk" onChange={handleImport} style={{ display: 'none' }} />
+              </div>
+            </div>
+
+            {/* Load from URL */}
+            <div style={{ paddingTop: '20px', borderTop: '1px solid var(--border-subtle)' }}>
+              <label style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                Load from URL — fetch encrypted key file from your Worker
+              </label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                <input type="text" value={urlKeySource} onChange={e => setUrlKeySource(e.target.value)}
+                  placeholder="https://keys.yourcrosstalklab.com"
+                  style={{ flex: 1, padding: '8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none' }}
                 />
               </div>
-            ))}
-
-            {/* Key File Management */}
-            <div style={{
-              padding: '20px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
-              border: '1px solid var(--border-subtle)', marginBottom: '16px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontFamily: 'JetBrains Mono', fontSize: '14px', fontWeight: 600 }}>
-                  Key File (Encrypted)
-                </h3>
-                <button
-                  onClick={testAll}
-                  disabled={['claude','chatgpt','gemini'].some(id => keyTestStatus[id] === 'testing')}
-                  title={
-                    ['claude','chatgpt','gemini'].every(id => keyTestStatus[id] === 'pass')
-                      ? 'All keys validated'
-                      : 'Test all keys before exporting'
-                  }
-                  style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 14px',
-                    borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s ease',
-                    border: `1px solid ${exportColors[exportState].border}`,
-                    background: exportColors[exportState].bg,
-                    color: exportColors[exportState].color,
-                  }}
-                >
-                  {['claude','chatgpt','gemini'].some(id => keyTestStatus[id] === 'testing') ? 'Testing...' : 'Test All'}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input type={showPassphrase.url ? 'text' : 'password'} value={urlPassphrase} onChange={e => setUrlPassphrase(e.target.value)}
+                    autoComplete="new-password" placeholder="Enter your passphrase..."
+                    style={{ width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none' }}
+                  />
+                  <button onClick={() => setShowPassphrase(prev => ({ ...prev, url: !prev.url }))}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1 }}>
+                    {showPassphrase.url ? '🙈' : '👁'}
+                  </button>
+                </div>
+                <button onClick={handleLoadFromUrl}
+                  style={{ fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px', background: 'var(--chatgpt-border)', border: 'none', borderRadius: 'var(--radius)', cursor: 'pointer', color: 'var(--chatgpt-accent)', whiteSpace: 'nowrap' }}>
+                  Load ↓
                 </button>
               </div>
-
-              {/* Export */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
-                  display: 'block', marginBottom: '4px'
-                }}>Export — save your keys to an encrypted file</label>
-                <p style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)',
-                  marginBottom: '8px', lineHeight: 1.5
-                }}>
-                  🟡 Yellow = untested keys included as-is · 🟢 Green = all passed · 🔴 Red = failed keys excluded with confirmation · Test and export in the same Settings session — closing resets test results.
-                </p>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    <input
-                      type={showPassphrase.export ? 'text' : 'password'}
-                      value={exportPassphrase}
-                      onChange={e => setExportPassphrase(e.target.value)}
-                      autoComplete="new-password"
-                      placeholder="Choose a passphrase..."
-                      style={{
-                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      onClick={() => setShowPassphrase(prev => ({ ...prev, export: !prev.export }))}
-                      title={showPassphrase.export ? 'Hide passphrase' : 'Show passphrase'}
-                      style={{
-                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
-                      }}
-                    >{showPassphrase.export ? '🙈' : '👁'}</button>
-                  </div>
-                  <button
-                    onClick={handleExport}
-                    title={exportTooltips[exportState]}
-                    style={{
-                      fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                      border: 'none', borderRadius: 'var(--radius)',
-                      cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s ease',
-                      background: exportColors[exportState].bg,
-                      color: exportColors[exportState].color,
-                    }}
-                  >
-                    Export .ctk
-                  </button>
-                </div>
-              </div>
-
-              {/* Import */}
-              <div>
-                <label style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
-                  display: 'block', marginBottom: '6px'
-                }}>Import — load keys from an encrypted file</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    <input
-                      type={showPassphrase.import ? 'text' : 'password'}
-                      value={importPassphrase}
-                      onChange={e => setImportPassphrase(e.target.value)}
-                      autoComplete="new-password"
-                      placeholder="Enter your passphrase..."
-                      style={{
-                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      onClick={() => setShowPassphrase(prev => ({ ...prev, import: !prev.import }))}
-                      title={showPassphrase.import ? 'Hide passphrase' : 'Show passphrase'}
-                      style={{
-                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
-                      }}
-                    >{showPassphrase.import ? '🙈' : '👁'}</button>
-                  </div>
-                  <button onClick={() => fileInputRef.current?.click()} style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                    background: 'var(--gemini-border)', border: 'none', borderRadius: 'var(--radius)',
-                    cursor: 'pointer', color: 'var(--gemini-accent)', whiteSpace: 'nowrap'
-                  }}>
-                    Import .ctk
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".ctk"
-                    onChange={handleImport}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-              </div>
-
-              {/* Load from URL */}
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-                <label style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: 'var(--text-secondary)',
-                  display: 'block', marginBottom: '6px'
-                }}>Load from URL — fetch encrypted key file from your Worker</label>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <input
-                    type="text"
-                    value={urlKeySource}
-                    onChange={e => setUrlKeySource(e.target.value)}
-                    placeholder="https://keys.yourcrosstalklab.com"
-                    style={{
-                      flex: 1, padding: '8px 12px', background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <div style={{ flex: 1, position: 'relative' }}>
-                    <input
-                      type={showPassphrase.url ? 'text' : 'password'}
-                      value={urlPassphrase}
-                      onChange={e => setUrlPassphrase(e.target.value)}
-                      autoComplete="new-password"
-                      placeholder="Enter your passphrase..."
-                      style={{
-                        width: '100%', padding: '8px 32px 8px 12px', background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                        color: 'var(--text-primary)', fontFamily: 'JetBrains Mono', fontSize: '12px',
-                        outline: 'none'
-                      }}
-                    />
-                    <button
-                      onClick={() => setShowPassphrase(prev => ({ ...prev, url: !prev.url }))}
-                      title={showPassphrase.url ? 'Hide passphrase' : 'Show passphrase'}
-                      style={{
-                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', fontSize: '12px', padding: '2px', lineHeight: 1
-                      }}
-                    >{showPassphrase.url ? '🙈' : '👁'}</button>
-                  </div>
-                  <button onClick={handleLoadFromUrl} style={{
-                    fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '8px 16px',
-                    background: 'var(--chatgpt-border)', border: 'none', borderRadius: 'var(--radius)',
-                    cursor: 'pointer', color: 'var(--chatgpt-accent)', whiteSpace: 'nowrap'
-                  }}>
-                    Load ↓
-                  </button>
-                </div>
-              </div>
-
-              {/* Inline export confirmation — replaces window.confirm */}
-              {exportConfirm && (
-                <div style={{
-                  marginTop: '12px', padding: '12px', borderRadius: 'var(--radius)',
-                  background: '#3d1a1a', border: '1px solid #5a2a2a',
-                  fontFamily: 'JetBrains Mono', fontSize: '12px', color: '#f47068'
-                }}>
-                  <div style={{ marginBottom: '8px', fontWeight: 600 }}>
-                    The following key{exportConfirm.failedLabels.length > 1 ? 's' : ''} failed validation and will not be included:
-                  </div>
-                  {exportConfirm.failedLabels.map(l => (
-                    <div key={l} style={{ marginBottom: '4px' }}>• {l}</div>
-                  ))}
-                  <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => doExport(exportConfirm.exportKeys)}
-                      style={{
-                        fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px',
-                        background: '#5a2a2a', border: '1px solid #7a3a3a', borderRadius: 'var(--radius)',
-                        color: '#f47068', cursor: 'pointer'
-                      }}
-                    >
-                      Proceed without {exportConfirm.failedLabels.length > 1 ? 'them' : 'it'}
-                    </button>
-                    <button
-                      onClick={() => setExportConfirm(null)}
-                      style={{
-                        fontFamily: 'JetBrains Mono', fontSize: '11px', padding: '5px 12px',
-                        background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                        borderRadius: 'var(--radius)', color: 'var(--text-secondary)', cursor: 'pointer'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Status message */}
-              {cryptoStatus && (
-                <div style={{
-                  marginTop: '12px', fontSize: '12px', fontFamily: 'JetBrains Mono',
-                  color: statusColors[cryptoStatus.type] || 'var(--text-secondary)'
-                }}>
-                  {cryptoStatus.msg}
-                </div>
-              )}
             </div>
 
-            <div style={{
-              padding: '16px', background: 'var(--bg-input)', borderRadius: 'var(--radius)',
-              border: '1px solid var(--border-subtle)', fontSize: '13px', color: 'var(--text-secondary)',
-              lineHeight: 1.5
-            }}>
-              <strong style={{ color: 'var(--text-primary)' }}>Security:</strong> API keys exist only in browser
-              session memory and are never stored on disk unless you explicitly export them. Exported .ctk files
-              are encrypted with AES-256-GCM — without your passphrase, the contents are unrecoverable.
+            {cryptoStatus && (
+              <div style={{ marginTop: '12px', fontSize: '12px', fontFamily: 'JetBrains Mono', color: statusColors[cryptoStatus.type] || 'var(--text-secondary)' }}>
+                {cryptoStatus.msg}
+              </div>
+            )}
+
+            {/* Security note */}
+            <div style={{ marginTop: '20px', padding: '14px', background: 'var(--bg-input)', borderRadius: 'var(--radius)', border: '1px solid var(--border-subtle)', fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--text-primary)' }}>Security:</strong> API keys exist only in browser session memory and are never stored on disk unless you explicitly export them. Exported .ctk files are encrypted with AES-256-GCM — without your passphrase, the contents are unrecoverable.
             </div>
           </div>
         </div>
       );
     }
-
     // ─────────────────────────────────────────────
     // Model Response Card
     // ─────────────────────────────────────────────
@@ -1747,9 +1533,10 @@
     // ─────────────────────────────────────────────
 
     function App() {
-      const [keys, setKeys] = useState({ claude: '', chatgpt: '', gemini: '' });
-      const [systemPrompts, setSystemPrompts] = useState({ claude: '', chatgpt: '', gemini: '' });
-      const [showSettings, setShowSettings] = useState(false);
+      const [keys, setKeys] = useState({ claude: '', chatgpt: '', gemini: '', grok: '', mistral: '', deepseek: '' });
+      const [systemPrompts, setSystemPrompts] = useState({ claude: '', chatgpt: '', gemini: '', grok: '', mistral: '', deepseek: '' });
+      const [showGenerateCtk, setShowGenerateCtk] = useState(false);
+      const [showLoadKeys, setShowLoadKeys] = useState(false);
       const [showAbout, setShowAbout] = useState(false);
       const [prompt, setPrompt] = useState('');
       const [responses, setResponses] = useState({ claude: null, chatgpt: null, gemini: null });
@@ -2969,8 +2756,11 @@
 
               {/* Settings + Theme at bottom */}
               <div className="sidebar-section-label">Interface</div>
-              <button className="sidebar-btn" onClick={() => setShowSettings(true)}>
-                <span>⚙</span> Configuration
+              <button className="sidebar-btn" onClick={() => setShowLoadKeys(true)}>
+                <span>↓</span> Load Keys
+              </button>
+              <button className="sidebar-btn" onClick={() => setShowGenerateCtk(true)}>
+                <span>⚿</span> Generate .ctk
               </button>
               <button className="sidebar-btn" onClick={() => setDarkMode(m => !m)}>
                 <span>{darkMode ? '☀' : '☾'}</span> {darkMode ? 'Light mode' : 'Dark mode'}
@@ -3076,11 +2866,11 @@
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>
                 Configure your API keys to start querying models.
               </p>
-              <button onClick={() => setShowSettings(true)} style={{
+              <button onClick={() => setShowLoadKeys(true)} style={{
                 fontFamily: 'JetBrains Mono', fontSize: '13px', padding: '10px 24px',
                 background: 'var(--claude-border)', border: 'none', borderRadius: 'var(--radius)',
                 cursor: 'pointer', color: 'var(--claude-accent)'
-              }}>Configure keys</button>
+              }}>Load keys</button>
             </div>
           )}
 
@@ -3382,12 +3172,19 @@
           <HistoryPanel history={turnHistory} onLoadTurn={() => {}} />
 
           {/* Settings Modal */}
-          {showSettings && (
-            <SettingsPanel
+          {showLoadKeys && (
+            <LoadKeysModal
+              setKeys={setKeys}
+              setSystemPrompts={setSystemPrompts}
+              onClose={() => setShowLoadKeys(false)}
+            />
+          )}
+
+          {showGenerateCtk && (
+            <GenerateCtkModal
               keys={keys} setKeys={setKeys}
               systemPrompts={systemPrompts} setSystemPrompts={setSystemPrompts}
-              conductorOrder={conductorOrder} setConductorOrder={setConductorOrder}
-              onClose={() => setShowSettings(false)}
+              onClose={() => setShowGenerateCtk(false)}
             />
           )}
 
