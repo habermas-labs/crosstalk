@@ -621,10 +621,24 @@
 
     // Default model strings — used on first load before dynamic fetch
     const DEFAULT_MODELS = {
-      claude:  'claude-sonnet-4-20250514',
-      chatgpt: 'gpt-4o',
-      gemini:  'gemini-2.5-flash',
+      claude:   'claude-sonnet-4-20250514',
+      chatgpt:  'gpt-4o',
+      gemini:   'gemini-2.5-flash',
+      grok:     'grok-3-latest',
+      mistral:  'mistral-large-latest',
+      deepseek: 'deepseek-chat',
     };
+
+    // Central provider metadata — single source of truth for labels, icons, colors
+    const PROVIDER_META = {
+      claude:   { label: 'Claude',   icon: '◈', accent: 'var(--claude-accent)',   bg: 'var(--claude-bg)',   border: 'var(--claude-border)'   },
+      chatgpt:  { label: 'ChatGPT',  icon: '◇', accent: 'var(--chatgpt-accent)',  bg: 'var(--chatgpt-bg)',  border: 'var(--chatgpt-border)'  },
+      gemini:   { label: 'Gemini',   icon: '△', accent: 'var(--gemini-accent)',   bg: 'var(--gemini-bg)',   border: 'var(--gemini-border)'   },
+      grok:     { label: 'Grok',     icon: '◉', accent: 'var(--grok-accent)',     bg: 'var(--grok-bg)',     border: 'var(--grok-border)'     },
+      mistral:  { label: 'Mistral',  icon: '⬡', accent: 'var(--mistral-accent)',  bg: 'var(--mistral-bg)',  border: 'var(--mistral-border)'  },
+      deepseek: { label: 'DeepSeek', icon: '▿', accent: 'var(--deepseek-accent)', bg: 'var(--deepseek-bg)', border: 'var(--deepseek-border)' },
+    };
+    const ALL_PROVIDERS = Object.keys(PROVIDER_META);
 
     // Fetch available models from each provider using the user's API key.
     // Returns array of { id, label } objects, or [{id:'default',label:'Default'}] on failure.
@@ -670,6 +684,28 @@
               id: m.name.replace('models/', ''),
               label: m.displayName || m.name.replace('models/', '')
             }));
+        }
+        // OpenAI-compatible providers: grok, mistral, deepseek
+        const OAI_ENDPOINTS = {
+          grok:     'https://api.x.ai/v1/models',
+          mistral:  'https://api.mistral.ai/v1/models',
+          deepseek: 'https://api.deepseek.com/v1/models',
+        };
+        const OAI_FILTERS = {
+          grok:     m => !m.id.includes('image') && !m.id.includes('embed'),
+          mistral:  m => !m.id.includes('embed') && !m.id.includes('voxtral') && !m.id.includes('moderation'),
+          deepseek: m => true,
+        };
+        if (OAI_ENDPOINTS[provider]) {
+          const res = await fetch(OAI_ENDPOINTS[provider], {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          });
+          const data = await res.json();
+          if (!data.data) return [{ id: 'default', label: 'Default' }];
+          return data.data
+            .filter(OAI_FILTERS[provider])
+            .sort((a, b) => (b.created || 0) - (a.created || 0))
+            .map(m => ({ id: m.id, label: m.id }));
         }
       } catch (_) {
         return [{ id: 'default', label: 'Default' }];
@@ -741,7 +777,34 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
         return data.candidates[0].content.parts.map(p => p.text).join('\n');
-      }
+      },
+
+      // OpenAI-compatible adapters: grok, mistral, deepseek
+      ...((() => {
+        const OAI_BASES = {
+          grok:     'https://api.x.ai/v1/chat/completions',
+          mistral:  'https://api.mistral.ai/v1/chat/completions',
+          deepseek: 'https://api.deepseek.com/v1/chat/completions',
+        };
+        return Object.fromEntries(
+          ['grok', 'mistral', 'deepseek'].map(provider => [
+            provider,
+            async (messages, systemPrompt, apiKey, modelString) => {
+              const msgs = [];
+              if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
+              msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
+              const res = await fetch(OAI_BASES[provider], {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: modelString || DEFAULT_MODELS[provider], max_tokens: 4096, messages: msgs })
+              });
+              const data = await res.json();
+              if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+              return data.choices[0].message.content;
+            }
+          ])
+        );
+      })()),
     };
 
     // ─────────────────────────────────────────────
@@ -798,11 +861,7 @@
       const panelRef = useRef(null);
       const dragState = useRef(null);
 
-      const MODEL_META = {
-        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  icon: '◈' },
-        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', icon: '◇' },
-        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  icon: '△' },
-      };
+      const MODEL_META = PROVIDER_META;
       const meta = MODEL_META[panel.model];
 
       const handleMouseDown = (e) => {
@@ -1339,11 +1398,7 @@
     // ─────────────────────────────────────────────
 
     function ModelCard({ model, response, isLoading, error, enabled, hasKey, onToggle, onOpenPanel, onClip }) {
-      const config = {
-        claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  bg: 'var(--claude-bg)',  border: 'var(--claude-border)',  icon: '◈' },
-        chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', bg: 'var(--chatgpt-bg)', border: 'var(--chatgpt-border)', icon: '◇' },
-        gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  bg: 'var(--gemini-bg)',  border: 'var(--gemini-border)',  icon: '△' }
-      }[model];
+      const config = PROVIDER_META[model] || { label: model, accent: 'var(--text-muted)', bg: 'var(--bg-secondary)', border: 'var(--border-subtle)', icon: '◌' };
 
       return (
         <div style={{
@@ -1488,8 +1543,8 @@
                   }}>
                     Turn {i + 1} — {
                       turn.mode === 'parallel' ? 'Parallel' :
-                      turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => ({claude:'◈',chatgpt:'◇',gemini:'△'})[m]).join('→')})` :
-                      `Directed → ${{claude:'◈ Claude',chatgpt:'◇ ChatGPT',gemini:'△ Gemini'}[turn.target] || turn.target}`
+                      turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => PROVIDER_META[m]?.icon || m).join('→')})` :
+                      `Directed → ${PROVIDER_META[turn.target]?.icon || ''} ${PROVIDER_META[turn.target]?.label || turn.target}`
                     }
                   </div>
                   <div style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
@@ -1539,13 +1594,13 @@
       const [showLoadKeys, setShowLoadKeys] = useState(false);
       const [showAbout, setShowAbout] = useState(false);
       const [prompt, setPrompt] = useState('');
-      const [responses, setResponses] = useState({ claude: null, chatgpt: null, gemini: null });
-      const [loading, setLoading] = useState({ claude: false, chatgpt: false, gemini: false });
-      const [errors, setErrors] = useState({ claude: null, chatgpt: null, gemini: null });
-      const [enabled, setEnabled] = useState({ claude: true, chatgpt: true, gemini: true });
-      const [conversationHistory, setConversationHistory] = useState({
-        claude: [], chatgpt: [], gemini: []
-      });
+      const [responses, setResponses] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+      const [loading, setLoading] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
+      const [errors, setErrors] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+      const [enabled, setEnabled] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, true])));
+      const [conversationHistory, setConversationHistory] = useState(
+        Object.fromEntries(ALL_PROVIDERS.map(p => [p, []]))
+      );
       const [turnHistory, setTurnHistory] = useState([]);
       const [sessionMeta, setSessionMeta] = useState(() => ({
         sessionId: generateSessionId(),
@@ -1647,22 +1702,20 @@
       // CT-097 — per-slot model version selector
       const [selectedModels, setSelectedModels] = useState({ ...DEFAULT_MODELS });
       const [pendingModels, setPendingModels]   = useState({ ...DEFAULT_MODELS });
-      const [availableModels, setAvailableModels] = useState({
-        claude:  [{ id: DEFAULT_MODELS.claude,  label: 'claude-sonnet-4-20250514' }],
-        chatgpt: [{ id: DEFAULT_MODELS.chatgpt, label: 'gpt-4o' }],
-        gemini:  [{ id: DEFAULT_MODELS.gemini,  label: 'gemini-2.5-flash' }],
-      });
-      const [modelsFetching, setModelsFetching] = useState({ claude: false, chatgpt: false, gemini: false });
+      const [availableModels, setAvailableModels] = useState(
+        Object.fromEntries(ALL_PROVIDERS.map(p => [p, [{ id: DEFAULT_MODELS[p], label: DEFAULT_MODELS[p] }]]))
+      );
+      const [modelsFetching, setModelsFetching] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
       const [modelConfirmOpen, setModelConfirmOpen] = useState(false);
       const [modelConfirmWarning, setModelConfirmWarning] = useState(false);
-      const pendingHasChanges = ['claude','chatgpt','gemini'].some(m => pendingModels[m] !== selectedModels[m]);
-      const pendingVals = ['claude','chatgpt','gemini'].map(m => pendingModels[m]);
+      const pendingHasChanges = conductorOrder.some(m => pendingModels[m] !== selectedModels[m]);
+      const pendingVals = conductorOrder.map(m => pendingModels[m]);
       const pendingHasDupe = pendingVals.some((v, i) => pendingVals.indexOf(v) !== i);
 
       // Fetch model lists once per provider when a key becomes available
-      const fetchedRef = React.useRef({ claude: false, chatgpt: false, gemini: false });
+      const fetchedRef = React.useRef(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
       useEffect(() => {
-        ['claude', 'chatgpt', 'gemini'].forEach(async (provider) => {
+        ALL_PROVIDERS.forEach(async (provider) => {
           const key = keys[provider]?.trim();
           if (!key || fetchedRef.current[provider]) return;
           fetchedRef.current[provider] = true;
@@ -1702,7 +1755,7 @@
       const [excludeModel, setExcludeModel] = useState('none'); // 'none' | 'claude' | 'chatgpt' | 'gemini'
       const [includeResponse, setIncludeResponse] = useState('none'); // 'none' | 'claude' | 'chatgpt' | 'gemini'
 
-      const activeModels = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim());
+      const activeModels = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
 
       const handleSetDirectTo = (val) => {
         setDirectTo(val);
@@ -1721,9 +1774,9 @@
 
       // CT-094 — In-app clipboard: one slot per model, replace on re-clip
       // { claude: { text, clippedAt } | null, chatgpt: ..., gemini: ... }
-      const [clippedResponses, setClippedResponses] = useState({ claude: null, chatgpt: null, gemini: null });
+      const [clippedResponses, setClippedResponses] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
       // Which clipped slots are selected for include in next prompt
-      const [clipInclude, setClipInclude] = useState({ claude: false, chatgpt: false, gemini: false });
+      const [clipInclude, setClipInclude] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
 
       const clipResponse = (model, text) => {
         setClippedResponses(prev => ({ ...prev, [model]: { text, clippedAt: new Date().toISOString() } }));
@@ -1740,8 +1793,8 @@
       };
 
       const clearAllClips = () => {
-        setClippedResponses({ claude: null, chatgpt: null, gemini: null });
-        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+        setClippedResponses(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+        setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
       };
 
       const anyClipIncluded = Object.values(clipInclude).some(Boolean);
@@ -1884,7 +1937,7 @@
 
         // Append clipped responses — in-app clipboard inclusions
         if (clippedItems && clippedItems.length > 0) {
-          const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+          const modelLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].label]));
           const clipBlocks = clippedItems.map(({ model, text }) =>
             `\n\n---\nThe following is a clipped response from ${modelLabels[model]} included from the in-app clipboard:\n\n${text}\n---`
           ).join('');
@@ -1894,7 +1947,7 @@
         // No model response to include — return base
         if (!includeModel || includeModel === 'none' || !responses[includeModel]) return base || userText;
 
-        const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+        const modelLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].label]));
         const included = responses[includeModel];
         if (!base.trim()) {
           return `Here is ${modelLabels[includeModel]}'s response to our discussion. Please react to it, noting points of agreement, disagreement, or areas you'd like to develop further:\n\n---\n${included}\n---`;
@@ -1911,17 +1964,17 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const clippedItems = conductorOrder.filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
         const content = buildPromptContent(userText, included, vaultFiles, clippedItems);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
-        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+        setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
         setModeArmed(false);
 
-        const models = ['claude', 'chatgpt', 'gemini'].filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
+        const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -1931,7 +1984,7 @@
 
         const resetResponses = {};
         const resetErrors = {};
-        const loadingState = { claude: false, chatgpt: false, gemini: false };
+        const loadingState = Object.fromEntries(ALL_PROVIDERS.map(p => [p, false]));
         models.forEach(m => { resetResponses[m] = null; resetErrors[m] = null; loadingState[m] = true; });
         setResponses(prev => ({ ...prev, ...resetResponses }));
         setErrors(prev => ({ ...prev, ...resetErrors }));
@@ -1987,7 +2040,7 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const clippedItems = conductorOrder.filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
         const baseContent = buildPromptContent(userText, included, vaultFiles, clippedItems);
         const activeExclude = excludeModel;
         setPrompt('');
@@ -1995,7 +2048,7 @@
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
-        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+        setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
         setModeArmed(false);
 
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== activeExclude);
@@ -2022,7 +2075,7 @@
 
           let contextualPrompt = baseContent;
           if (priorResponses.length > 0) {
-            const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+            const modelLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].label]));
             const priorText = priorResponses
               .map(p => '### ' + modelLabels[p.model] + '\n' + p.response)
               .join('\n\n');
@@ -2082,14 +2135,14 @@
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
-        const clippedItems = ['claude','chatgpt','gemini'].filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
+        const clippedItems = conductorOrder.filter(m => clipInclude[m] && clippedResponses[m]).map(m => ({ model: m, text: clippedResponses[m].text }));
         const content = buildPromptContent(userText, included, vaultFiles, clippedItems);
         setPrompt('');
         setDirectTo('all');
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
-        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+        setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
 
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
@@ -2149,9 +2202,9 @@
 
       // Clear conversation
       const clearConversation = () => {
-        setResponses({ claude: null, chatgpt: null, gemini: null });
-        setErrors({ claude: null, chatgpt: null, gemini: null });
-        setConversationHistory({ claude: [], chatgpt: [], gemini: [] });
+        setResponses(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+        setErrors(Object.fromEntries(ALL_PROVIDERS.map(p => [p, null])));
+        setConversationHistory(Object.fromEntries(ALL_PROVIDERS.map(p => [p, []])));
         setTurnHistory([]);
         setSessionMeta({
           sessionId: generateSessionId(),
@@ -2165,15 +2218,15 @@
         setExcludeModel('none');
         setIncludeResponse('none');
         setVaultForward([]);
-        setClipInclude({ claude: false, chatgpt: false, gemini: false });
+        setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
         setModeArmed(false);
       };
 
       // Export session as markdown transcript
       const exportTranscript = () => {
         if (turnHistory.length === 0) return;
-        const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
-        const modelIcons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
+        const modelLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].label]));
+        const modelIcons  = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].icon]));
         const now = new Date();
         const exportedAt = now.toISOString();
         const dateStr = now.toLocaleDateString('en-CA');
@@ -2188,7 +2241,7 @@
         // Active models from sessionMeta, fallback to keyed models
         const activeModelIds = sessionMeta.modelsActive.length > 0
           ? sessionMeta.modelsActive
-          : ['claude', 'chatgpt', 'gemini'].filter(m => keys[m]?.trim());
+          : conductorOrder.filter(m => keys[m]?.trim());
         const activeModelsStr = activeModelIds.map(m => `${modelIcons[m]} ${modelLabels[m]}`).join(' · ');
 
         // Modes used across turns
@@ -2271,13 +2324,13 @@
         setExportMenuOpen(false);
         setSummarizing(true);
 
-        const modelLabels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
-        const modelIcons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
+        const modelLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].label]));
+        const modelIcons  = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].icon]));
 
         // Build a compact session digest to send — structured but not full prose
         const activeModelIds = sessionMeta.modelsActive.length > 0
           ? sessionMeta.modelsActive
-          : ['claude', 'chatgpt', 'gemini'].filter(m => keys[m]?.trim());
+          : conductorOrder.filter(m => keys[m]?.trim());
 
         let digest = `You are synthesizing a multi-model triangulation session from Crosstalk Lab.\n\n`;
         digest += `Session ID: ${sessionMeta.sessionId}\n`;
@@ -2367,7 +2420,7 @@
       };
 
       // Conductor order display for status line
-      const conductorOrderLabels = { claude: '◈', chatgpt: '◇', gemini: '△' };
+      const conductorOrderLabels = Object.fromEntries(ALL_PROVIDERS.map(p => [p, PROVIDER_META[p].icon]));
 
       return (
         <div className="ct-layout">
@@ -2427,11 +2480,10 @@
                   <div style={{
                     fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)',
                     marginBottom: '8px'
-                  }}>Order</div>
+                  }}>Active Model Order</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {conductorOrder.map((modelId, position) => {
-                      const MODEL_LABELS = { claude: '◈ Claude', chatgpt: '◇ ChatGPT', gemini: '△ Gemini' };
-                      const MODEL_ACCENTS = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
+                      const meta = PROVIDER_META[modelId] || {};
                       return (
                         <div key={position} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{
@@ -2452,20 +2504,23 @@
                             style={{
                               flex: 1, padding: '4px 6px',
                               background: 'var(--bg-secondary)',
-                              border: `1px solid ${modelId === 'claude' ? 'var(--claude-border)' : modelId === 'chatgpt' ? 'var(--chatgpt-border)' : 'var(--gemini-border)'}`,
+                              border: `1px solid ${meta.border || 'var(--border-subtle)'}`,
                               borderRadius: '4px',
-                              color: MODEL_ACCENTS[modelId],
+                              color: meta.accent || 'var(--text-muted)',
                               fontFamily: 'JetBrains Mono', fontSize: '11px',
                               outline: 'none', cursor: 'pointer',
                             }}
                           >
-                            <option value="claude">◈ Claude</option>
-                            <option value="chatgpt">◇ ChatGPT</option>
-                            <option value="gemini">△ Gemini</option>
+                            {ALL_PROVIDERS.map(p => (
+                              <option key={p} value={p}>{PROVIDER_META[p].icon} {PROVIDER_META[p].label}</option>
+                            ))}
                           </select>
                         </div>
                       );
                     })}
+                  </div>
+                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '9px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.5 }}>
+                    Only 3 models active at a time — swap slots to change providers.
                   </div>
                 </div>
               </div>
@@ -2477,10 +2532,8 @@
                   background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius)', padding: '10px 12px',
                 }}>
-                  {(['claude', 'chatgpt', 'gemini']).map(provider => {
-                    const ICONS   = { claude: '◈', chatgpt: '◇', gemini: '△' };
-                    const ACCENTS = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
-                    const BORDERS = { claude: 'var(--claude-border)', chatgpt: 'var(--chatgpt-border)', gemini: 'var(--gemini-border)' };
+                  {(conductorOrder).map(provider => {
+                    const meta    = PROVIDER_META[provider] || {};
                     const hasKey  = !!keys[provider]?.trim();
                     const options = availableModels[provider] || [];
                     const isDupe  = pendingVals.filter(v => v === pendingModels[provider]).length > 1;
@@ -2488,9 +2541,9 @@
                       <div key={provider} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                         <span style={{
                           fontFamily: 'JetBrains Mono', fontSize: '11px',
-                          color: hasKey ? ACCENTS[provider] : 'var(--text-muted)',
+                          color: hasKey ? meta.accent : 'var(--text-muted)',
                           width: '14px', flexShrink: 0, textAlign: 'center'
-                        }}>{ICONS[provider]}</span>
+                        }}>{meta.icon}</span>
                         <select
                           disabled={!hasKey || modelsFetching[provider]}
                           value={pendingModels[provider]}
@@ -2498,9 +2551,9 @@
                           style={{
                             flex: 1, padding: '4px 6px',
                             background: hasKey ? 'var(--bg-secondary)' : 'var(--bg-input)',
-                            border: `1px solid ${isDupe ? '#f47068' : hasKey ? BORDERS[provider] : 'var(--border-subtle)'}`,
+                            border: `1px solid ${isDupe ? '#f47068' : hasKey ? meta.border : 'var(--border-subtle)'}`,
                             borderRadius: '4px',
-                            color: hasKey ? ACCENTS[provider] : 'var(--text-muted)',
+                            color: hasKey ? meta.accent : 'var(--text-muted)',
                             fontFamily: 'JetBrains Mono', fontSize: '10px',
                             outline: 'none', cursor: hasKey ? 'pointer' : 'default',
                             opacity: hasKey ? 1 : 0.4,
@@ -2565,13 +2618,12 @@
                     {!modelConfirmWarning ? (
                       <>
                         <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.6' }}>
-                          {(['claude','chatgpt','gemini']).filter(m => pendingModels[m] !== selectedModels[m]).map(m => {
-                            const ICONS = { claude: '◈', chatgpt: '◇', gemini: '△' };
-                            const LABELS = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
+                          {(conductorOrder).filter(m => pendingModels[m] !== selectedModels[m]).map(m => {
+                            const meta = PROVIDER_META[m] || {};
                             return (
                               <div key={m} style={{ marginBottom: '6px' }}>
-                                <span style={{ color: m === 'claude' ? 'var(--claude-accent)' : m === 'chatgpt' ? 'var(--chatgpt-accent)' : 'var(--gemini-accent)' }}>
-                                  {ICONS[m]} {LABELS[m]}
+                                <span style={{ color: meta.accent }}>
+                                  {meta.icon} {meta.label}
                                 </span>
                                 {' '}→ {pendingModels[m]}
                               </div>
@@ -2698,10 +2750,8 @@
                           borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)',
                           minWidth: '100%', overflow: 'hidden', zIndex: 51
                         }}>
-                          {['claude', 'chatgpt', 'gemini'].map(model => {
-                            const labels = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' };
-                            const icons  = { claude: '◈', chatgpt: '◇', gemini: '△' };
-                            const accents = { claude: 'var(--claude-accent)', chatgpt: 'var(--chatgpt-accent)', gemini: 'var(--gemini-accent)' };
+                          {conductorOrder.map(model => {
+                            const meta = PROVIDER_META[model] || {};
                             const available = !!keys[model]?.trim();
                             return (
                               <button key={model}
@@ -2719,8 +2769,8 @@
                                 onMouseEnter={e => { if (available) e.currentTarget.style.background = 'var(--bg-card)'; }}
                                 onMouseLeave={e => e.currentTarget.style.background = 'none'}
                               >
-                                <span style={{ color: available ? accents[model] : 'inherit' }}>{icons[model]}</span>
-                                {labels[model]}
+                                <span style={{ color: available ? meta.accent : 'inherit' }}>{meta.icon}</span>
+                                {meta.label}
                                 {!available && <span style={{ fontSize: '10px', marginLeft: 'auto' }}>no key</span>}
                               </button>
                             );
@@ -2915,17 +2965,14 @@
                   style={{
                     padding: '5px 8px', background: 'var(--bg-input)',
                     border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                    color: directTo === 'all' ? 'var(--text-primary)'
-                      : directTo === 'claude' ? 'var(--claude-accent)'
-                      : directTo === 'chatgpt' ? 'var(--chatgpt-accent)'
-                      : 'var(--gemini-accent)',
+                    color: directTo === 'all' ? 'var(--text-primary)' : (PROVIDER_META[directTo]?.accent || 'var(--text-muted)'),
                     fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
                   }}
                 >
                   <option value="all">All</option>
-                  {enabled['claude']  && keys['claude']?.trim()  && <option value="claude">◈ Claude</option>}
-                  {enabled['chatgpt'] && keys['chatgpt']?.trim() && <option value="chatgpt">◇ ChatGPT</option>}
-                  {enabled['gemini']  && keys['gemini']?.trim()  && <option value="gemini">△ Gemini</option>}
+                  {conductorOrder.filter(m => enabled[m] && keys[m]?.trim()).map(m => (
+                    <option key={m} value={m}>{PROVIDER_META[m]?.icon} {PROVIDER_META[m]?.label}</option>
+                  ))}
                 </select>
               </div>
 
@@ -2941,23 +2988,20 @@
                     style={{
                       padding: '5px 8px', background: 'var(--bg-input)',
                       border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: excludeModel === 'none' ? 'var(--text-secondary)'
-                        : excludeModel === 'claude' ? 'var(--claude-accent)'
-                        : excludeModel === 'chatgpt' ? 'var(--chatgpt-accent)'
-                        : 'var(--gemini-accent)',
+                      color: excludeModel === 'none' ? 'var(--text-secondary)' : (PROVIDER_META[excludeModel]?.accent || 'var(--text-muted)'),
                       fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
                     }}
                   >
                     <option value="none">None</option>
-                    {enabled['claude']  && keys['claude']?.trim()  && <option value="claude">◈ Claude</option>}
-                    {enabled['chatgpt'] && keys['chatgpt']?.trim() && <option value="chatgpt">◇ ChatGPT</option>}
-                    {enabled['gemini']  && keys['gemini']?.trim()  && <option value="gemini">△ Gemini</option>}
+                    {conductorOrder.filter(m => enabled[m] && keys[m]?.trim()).map(m => (
+                      <option key={m} value={m}>{PROVIDER_META[m]?.icon} {PROVIDER_META[m]?.label}</option>
+                    ))}
                   </select>
                 </div>
               )}
 
               {/* Forward dropdown — shown only when a model has a response */}
-              {['claude','chatgpt','gemini'].some(m => responses[m]) && (
+              {conductorOrder.some(m => responses[m]) && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{
                     fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap'
@@ -2968,17 +3012,14 @@
                     style={{
                       padding: '5px 8px', background: 'var(--bg-input)',
                       border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius)',
-                      color: includeResponse === 'none' ? 'var(--text-secondary)'
-                        : includeResponse === 'claude' ? 'var(--claude-accent)'
-                        : includeResponse === 'chatgpt' ? 'var(--chatgpt-accent)'
-                        : 'var(--gemini-accent)',
+                      color: includeResponse === 'none' ? 'var(--text-secondary)' : (PROVIDER_META[includeResponse]?.accent || 'var(--text-muted)'),
                       fontFamily: 'JetBrains Mono', fontSize: '12px', outline: 'none', cursor: 'pointer'
                     }}
                   >
                     <option value="none">None</option>
-                    {responses['claude']  && <option value="claude">◈ Claude</option>}
-                    {responses['chatgpt'] && <option value="chatgpt">◇ ChatGPT</option>}
-                    {responses['gemini']  && <option value="gemini">△ Gemini</option>}
+                    {conductorOrder.filter(m => responses[m]).map(m => (
+                      <option key={m} value={m}>{PROVIDER_META[m]?.icon} {PROVIDER_META[m]?.label}</option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -3034,26 +3075,23 @@
                       ◈ Conducting… {conductorOrder.map(m => conductorOrderLabels[m]).join(' → ')}
                     </span>
                   : directTo !== 'all'
-                  ? <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo] }}>
-                      {{ claude:'◈ Claude', chatgpt:'◇ ChatGPT', gemini:'△ Gemini' }[directTo]}
+                  ? <span style={{ color: PROVIDER_META[directTo]?.accent || 'var(--text-muted)' }}>
+                      {PROVIDER_META[directTo]?.icon} {PROVIDER_META[directTo]?.label}
                     </span>
                   : excludeModel !== 'none'
-                  ? <span>Excluding <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[excludeModel] }}>{{ claude:'◈ Claude', chatgpt:'◇ ChatGPT', gemini:'△ Gemini' }[excludeModel]}</span></span>
+                  ? <span>Excluding <span style={{ color: PROVIDER_META[excludeModel]?.accent }}>{PROVIDER_META[excludeModel]?.icon} {PROVIDER_META[excludeModel]?.label}</span></span>
                   : sendMode === 'conductor'
                   ? <span>
                       Order: {conductorOrder.map((m, i) => (
                         <span key={m}>
-                          <span style={{ color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[m] }}>
-                            {conductorOrderLabels[m]}
+                          <span style={{ color: PROVIDER_META[m]?.accent }}>
+                            {PROVIDER_META[m]?.icon} {PROVIDER_META[m]?.label}
                           </span>
                           {i < conductorOrder.length - 1 && ' → '}
                         </span>
                       ))}
                     </span>
-                  : <>Active: {activeModels
-                      .map(m => ({ claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini' }[m]))
-                      .join(', ') || 'None'}
-                    </>
+                  : <>Active: {activeModels.map(m => PROVIDER_META[m]?.label || m).join(', ') || 'None'}</>
                 }
               </div>
 
@@ -3120,10 +3158,10 @@
                   onClick={() => sendDirect(directTo)}
                   style={{
                     fontFamily: 'JetBrains Mono', fontSize: '12px', padding: '6px 14px',
-                    background: {claude:'var(--claude-border)',chatgpt:'var(--chatgpt-border)',gemini:'var(--gemini-border)'}[directTo],
+                    background: PROVIDER_META[directTo]?.border || 'var(--bg-input)',
                     border: 'none', borderRadius: 'var(--radius)',
                     cursor: (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) ? 'default' : 'pointer',
-                    color: {claude:'var(--claude-accent)',chatgpt:'var(--chatgpt-accent)',gemini:'var(--gemini-accent)'}[directTo],
+                    color: PROVIDER_META[directTo]?.accent || 'var(--text-primary)',
                     fontWeight: 600,
                     opacity: (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) ? 0.4 : 1
                   }}
@@ -3137,7 +3175,7 @@
           <div style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px'
           }}>
-            {['claude', 'chatgpt', 'gemini'].map(model => (
+            {conductorOrder.map(model => (
               <ModelCard
                 key={model}
                 model={model}
@@ -3370,12 +3408,8 @@
                   <span>Clipboard</span>
                   <span style={{ fontSize: '11px', opacity: 0.5 }}>✂</span>
                 </div>
-                {['claude', 'chatgpt', 'gemini'].map(m => {
-                  const META = {
-                    claude:  { label: 'Claude',  accent: 'var(--claude-accent)',  border: 'var(--claude-border)',  icon: '◈' },
-                    chatgpt: { label: 'ChatGPT', accent: 'var(--chatgpt-accent)', border: 'var(--chatgpt-border)', icon: '◇' },
-                    gemini:  { label: 'Gemini',  accent: 'var(--gemini-accent)',  border: 'var(--gemini-border)',  icon: '△' },
-                  }[m];
+                {conductorOrder.map(m => {
+                  const META = PROVIDER_META[m] || {};
                   const clip = clippedResponses[m];
                   const selected = clipInclude[m];
                   return (
