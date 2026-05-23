@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 113
+**Latest entry:** 116
 
 ---
 
@@ -22,10 +22,10 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 |---|---------------|-------------|--------|--------|------|
 | 011 | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
 | 015 | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation; one of four planned export modes alongside full transcript, bullet summary, and handoff-by-model | `planned` | User insight | 2026-03 |
-| 017 | Cost tracking | Estimate token usage and API cost per turn; stub in right sidebar accumulative zone (CT-107) | `idea` | Claude suggestion | 2026-03 |
+| 017 | Cost tracking | Estimate token usage and API cost per turn; stub in right sidebar accumulative zone (CT-107); becomes design requirement for Committee mode (CT-114) | `idea` | Claude suggestion | 2026-03 |
 | 020 | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 023 | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
-| 024 | Ko-fi funding strategy | Develop strategy to use Ko-fi to help fund development; Ko-fi page framing and tier/support structure; UI link surface handled separately in CT-105 | `idea` | User insight | 2026-03 |
+| 024 | Ko-fi funding strategy | Develop strategy to use Ko-fi to help fund development; Ko-fi page framing and tier/support structure; UI link surface handled by CT-105 | `idea` | User insight | 2026-03 |
 | 025 | Acquisition / IP strategy | Consideration of acquisition opportunities and intellectual property positioning | `idea` | User insight | 2026-03 |
 | 026 | Static site generator decision | Select and document SSG for CT public web presence; not the app itself | `deferred` | Session discussion | 2026-03 |
 | 027 | Frontmatter schema v1 | Canonical required/optional fields for content entries; depends on SSG decision (CT-026) | `deferred` | Session discussion | 2026-03 |
@@ -62,16 +62,16 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 089 | Per-model system prompt — individual configuration | System prompt field per model in Configuration panel; foundation for Tetra/Hedra preset injection | `idea` | Session discussion | 2026-03-10 |
 | 090 | Sequential awareness accumulation — document as architectural property | In Conductor mode, awareness accumulates down the chain structurally; this is not a bug but an architectural property; Parallel is the only mode that delivers genuinely independent responses | `idea` | Session discussion | 2026-03-10 |
 | 091 | Session Brief — pre-session context intake | Optional context intake mechanism triggered on Tetra selection; two intake paths: direct text entry or guided intake via a selected model; produces a Session Brief dispatched in parallel to all models | `idea` | Session discussion | 2026-03-12 |
-| 097 | Per-slot model version selector — mid-session | Dropdown in each model card header to switch provider tier mid-session; history survives the switch because CT owns the conversation array client-side; structural differentiator from all native interfaces | `planned` | Session discussion | 2026-03-16 |
 | 098 | Worker hardening for proxied key architecture | Rate limiting, auth checks, abuse detection on Worker side; not required for BYOK launch but becomes non-optional if CT moves to hosted keys | `idea` | Session discussion | 2026-03-17 |
-| 099 | Expanded model support — Grok, Mistral, DeepSeek | User-configurable model chips; priority candidates by distinct epistemic provenance: Grok (live web access), Mistral (European open-weights), DeepSeek (Chinese provenance) | `planned` | Session discussion | 2026-03-17 |
 | 100 | Role-context experiment series | Test whether defensive/performative self-reflection is emergent (context-activated) or a stable model difference; Version C role rotation is the priority experiment | `idea` | Session discussion | 2026-03-17 |
 | 103 | Focus Thread — turn selection and curated export | Live annotation layer — user checks turn chips as the session advances; export harvests checked turns in chronological order with gaps intact; requires CT-104 (turn chips) | `idea` | Session discussion | 2026-03-24 |
 | 104 | History chips → Turn chips | Rename and reconceptualize history chips as turn chips representing every turn in the session; prerequisite for CT-103 and CT-039 | `idea` | Session discussion | 2026-03-24 |
-| 105 | Left sidebar — support and about links | Ko-fi, MDReader, and About links surfaced in the left sidebar; persistent above-the-fold placement preferred over footer given unbounded page growth from turn history | `planned` | User insight | 2026-03-25 |
 | 108 | Routing chip — Target / Attach / Dispatch | Dedicated routing zone at input band level replacing the current two-row control strip; three named sections: Target, Attach, Dispatch; routing is flow control not static configuration | `planned` | Via Nagi | 2026-03-29 |
 | 109 | Header as HUD | Active Tetra name displayed in the header alongside CT branding once a Tetra is selected; placeholder stub currently implemented | `planned` | Via Nagi | 2026-03-29 |
 | 113 | Recent turns — right sidebar navigation section | Recency-scoped turn history in the right sidebar showing the last 4–5 turns; avoids requiring the user to scroll to the history panel at page bottom; prerequisite: CT-104 (turn chips) | `idea` | Session discussion | 2026-04-16 |
+| 114 | Committee mode — all-six Hepta | All six models active simultaneously; hexagonal pyramid geometry (human conductor at apex, six models at base vertices); viewport-gated (≥1600px minimum); prerequisite: CT-099 (expanded model support); CT-017 (cost tracking) becomes a design requirement for this mode rather than optional; "Committee" is a named Hepta following the Tetra/Hepta taxonomy | `idea` | Session discussion | 2026-05-22 |
+| 115 | New provider testing plan — Mistral, DeepSeek, version switching | Structured test plan: (1) confirm Mistral and DeepSeek full parallel send; (2) test model version detection for all 6 providers; (3) test mid-session version switching; (4) comparative session — OG trio (Claude/ChatGPT/Gemini) vs new trio (Grok/Mistral/DeepSeek) in parallel on a shared prompt; (5) mixed triads to explore inter-triad interactions | `planned` | Session discussion | 2026-05-22 |
+| 116 | Comparative session prompt design | Develop an initial prompt and 2–3 follow-ups suitable for parallel send across two configurations: OG trio and new trio; prompt should be substantive enough to surface epistemic differences between European/American/Chinese training lineages; potential follow-ups exploring convergence and divergence | `idea` | Session discussion | 2026-05-22 |
 
 ---
 
@@ -127,11 +127,14 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 101 | Light/dark mode — migrated to left sidebar | Dark/Light toggle in left sidebar Interface section; dark default; localStorage persistence; light palette `#f0f2f6` base with darkened brand accents | Session discussion | 2026-03-17 |
 | 094 | In-app clipboard | Three fixed slots (one per model) in right sidebar Clipboard section; ✂ Clip button in model card header alongside SVG copy button; toggle-select slots for include; clipped-at timestamp confirms replacement; clip status indicator in Target row; clips append to prompt as labeled text blocks; clip selection resets on send | Session discussion | 2026-04-11 |
 | 095 | Two-row input band layout | Row 1 Target (Direct to, Exclude, Forward, Vault status, Clip status); Row 2 Dispatch (Active status, Mode, Send); always two rows at every viewport width; no wrapping | Session discussion | 2026-04-11 |
-| 106 | Left sidebar — constitutive zone | Collapsible left panel; 240px open, 40px rail; auto-opens ≥1100px; contains CT identity, Tetras stub, Hedras stub, Conducting section (Conductor Order), Session section (Export), Interface section (Configuration, Dark/Light) | Via Nagi | 2026-04-11 |
-| 107 | Right sidebar — accumulative zone | Collapsible right panel; 240px open, 40px rail; auto-opens ≥1200px; contains File Vault (toggle-select files, Add files, Clear vault), Clipboard (CT-094 three-slot), Cost stub, Reset session at bottom | Via Nagi | 2026-04-11 |
+| 106 | Left sidebar — constitutive zone | Collapsible left panel; 240px open, 40px rail; auto-opens ≥1100px; contains CT identity, Tetras stub, Hedras stub, Conducting section, Session section, Interface section | Via Nagi | 2026-04-11 |
+| 107 | Right sidebar — accumulative zone | Collapsible right panel; 240px open, 40px rail; auto-opens ≥1200px; contains File Vault, Clipboard (CT-094), Cost stub, Reset session | Via Nagi | 2026-04-11 |
 | 110 | Code block floating panels | Collapsed inline token replaces code blocks in model chips; draggable fixed-position panels clamped to viewport; first panel snaps to column edge, subsequent panels cascade 24px; max three panels with warning; z-index focus management; SVG copy button in panel header; position memory per model origin | User insight | 2026-04-11 |
 | 111 | Conducting section — left sidebar | Conductor Order controls migrated from Configuration modal to dedicated Conducting section in left sidebar | Session discussion | 2026-04-11 |
 | 112 | Configuration rename + UI text cleanup | Settings modal and all UI references renamed to Configuration; getting-started notice updated; security note trimmed | Session discussion | 2026-04-11 |
+| 105 | Left sidebar — support and about links | Ko-fi (♥ Buy me a coffee), MDReader (↗), and About CT (◎) in Support section below Interface; About opens modal with CT description, Habermas Labs attribution, and footer links to Ko-fi and MDReader | User insight | 2026-05-22 |
+| 097 | Per-slot model version selector — mid-session | Model version dropdowns in left sidebar Models section; lists fetched dynamically from each provider's API on key load; selection survives mid-session without resetting conversation history; models unaware of version switches (confirmed); extended to all 6 providers 2026-05-22; Models section follows conductorOrder so displayed slots match active slot assignments | Session discussion | 2026-05-22 |
+| 099 | Expanded model support — Grok, Mistral, DeepSeek | Six-provider roster: Claude, ChatGPT, Gemini, Grok (api.x.ai), Mistral (api.mistral.ai), DeepSeek (api.deepseek.com); PROVIDER_META module-level constant is single source of truth for all labels, icons, and colors; conductorOrder serves as slot selector — 3 active slots chosen from 6 via Conducting dropdowns; "Active Model Order" label; slot note added; SettingsPanel split into GenerateCtkModal (6-provider key entry, test, export) and LoadKeysModal (import .ctk, load from URL, security note); Generate .ctk in sidebar below Load Keys; Grok confirmed working in ct-session-20260522-ddc77a; Mistral and DeepSeek pending full test (CT-115) | Session discussion | 2026-05-22 |
 
 ---
 
@@ -179,6 +182,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | B018 | Conductor send fires immediately without arming | Conductor mode send was not gated on modeArmed | `resolved` | 2026-03-10 | 2026-03-11 |
 | B019 | Forward dropdown design decision | Forward shows all models with responses regardless of routing state; the only filter is the source model itself | `resolved` | 2026-03-11 | 2026-03-11 |
 | B020 | ChatGPT vault file framing — safeguard trigger | Inline vault text without framing caused ChatGPT safeguard responses; fix: explicit inline-text declaration in file block | `resolved` | 2026-03-13 | 2026-03-13 |
+| B021 | pendingHasChanges/pendingVals/pendingHasDupe forward reference | Three derived values computed immediately using `conductorOrder` before `conductorOrder`'s `useState` call; Babel's var hoisting made `conductorOrder` undefined at evaluation time, producing blank-screen crash; fix: moved three derived values to after `conductorOrder` declaration | `resolved` | 2026-05-22 | 2026-05-22 |
 
 ---
 
@@ -221,7 +225,13 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Two-row input band (095/2026-04-11): Target row and Dispatch row are always explicit at every viewport width. The split encodes the Target/Dispatch distinction from CT-108 spec in the current interface ahead of the full routing chip implementation.
 - Clipboard (CT-094/2026-04-11): clip is distinct from copy (OS clipboard) and forward (dialogue routing act). Clip is CT-internal session-scoped routing that preserves source card state. Three fixed slots, one per model, replace on re-clip. Clipped-at timestamp in sidebar pill confirms replacement at a glance.
 - Conducting section in left sidebar (CT-111/2026-04-11): Conductor Order is a session-shape decision (constitutive zone) not a configuration concern. Its visibility in the left sidebar makes it available as a deliberate choice before and between turns.
-- Sessions to date: ct-session-20260305-b901f7-ai-political-topics.md, ct-session-20260306-956108-water-is-wet.md, ct-session-20260307-ce45a5-the-in-between.md, ct-session-20260310-cb355c.md, ct-session-20260311-56e54a.md, ct-session-20260317-55bf7b.md.
+- Sessions to date: ct-session-20260305-b901f7-ai-political-topics.md, ct-session-20260306-956108-water-is-wet.md, ct-session-20260307-ce45a5-the-in-between.md, ct-session-20260310-cb355c.md, ct-session-20260311-56e54a.md, ct-session-20260317-55bf7b.md, ct-session-20260522-ddc77a.md (first Grok session).
+- PROVIDER_META (2026-05-22): module-level constant is now the single source of truth for all 6 provider labels, icons, accent/bg/border colors; replaces all scattered inline provider-keyed object literals throughout the codebase. Pattern to maintain as new providers are added.
+- conductorOrder as slot selector (2026-05-22): the 3 Conducting dropdown positions determine which providers are active, not just their firing order. Six-provider roster with 3-slot UI requires no additional slot picker architecture. Slot note added: "Only 3 models active at a time — swap slots to change providers."
+- BYOK architectural decision (2026-05-22): hosted-key model planned for public release; BYOK UI (Generate .ctk modal) is dev scaffolding to be retired on public launch; drives the decision to keep fixed 6-provider roster and 3-slot UI rather than adding flexible slot picker or expanded provider marketplace.
+- Generate .ctk / Load Keys split (2026-05-22): SettingsPanel replaced by two focused modals. Generate .ctk is the developer/admin path (key entry, test, export). Load Keys is the everyday session path (import .ctk file, load from URL). Security note lives in Load Keys as it's the user-facing action. Both surfaced as sidebar buttons in Interface section.
+- Committee/Hepta geometry (2026-05-22): hexagonal pyramid is the natural 7-vertex polyhedron for Committee mode — human conductor at apex, 6 models at hexagonal base vertices. Geometrically distinguishes the conductor from the models, unlike the tetrahedron's vertex equivalence. "Hepta" follows the Tetra naming convention; "Committee" is the first named Hepta.
+- First Grok session (ct-session-20260522-ddc77a): Grok integration verified; Grok's closing response (model selection heuristic table) was the most substantive and actionable of the three; accidental parallel send on Turn 3 produced a clean three-way comparison demonstrating CT's core value proposition. Mistral and DeepSeek pending full test.
 
 ---
 
@@ -235,11 +245,11 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W002 | Workload outsourcing | ZK permanent | proposed | 015, 047 |
 | W003 | Heteroglossia and compression in AI provenance | ZK permanent | proposed | 015 |
 | W004 | Participation mode matrix | ZK permanent | proposed | 040, 046 |
-| W005 | Polyhedra interaction geometry | ZK permanent | proposed | 043, 044, 073 |
+| W005 | Polyhedra interaction geometry | ZK permanent | proposed | 043, 044, 073, 114 |
 | W006 | Dimensionality ladder | ZK permanent | proposed | 043, 044 |
 | W007 | Sociocultural hermeneutics and CT | ZK permanent | proposed | 046, 071 |
 | W008 | Role-context mimicry and self-reflection | ZK permanent | drafted | 100 |
 | W009 | Session knowledge architecture | ZK permanent | proposed | 031, 039, 047, 103 |
 
 ---
-*Last updated: 2026-05-01*
+*Last updated: 2026-05-22*
