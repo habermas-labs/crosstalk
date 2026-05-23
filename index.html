@@ -780,31 +780,47 @@
       },
 
       // OpenAI-compatible adapters: grok, mistral, deepseek
-      ...((() => {
-        const OAI_BASES = {
-          grok:     'https://api.x.ai/v1/chat/completions',
-          mistral:  'https://api.mistral.ai/v1/chat/completions',
-          deepseek: 'https://api.deepseek.com/v1/chat/completions',
-        };
-        return Object.fromEntries(
-          ['grok', 'mistral', 'deepseek'].map(provider => [
-            provider,
-            async (messages, systemPrompt, apiKey, modelString) => {
-              const msgs = [];
-              if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
-              msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
-              const res = await fetch(OAI_BASES[provider], {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({ model: modelString || DEFAULT_MODELS[provider], max_tokens: 4096, messages: msgs })
-              });
-              const data = await res.json();
-              if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-              return data.choices[0].message.content;
-            }
-          ])
-        );
-      })()),
+      grok: async (messages, systemPrompt, apiKey, modelString) => {
+        const msgs = [];
+        if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
+        msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
+        const res = await fetch('https://api.x.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: modelString || DEFAULT_MODELS.grok, max_tokens: 4096, messages: msgs })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        return data.choices[0].message.content;
+      },
+
+      mistral: async (messages, systemPrompt, apiKey, modelString) => {
+        const msgs = [];
+        if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
+        msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
+        const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: modelString || DEFAULT_MODELS.mistral, max_tokens: 4096, messages: msgs })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        return data.choices[0].message.content;
+      },
+
+      deepseek: async (messages, systemPrompt, apiKey, modelString) => {
+        const msgs = [];
+        if (systemPrompt) msgs.push({ role: 'system', content: systemPrompt });
+        msgs.push(...messages.map(m => ({ role: m.role, content: m.content })));
+        const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify({ model: modelString || DEFAULT_MODELS.deepseek, max_tokens: 4096, messages: msgs })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        return data.choices[0].message.content;
+      },
     };
 
     // ─────────────────────────────────────────────
