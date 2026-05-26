@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 117
+**Latest entry:** 119
 
 ---
 
@@ -73,6 +73,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 115 | New provider testing plan — Mistral, DeepSeek, version switching | Structured test plan: (1) confirm Mistral and DeepSeek full parallel send; (2) test model version detection for all 6 providers; (3) test mid-session version switching; (4) comparative session — OG trio (Claude/ChatGPT/Gemini) vs new trio (Grok/Mistral/DeepSeek) in parallel on a shared prompt; (5) mixed triads to explore inter-triad interactions | `planned` | Session discussion | 2026-05-22 |
 | 116 | Comparative session prompt design | Develop an initial prompt and 2–3 follow-ups suitable for parallel send across two configurations: OG trio and new trio; prompt should be substantive enough to surface epistemic differences between European/American/Chinese training lineages; potential follow-ups exploring convergence and divergence | `idea` | Session discussion | 2026-05-22 |
 | 117 | Model orientation inject | One-click dispatch sending a three-layer briefing to all active models simultaneously: (1) static CT environment description optimized for model comprehension; (2) dynamic active model roster for this session — gives each model awareness of the others; (3) acknowledgment prompt confirming context was processed; left sidebar placement, constitutive zone; base layer that Tetra initialization will extend with role assignments | planned | Session discussion | 2026-05-26 |
+| 118 | Model lineup change notification | Toggle in session controls; when active, silently notifies all models on the next prompt dispatch if the active model roster has changed since the last send; no acknowledgment prompt — informational only; models are simply made aware they are now in a different lineup than the previous turn; notification held until next actual send rather than fired immediately on roster change | idea | Session discussion | 2026-05-26 |
+| 119 | CT as explicit experimental testbed — human-AI communication research | Formal experimental program using CT's multi-model parallel architecture to study inter-model dynamics, model self-awareness, and structural properties of human-AI communication; distinct from incidental findings in ordinary sessions; involves deliberate condition design, controlled variables, and measurable output criteria; CT-118 (lineup change notification) and prior Haiku/Sonnet/Opus session results are candidate entry points; connects to role-context mimicry findings (CT-100) and the broader theoretical claim that sycophancy and hallucination are geometric rather than behavioral properties | idea | Session discussion | 2026-05-26 |
 
 ---
 
