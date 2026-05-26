@@ -1560,6 +1560,8 @@
                     Turn {i + 1} — {
                       turn.mode === 'parallel' ? 'Parallel' :
                       turn.mode === 'conductor' ? `Conductor (${turn.order?.map(m => PROVIDER_META[m]?.icon || m).join('→')})` :
+                      turn.mode === 'orient' ? 'Orient Models' :
+                      turn.mode === 'brief' ? 'Brief Models' :
                       `Directed → ${PROVIDER_META[turn.target]?.icon || ''} ${PROVIDER_META[turn.target]?.label || turn.target}`
                     }
                   </div>
@@ -2378,6 +2380,10 @@
             turnLabel = 'Parallel';
           } else if (turn.mode === 'conductor') {
             turnLabel = `Conductor — ${turn.order.map(m => modelIcons[m]).join(' → ')}`;
+          } else if (turn.mode === 'orient') {
+            turnLabel = 'Orient Models';
+          } else if (turn.mode === 'brief') {
+            turnLabel = 'Brief Models';
           } else {
             // directed
             const includeLabel = turn.include ? ` + ${modelIcons[turn.include.model]}` : '';
@@ -2454,6 +2460,8 @@
           let turnLabel = '';
           if (turn.mode === 'parallel') turnLabel = 'Parallel';
           else if (turn.mode === 'conductor') turnLabel = `Conductor (${turn.order.map(m => modelIcons[m]).join(' → ')})`;
+          else if (turn.mode === 'orient') turnLabel = 'Orient Models';
+          else if (turn.mode === 'brief') turnLabel = 'Brief Models';
           else turnLabel = `Directed → ${modelIcons[turn.target]} ${modelLabels[turn.target]}`;
 
           digest += `## Turn ${i + 1} — ${turnLabel}\n\n`;
