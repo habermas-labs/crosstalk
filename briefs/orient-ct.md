@@ -37,4 +37,4 @@ The human is not an external moderator but a structural participant — routing,
 
 ---
 
-*Confirm receipt and comprehension of this orientation. If a role has been assigned to you in the session brief, state it. You are ready to participate.*
+*Confirm receipt and comprehension of this orientation. You are ready to participate.*
