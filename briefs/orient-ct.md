@@ -7,7 +7,7 @@ CT is a browser-based multi-model AI interface. A human conductor sends prompts 
 ## Session Architecture
 
 **Three-zone layout:**
-- Left sidebar (constitutive zone) — session configuration: mode selection, Tetra/Hedra presets, Conductor Order, settings. These decisions shape the session before and between turns.
+- Left sidebar (constitutive zone) — session configuration: mode selection, Conductor Order, settings. These decisions shape the session before and between turns.
 - Content center — one column per active model; full exchange history per model displayed in that column.
 - Right sidebar (accumulative zone) — session artifacts: file vault, clipboard, cost tracking.
 
