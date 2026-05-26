@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 116
+**Latest entry:** 117
 
 ---
 
@@ -22,7 +22,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 |---|---------------|-------------|--------|--------|------|
 | 011 | Mobile interface — accordion layout | Vertical accordion layout optimized for thumb navigation, one model visible at a time | `deferred` | User insight | 2026-03 |
 | 015 | Handoff summaries | Compressed context summaries (compressed local heteroglossia) enabling model role-swapping mid-conversation; one of four planned export modes alongside full transcript, bullet summary, and handoff-by-model | `planned` | User insight | 2026-03 |
-| 017 | Cost tracking | Estimate token usage and API cost per turn; stub in right sidebar accumulative zone (CT-107); becomes design requirement for Committee mode (CT-114) | `idea` | Claude suggestion | 2026-03 |
+| 017 | Cost tracking | Estimate token usage and API cost per turn; stub in right sidebar accumulative zone (CT-107); primary driver is hosted-key transition — cost visibility is a prerequisite for moving off BYOK to a subscriber model | idea | Claude suggestion | 2026-03 |
 | 020 | Obsidian / Zettelkasten integration | Knowledge graph building from triangulation sessions | `idea` | User insight | 2026-03 |
 | 023 | PWA / home screen installability | Web app manifest and service worker additions to enable install-to-homescreen on mobile | `deferred` | Claude suggestion | 2026-03 |
 | 024 | Ko-fi funding strategy | Develop strategy to use Ko-fi to help fund development; Ko-fi page framing and tier/support structure; UI link surface handled by CT-105 | `idea` | User insight | 2026-03 |
@@ -69,9 +69,10 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 108 | Routing chip — Target / Attach / Dispatch | Dedicated routing zone at input band level replacing the current two-row control strip; three named sections: Target, Attach, Dispatch; routing is flow control not static configuration | `planned` | Via Nagi | 2026-03-29 |
 | 109 | Header as HUD | Active Tetra name displayed in the header alongside CT branding once a Tetra is selected; placeholder stub currently implemented | `planned` | Via Nagi | 2026-03-29 |
 | 113 | Recent turns — right sidebar navigation section | Recency-scoped turn history in the right sidebar showing the last 4–5 turns; avoids requiring the user to scroll to the history panel at page bottom; prerequisite: CT-104 (turn chips) | `idea` | Session discussion | 2026-04-16 |
-| 114 | Committee mode — all-six Hepta | All six models active simultaneously; hexagonal pyramid geometry (human conductor at apex, six models at base vertices); viewport-gated (≥1600px minimum); prerequisite: CT-099 (expanded model support); CT-017 (cost tracking) becomes a design requirement for this mode rather than optional; "Committee" is a named Hepta following the Tetra/Hepta taxonomy | `idea` | Session discussion | 2026-05-22 |
+| 114 | Committee mode — all-six Hepta | All six models active simultaneously; hexagonal pyramid geometry (human conductor at apex, six models at base vertices); viewport-gated — available only when both sidebars expanded plus six model cards fit the viewport; no degraded fallback, hard constraint; prerequisite: CT-099 (expanded model support); "Committee" is a named Hepta following the Tetra/Hepta taxonomy | idea | Session discussion | 2026-05-22 |
 | 115 | New provider testing plan — Mistral, DeepSeek, version switching | Structured test plan: (1) confirm Mistral and DeepSeek full parallel send; (2) test model version detection for all 6 providers; (3) test mid-session version switching; (4) comparative session — OG trio (Claude/ChatGPT/Gemini) vs new trio (Grok/Mistral/DeepSeek) in parallel on a shared prompt; (5) mixed triads to explore inter-triad interactions | `planned` | Session discussion | 2026-05-22 |
 | 116 | Comparative session prompt design | Develop an initial prompt and 2–3 follow-ups suitable for parallel send across two configurations: OG trio and new trio; prompt should be substantive enough to surface epistemic differences between European/American/Chinese training lineages; potential follow-ups exploring convergence and divergence | `idea` | Session discussion | 2026-05-22 |
+| 117 | Model orientation inject | One-click dispatch sending a three-layer briefing to all active models simultaneously: (1) static CT environment description optimized for model comprehension; (2) dynamic active model roster for this session — gives each model awareness of the others; (3) acknowledgment prompt confirming context was processed; left sidebar placement, constitutive zone; base layer that Tetra initialization will extend with role assignments | planned | Session discussion | 2026-05-26 |
 
 ---
 
