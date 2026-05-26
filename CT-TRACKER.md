@@ -233,6 +233,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - Generate .ctk / Load Keys split (2026-05-22): SettingsPanel replaced by two focused modals. Generate .ctk is the developer/admin path (key entry, test, export). Load Keys is the everyday session path (import .ctk file, load from URL). Security note lives in Load Keys as it's the user-facing action. Both surfaced as sidebar buttons in Interface section.
 - Committee/Hepta geometry (2026-05-22): hexagonal pyramid is the natural 7-vertex polyhedron for Committee mode — human conductor at apex, 6 models at hexagonal base vertices. Geometrically distinguishes the conductor from the models, unlike the tetrahedron's vertex equivalence. "Hepta" follows the Tetra naming convention; "Committee" is the first named Hepta.
 - First Grok session (ct-session-20260522-ddc77a): Grok integration verified; Grok's closing response (model selection heuristic table) was the most substantive and actionable of the three; accidental parallel send on Turn 3 produced a clean three-way comparison demonstrating CT's core value proposition. Mistral and DeepSeek pending full test.
+- CT-117 architecture settled — static layer fetched from server at inject time rather than embedded in index.html; UI assembles dynamic roster and prepends to fetched content before dispatch; acknowledgment instruction baked into end of static file so it lands last; all briefing files live in /briefs/ at repo root, flat structure, filename prefixes distinguish types (orient-, tetra-, hedra-, hepta-).
 
 ---
 
