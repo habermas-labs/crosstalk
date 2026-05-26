@@ -1763,6 +1763,7 @@
       const [sendMode, setSendMode] = useState('parallel'); // 'parallel' | 'conductor'
       const [modeArmed, setModeArmed] = useState(false);
       const [conductorOrder, setConductorOrder] = useState(['claude', 'chatgpt', 'gemini']);
+      const [orientLoading, setOrientLoading] = useState(false);
       const pendingHasChanges = conductorOrder.some(m => pendingModels[m] !== selectedModels[m]);
       const pendingVals = conductorOrder.map(m => pendingModels[m]);
       const pendingHasDupe = pendingVals.some((v, i) => pendingVals.indexOf(v) !== i);
@@ -2215,6 +2216,101 @@
 
       // Moderated dialogue — send one model's response to another
 
+      // CT-117 — Orient Models: fetch static brief, prepend dynamic roster, dispatch to all active models
+      const orientModels = async () => {
+        const activeModels = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
+        if (activeModels.length === 0 || orientLoading) return;
+        setOrientLoading(true);
+        try {
+          const res = await fetch('/briefs/orient-ct.md');
+          if (!res.ok) throw new Error(`Could not load orientation brief (${res.status})`);
+          const staticContent = await res.text();
+          const rosterLine = `Active models this session: ${activeModels.map(m => PROVIDER_META[m].label).join(', ')}. All active models are receiving this orientation simultaneously.`;
+          const content = `${rosterLine}\n\n---\n\n${staticContent}`;
+          const turnTimestamp = new Date().toISOString();
+          const resetResponses = {};
+          const resetErrors = {};
+          const loadingState = Object.fromEntries(ALL_PROVIDERS.map(p => [p, false]));
+          activeModels.forEach(m => { resetResponses[m] = null; resetErrors[m] = null; loadingState[m] = true; });
+          setResponses(prev => ({ ...prev, ...resetResponses }));
+          setErrors(prev => ({ ...prev, ...resetErrors }));
+          setLoading(loadingState);
+          const newHistories = { ...conversationHistory };
+          activeModels.forEach(m => { newHistories[m] = [...newHistories[m], { role: 'user', content }]; });
+          setConversationHistory(newHistories);
+          const results = {};
+          await Promise.allSettled(activeModels.map(async (model) => {
+            try {
+              const response = await apiAdapters[model](newHistories[model], systemPrompts[model], keys[model], selectedModels[model]);
+              results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
+              setResponses(prev => ({ ...prev, [model]: response }));
+              setConversationHistory(prev => ({ ...prev, [model]: [...prev[model], { role: 'assistant', content: response }] }));
+            } catch (err) {
+              results[model] = { response: null, error: err.message, responseTimestamp: new Date().toISOString() };
+              setErrors(prev => ({ ...prev, [model]: err.message }));
+            } finally {
+              setLoading(prev => ({ ...prev, [model]: false }));
+            }
+          }));
+          setTurnHistory(prev => [...prev, {
+            turnIndex: prev.length, timestamp: turnTimestamp, mode: 'orient',
+            userText: '[Orient Models]', include: null, target: null, order: null,
+            builtPrompt: content, results, sessionModality: 'visual', roles: {},
+          }]);
+        } catch (err) {
+          setErrors(prev => Object.fromEntries(activeModels.map(m => [m, err.message])));
+        } finally {
+          setOrientLoading(false);
+        }
+      };
+
+      // CT-117 — Brief Models: fetch trajectory brief, prepend framing header, dispatch to all active models
+      const briefModels = async () => {
+        const activeModels = conductorOrder.filter(m => enabled[m] && keys[m]?.trim());
+        if (activeModels.length === 0 || orientLoading) return;
+        setOrientLoading(true);
+        try {
+          const res = await fetch('/briefs/orient-ct-trajectory.md');
+          if (!res.ok) throw new Error(`Could not load trajectory brief (${res.status})`);
+          const staticContent = await res.text();
+          const framingHeader = `The following describes the design philosophy and development trajectory of Crosstalk Lab. This context is provided to inform sessions where forward-looking feedback is sought.`;
+          const content = `${framingHeader}\n\n---\n\n${staticContent}`;
+          const turnTimestamp = new Date().toISOString();
+          const resetResponses = {};
+          const resetErrors = {};
+          const loadingState = Object.fromEntries(ALL_PROVIDERS.map(p => [p, false]));
+          activeModels.forEach(m => { resetResponses[m] = null; resetErrors[m] = null; loadingState[m] = true; });
+          setResponses(prev => ({ ...prev, ...resetResponses }));
+          setErrors(prev => ({ ...prev, ...resetErrors }));
+          setLoading(loadingState);
+          const newHistories = { ...conversationHistory };
+          activeModels.forEach(m => { newHistories[m] = [...newHistories[m], { role: 'user', content }]; });
+          setConversationHistory(newHistories);
+          const results = {};
+          await Promise.allSettled(activeModels.map(async (model) => {
+            try {
+              const response = await apiAdapters[model](newHistories[model], systemPrompts[model], keys[model], selectedModels[model]);
+              results[model] = { response, error: null, responseTimestamp: new Date().toISOString() };
+              setResponses(prev => ({ ...prev, [model]: response }));
+              setConversationHistory(prev => ({ ...prev, [model]: [...prev[model], { role: 'assistant', content: response }] }));
+            } catch (err) {
+              results[model] = { response: null, error: err.message, responseTimestamp: new Date().toISOString() };
+              setErrors(prev => ({ ...prev, [model]: err.message }));
+            } finally {
+              setLoading(prev => ({ ...prev, [model]: false }));
+            }
+          }));
+          setTurnHistory(prev => [...prev, {
+            turnIndex: prev.length, timestamp: turnTimestamp, mode: 'brief',
+            userText: '[Brief Models]', include: null, target: null, order: null,
+            builtPrompt: content, results, sessionModality: 'visual', roles: {},
+          }]);
+        } catch (err) {
+          setErrors(prev => Object.fromEntries(activeModels.map(m => [m, err.message])));
+        } finally {
+          setOrientLoading(false);
+        }
+      };
 
       // Clear conversation
       const clearConversation = () => {
@@ -2484,6 +2580,23 @@
                 <div className="sidebar-stub" style={{ fontSize: '10px', justifyContent: 'center', opacity: 0.4 }}>
                   CT-102 · planned
                 </div>
+              </div>
+
+              {/* CT-117 — Orient / Brief */}
+              <div style={{ marginBottom: '16px' }}>
+                <div className="sidebar-section-label">Session Setup</div>
+                <button
+                  className={`sidebar-btn${orientLoading || activeModels.length === 0 ? ' disabled' : ''}`}
+                  onClick={() => { if (!orientLoading && activeModels.length > 0) orientModels(); }}
+                >
+                  <span>⊹</span> Orient Models
+                </button>
+                <button
+                  className={`sidebar-btn${orientLoading || activeModels.length === 0 ? ' disabled' : ''}`}
+                  onClick={() => { if (!orientLoading && activeModels.length > 0) briefModels(); }}
+                >
+                  <span>⊹</span> Brief Models
+                </button>
               </div>
 
               {/* Conducting — Conductor Order */}
