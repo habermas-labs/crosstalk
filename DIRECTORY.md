@@ -48,6 +48,8 @@ Cross-repository index of project files not held in Claude project knowledge. Us
 | D-32 | ct-session-20260307-ce45a5-the-in-between.md | CT/docs/sessions | Session transcript: the-in-between — anti-convergence/RIFF design session; Gemini self-generated RIFF-adjacent protocol unprompted (Turn 3); tension map export framing emerged (Turn 6); primary annotated example for training guide |
 | D-33 | theoretical-sources-annotated.md | ZK/literature | Living annotated bibliography of CT theoretical sources; alphabetical by theorist; CT-relevance framing; 15 initial entries including Austin, Bakhtin, Clark & Chalmers, Grice, Habermas, Searle, Vygotsky and others; discipline tags descriptive not categorical|
 | D-34 | role-commitment-as-structural-requirement.md | ZK/permanent | Role assignment as performative speech act; fourth-vertex commitment as structural requirement; phantom vertex failure mode; Gricean violation at conversation-structure level; sycophancy mirror located at the human vertex; workload outsourcing parallel |
+| D-35 | distributed-metacognition.md | ZK/permanent | Permanent note on distributed metacognition as unit of analysis for human-AI cognitive systems; grounds concept in Vygotsky, Bakhtin, Clark & Chalmers; contrasts with Fan et al. (2025) "metacognitive laziness" construct; CT as designed environment for distributed metacognitive practice |
+| D-36 | literature-cluster-ai-learning-metacognition.md | ZK/literature | Annotated acquisition list for AI learning, metacognition, and hybrid intelligence sources; assembled from Fan et al. (2025) references; 11 sources in three priority tiers; status-tracked |
 ---
 
 ## Notes
