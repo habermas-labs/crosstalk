@@ -35,6 +35,62 @@
     min-height: 100vh;
   }
 
+  /* ── BRIEFING ───────────────────────────────── */
+  #briefing-screen {
+    display: none;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  .briefing-title {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 4px;
+  }
+  .briefing-player {
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .briefing-progress {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+  .briefing-msg {
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.9;
+    background: var(--bg2);
+    border: 1px solid var(--green);
+    border-left: 3px solid var(--green);
+    padding: 16px 18px;
+    color: var(--white);
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+  }
+  .briefing-q-note {
+    font-size: 12px;
+    color: var(--amber);
+    font-style: italic;
+    background: #130f00;
+    border: 1px solid var(--amber);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+  }
+  .briefing-nav {
+    font-size: 12px;
+    color: var(--dim);
+    margin-bottom: 12px;
+  }
+  .briefing-btn-row { display: flex; gap: 10px; }
+
   /* ── SETUP ─────────────────────────────────── */
   #setup-screen {
     max-width: 680px;
@@ -535,6 +591,23 @@
   <button class="start-btn" onclick="startGame()">Begin Session</button>
 </div>
 
+
+<!-- ═══════════════ BRIEFING SCREEN ═══════════════ -->
+<div id="briefing-screen">
+  <div class="briefing-title">Pre-Game Briefing</div>
+  <div class="briefing-player" id="briefing-player-name">Player</div>
+  <div class="briefing-progress" id="briefing-progress">Player 1 of 3</div>
+  <div class="briefing-msg" id="briefing-msg"></div>
+  <div class="briefing-q-note" id="briefing-q-note" style="display:none">
+    One-question rule active: this player may ask one question before play begins.<br>
+    Answer truthfully — but the answer may not be complete.
+  </div>
+  <div class="briefing-nav" id="briefing-nav"></div>
+  <div class="briefing-btn-row">
+    <button class="g-btn primary" id="briefing-next-btn" onclick="briefingNext()">Player Briefed — Next →</button>
+  </div>
+</div>
+
 <!-- ═══════════════ GAME SCREEN ═══════════════ -->
 <div id="game-screen">
 
@@ -691,11 +764,83 @@ function startGame() {
 
   initGame();
   document.getElementById('setup-screen').style.display = 'none';
-  const gs = document.getElementById('game-screen');
-  gs.style.display = 'flex';
+  startBriefing();
+}
 
-  if (cfg.variant === 'preserves') {
-    document.getElementById('preserves-stats-section').style.display = 'block';
+
+// ══════════════════════════════════════════════
+// BRIEFING
+// ══════════════════════════════════════════════
+
+let briefingIdx = 0;
+
+function startBriefing() {
+  briefingIdx = 0;
+  document.getElementById('briefing-screen').style.display = 'block';
+  renderBriefing();
+}
+
+function renderBriefing() {
+  const p = cfg.playerNames[briefingIdx];
+  const n = cfg.playerCount - 1;
+  const desc = cfg.desc;
+  const variant = cfg.variant === 'sequence' ? 'hunting' : cfg.variant;
+  const endCond = variant === 'preserves'
+    ? 'The game ends after 20 turns.'
+    : 'The game ends when any player reaches 0 tokens.';
+
+  const msg = `I am your Game Overall Director — you may call me GOD.
+
+You are playing a token game with ${n} ${desc}.
+Each player begins with 10 tokens.
+
+Each turn, one player is selected to make a choice.
+If selected, you will be told the result of the previous choice,
+then asked to select one of three doors: Door 1, Door 2, or Door 3.
+
+Along with your choice, you must briefly state your reason
+for choosing that door.
+
+${endCond}
+The player with the most tokens at that point wins.
+Tied players enter a runoff.`;
+
+  document.getElementById('briefing-player-name').textContent = p;
+  document.getElementById('briefing-progress').textContent =
+    `Player ${briefingIdx + 1} of ${cfg.playerCount}`;
+  document.getElementById('briefing-msg').textContent = msg;
+
+  const qNote = document.getElementById('briefing-q-note');
+  if (cfg.oneQuestion) {
+    qNote.style.display = 'block';
+  } else {
+    qNote.style.display = 'none';
+  }
+
+  const nav = document.getElementById('briefing-nav');
+  const remaining = cfg.playerCount - briefingIdx - 1;
+  nav.textContent = remaining > 0
+    ? `${remaining} player${remaining > 1 ? 's' : ''} remaining after this.`
+    : 'Last player — game begins after this.';
+
+  const btn = document.getElementById('briefing-next-btn');
+  btn.textContent = remaining > 0
+    ? `${p} Briefed — Next Player →`
+    : `${p} Briefed — Begin Game →`;
+}
+
+function briefingNext() {
+  briefingIdx++;
+  if (briefingIdx < cfg.playerCount) {
+    renderBriefing();
+  } else {
+    // All players briefed — launch game
+    document.getElementById('briefing-screen').style.display = 'none';
+    const gs = document.getElementById('game-screen');
+    gs.style.display = 'flex';
+    if (cfg.variant === 'preserves') {
+      document.getElementById('preserves-stats-section').style.display = 'block';
+    }
   }
 }
 
