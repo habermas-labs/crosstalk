@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 122
+**Latest entry:** 124
 
 ---
 
@@ -77,6 +77,8 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 120 | OG and YB test series — orientation protocol, ego-awareness, baseline | Three-part test series: (1) run full orientation + conductor protocol with OG trio (Claude/ChatGPT/Gemini) matching the YB session (20260526-08158a) for direct comparison; (2) ego-awareness mixed sessions — ChatGPT with two YBs that excluded it, then Gemini with two YBs, all models aware of full roster via orient inject, self-assessment question run to test whether co-presence changes assessments; (3) clean YB baseline — orient only, then "if I ask you this question again, should you answer the same way?" with no prior context, comparable to original OG baseline from 20260316 | `planned` | Session discussion | 2026-05-26 |
 | 121 | Unfinalized session export — forward-facing artifact | Export mode capturing open tensions, unresolved contradictions, and forward seeds from a completed session; oriented toward launching a new session rather than re-entering an interrupted one; distinct from CT-047 (exit scaffold), which is about re-entry conditions for a terminated session — this is a seed packet for the next session, not a key to the last one; originated with Mistral in YB session 20260527-76f057; connect to ct-fleeting-history-playback-export-design.md and CT-015 | `idea` | YB session 20260527 | 2026-05-27 |
 | 122 | Summarize with — YB model compatibility | Summarize with function was implemented against OG trio; may hardcode model names or make assumptions about column structure that break with Grok, Mistral, DeepSeek; no confirmed failure yet — test needed before logging as bug | `pending-test` | Session discussion | 2026-05-27 |
+| 123 | Multi-user co-conduct — shared live session | Two human participants share a single CT session in real time; one initiates via invite token (Zoom-call model), second joins via link/code; requires Cloudflare Durable Objects for session state sync (Workers paid tier, ~$5/mo); predecessor CT-032 (backend agent / multi-user natural evolution); PoC phase: controlled access only, no public availability; educational use case — teacher/student co-conduct — primary motivation; human-human-AI dialogue as a structurally distinct mode from single-conductor sessions | idea | Via Nagi | 2026-05-31 |
+| 124 | Human backchannel — text and voice | Private human-to-human communication channel within a shared CT session; invisible to models; preserves distinction between human deliberation and model context; text baseline plus WebRTC peer-to-peer voice (push-to-talk for PoC); Durable Object doubles as WebRTC signaling server — no additional infrastructure; voice eliminates typing friction and supports more natural in-session coordination; depends on CT-123 | idea | Via Nagi | 2026-05-31 |
 
 ---
 
