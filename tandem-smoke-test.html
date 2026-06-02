@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tandem — Smoke Test</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --border: #2a2a30;
+    --accent: #5b8dee;
+    --accent-dim: #2a3d6e;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e8e8ec;
+    --text-dim: #6b6b7a;
+    --mono: 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 32px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: normal;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  header span {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 960px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d0d0f;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.3s;
+  }
+
+  .status-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.error { background: var(--red); }
+  .status-dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .panel-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  label {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, textarea:focus { border-color: var(--accent-dim); }
+
+  textarea { resize: vertical; min-height: 60px; }
+
+  button {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 8px 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s;
+    width: 100%;
+  }
+
+  button:hover { background: var(--accent); color: #fff; }
+  button:disabled { opacity: 0.3; cursor: not-allowed; }
+  button:disabled:hover { background: var(--accent-dim); color: var(--accent); }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row button { flex: 1; }
+
+  .btn-secondary {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+
+  .btn-secondary:hover { background: var(--border); color: var(--text); }
+
+  .log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+    height: 180px;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .log-entry {
+    padding: 2px 0;
+    line-height: 1.6;
+    border-bottom: 1px solid #1a1a1f;
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-entry .ts {
+    color: var(--text-dim);
+    margin-right: 8px;
+    font-size: 11px;
+  }
+
+  .log-entry.system .msg { color: var(--yellow); }
+  .log-entry.recv .msg { color: var(--green); }
+  .log-entry.sent .msg { color: var(--accent); }
+  .log-entry.error .msg { color: var(--red); }
+  .log-entry.info .msg { color: var(--text-dim); }
+
+  .room-display {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px;
+    font-size: 16px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-align: center;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+  }
+
+  .config-row {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .config-row label { margin: 0; white-space: nowrap; }
+  .config-row input { flex: 1; }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+
+  .tag.p1 { color: var(--accent); border-color: var(--accent-dim); background: #1a2340; }
+  .tag.p2 { color: var(--green); border-color: #1a4030; background: #0f2820; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tandem</h1>
+  <span>Phase 1 Smoke Test — CT-123</span>
+</header>
+
+<div style="max-width:960px">
+
+  <!-- Worker URL config -->
+  <div class="config-row" style="margin-bottom:20px">
+    <label>Worker URL</label>
+    <input type="text" id="workerUrl" value="https://tandem-crosstalk.skooterca.workers.dev" placeholder="https://tandem-crosstalk.skooterca.workers.dev">
+  </div>
+
+  <div class="grid">
+
+    <!-- Participant 1 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="tag p1">P1</span> &nbsp; Initiator</span>
+        <div class="status-dot" id="dot1"></div>
+      </div>
+      <div class="panel-body">
+        <div>
+          <label>Room ID</label>
+          <div class="room-display" id="roomDisplay">—</div>
+        </div>
+        <button id="createBtn" onclick="createSession()">Create Session</button>
+        <div>
+          <label>Send message</label>
+          <textarea id="msg1" placeholder="type a message..."></textarea>
+        </div>
+        <button id="send1Btn" onclick="sendMessage(1)" disabled>Send</button>
+        <div>
+          <label>Log</label>
+          <div class="log" id="log1"></div>
+        </div>
+        <button class="btn-secondary" onclick="clearLog(1)">Clear log</button>
+      </div>
+    </div>
+
+    <!-- Participant 2 -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="tag p2">P2</span> &nbsp; Joiner</span>
+        <div class="status-dot" id="dot2"></div>
+      </div>
+      <div class="panel-body">
+        <div>
+          <label>Room ID to join</label>
+          <input type="text" id="joinRoomId" placeholder="enter 8-char room ID" maxlength="8">
+        </div>
+        <button id="joinBtn" onclick="joinSession()">Join Session</button>
+        <div>
+          <label>Send message</label>
+          <textarea id="msg2" placeholder="type a message..."></textarea>
+        </div>
+        <button id="send2Btn" onclick="sendMessage(2)" disabled>Send</button>
+        <div>
+          <label>Log</label>
+          <div class="log" id="log2"></div>
+        </div>
+        <button class="btn-secondary" onclick="clearLog(2)">Clear log</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let ws1 = null, ws2 = null;
+  let roomId = null;
+
+  function workerUrl() {
+    return document.getElementById('workerUrl').value.replace(/\/$/, '');
+  }
+
+  function ts() {
+    return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function log(n, type, msg) {
+    const el = document.getElementById(`log${n}`);
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerHTML = `<span class="ts">${ts()}</span><span class="msg">${escHtml(msg)}</span>`;
+    el.appendChild(entry);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function clearLog(n) {
+    document.getElementById(`log${n}`).innerHTML = '';
+  }
+
+  function setDot(n, state) {
+    const dot = document.getElementById(`dot${n}`);
+    dot.className = 'status-dot ' + state;
+  }
+
+  async function createSession() {
+    const btn = document.getElementById('createBtn');
+    btn.disabled = true;
+    log(1, 'info', 'POST /session → creating room...');
+    try {
+      const res = await fetch(`${workerUrl()}/session`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      roomId = data.roomId;
+      document.getElementById('roomDisplay').textContent = roomId;
+      document.getElementById('joinRoomId').value = roomId;
+      log(1, 'system', `Room created: ${roomId}`);
+      connectWs(1, roomId);
+    } catch (e) {
+      log(1, 'error', `Create failed: ${e.message}`);
+      btn.disabled = false;
+    }
+  }
+
+  function joinSession() {
+    const rid = document.getElementById('joinRoomId').value.trim();
+    if (!rid || rid.length !== 8) { log(2, 'error', 'Enter a valid 8-char room ID'); return; }
+    document.getElementById('joinBtn').disabled = true;
+    connectWs(2, rid);
+  }
+
+  function connectWs(n, rid) {
+    const url = workerUrl().replace('https://', 'wss://').replace('http://', 'ws://');
+    const wsUrl = `${url}/session/${rid}`;
+    log(n, 'info', `Connecting to ${wsUrl}`);
+    setDot(n, 'connecting');
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      setDot(n, 'connected');
+      log(n, 'system', 'WebSocket connected');
+      document.getElementById(`send${n}Btn`).disabled = false;
+      if (n === 1) ws1 = ws;
+      else ws2 = ws;
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'system') {
+          log(n, 'system', `[system] ${JSON.stringify(msg.payload)}`);
+        } else {
+          log(n, 'recv', `[${msg.type}] ${JSON.stringify(msg.payload)}`);
+        }
+      } catch {
+        log(n, 'recv', event.data);
+      }
+    };
+
+    ws.onclose = () => {
+      setDot(n, '');
+      log(n, 'info', 'WebSocket closed');
+      document.getElementById(`send${n}Btn`).disabled = true;
+      if (n === 1) { ws1 = null; document.getElementById('createBtn').disabled = false; }
+      else { ws2 = null; document.getElementById('joinBtn').disabled = false; }
+    };
+
+    ws.onerror = () => {
+      setDot(n, 'error');
+      log(n, 'error', 'WebSocket error');
+    };
+  }
+
+  function sendMessage(n) {
+    const ws = n === 1 ? ws1 : ws2;
+    const text = document.getElementById(`msg${n}`).value.trim();
+    if (!ws || !text) return;
+    const msg = { type: 'sideband', payload: { from: `P${n}`, text } };
+    ws.send(JSON.stringify(msg));
+    log(n, 'sent', `[sideband] ${JSON.stringify(msg.payload)}`);
+    document.getElementById(`msg${n}`).value = '';
+  }
+
+  // Send on Ctrl+Enter in textareas
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      if (document.activeElement === document.getElementById('msg1')) sendMessage(1);
+      if (document.activeElement === document.getElementById('msg2')) sendMessage(2);
+    }
+  });
+</script>
+
+</body>
+</html>
