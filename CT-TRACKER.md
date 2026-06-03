@@ -275,4 +275,4 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W010 | Cultural and linguistic diversity in model training — hedra implications | ZK permanent | proposed | 116, 119, 120 |
 
 ---
-*Last updated: 2026-05-26*
+*Last updated: 2026-06-03*
