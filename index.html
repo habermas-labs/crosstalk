@@ -811,6 +811,12 @@
     };
     const ALL_PROVIDERS = Object.keys(PROVIDER_META);
 
+    // ─────────────────────────────────────────────
+    // Tandem constants (CT-123 Phase 2)
+    // ─────────────────────────────────────────────
+    const TANDEM_WORKER_URL = 'https://tandem-crosstalk.skooterca.workers.dev';
+    const TANDEM_MIN_WIDTH  = 1600; // px — minimum viewport width to show Tandem column
+
     // Fetch available models from each provider using the user's API key.
     // Returns array of { id, label } objects, or [{id:'default',label:'Default'}] on failure.
     const fetchProviderModels = async (provider, apiKey) => {
