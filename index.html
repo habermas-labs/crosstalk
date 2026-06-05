@@ -1961,7 +1961,8 @@
       // Send a sideband message
       const sendSideband = () => {
         const text = sidebandDraft.trim();
-        if (!text || !tandemWs.current) return;
+        console.log('sendSideband fired, ws:', tandemWs.current, 'text:', text);
+if (!text || !tandemWs.current) return;
         const from = tandemRole === 'host' ? 'Host' : 'Partner';
         const msg = { type: 'sideband', payload: { from, text } };
         tandemWs.current.send(JSON.stringify(msg));
