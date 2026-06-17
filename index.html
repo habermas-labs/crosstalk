@@ -1725,7 +1725,7 @@
       );
       const [modelsFetching, setModelsFetching] = useState(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
       const [modelConfirmOpen, setModelConfirmOpen] = useState(false);
-      const [modelConfirmWarning, setModelConfirmWarning] = useState(false);
+
 
       // Fetch model lists once per provider when a key becomes available
       const fetchedRef = React.useRef(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
@@ -1763,13 +1763,11 @@
 
       const applyModelChanges = () => {
         setSelectedModels({ ...pendingModels });
-        setModelConfirmWarning(false);
         setModelConfirmOpen(false);
       };
 
       const openModelConfirm = () => {
         if (pendingHasDupe) return;
-        setModelConfirmWarning(false);
         setModelConfirmOpen(true);
       };
 
@@ -2761,7 +2759,7 @@
                 </div>
               </div>
 
-              {/* CT-097 — Model confirm modal */}
+              {/* CT-097 — Model confirm modal (single-screen) */}
               {modelConfirmOpen && (
                 <div style={{
                   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
@@ -2777,77 +2775,47 @@
                     <div style={{ fontFamily: 'JetBrains Mono', fontSize: '13px', fontWeight: 700, marginBottom: '12px' }}>
                       Apply model changes?
                     </div>
-
-                    {!modelConfirmWarning ? (
-                      <>
-                        <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.6' }}>
-                          {(conductorOrder).filter(m => pendingModels[m] !== selectedModels[m]).map(m => {
-                            const meta = PROVIDER_META[m] || {};
-                            return (
-                              <div key={m} style={{ marginBottom: '6px' }}>
-                                <span style={{ color: meta.accent }}>
-                                  {meta.icon} {meta.label}
-                                </span>
-                                {' '}→ {pendingModels[m]}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => { setModelConfirmOpen(false); setPendingModels({ ...selectedModels }); }}
-                            style={{
-                              padding: '7px 16px', background: 'transparent',
-                              border: '1px solid var(--border-hover)', borderRadius: '4px',
-                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                              color: 'var(--text-secondary)',
-                            }}
-                          >Cancel</button>
-                          <button
-                            onClick={() => setModelConfirmWarning(true)}
-                            style={{
-                              padding: '7px 16px', background: 'var(--bg-secondary)',
-                              border: '1px solid var(--border-hover)', borderRadius: '4px',
-                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                              color: 'var(--text-primary)',
-                            }}
-                          >Continue →</button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div style={{
-                          fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)',
-                          marginBottom: '16px', lineHeight: '1.7',
-                          background: 'var(--bg-input)', borderRadius: '4px', padding: '10px 12px',
-                          border: '1px solid var(--border-subtle)'
-                        }}>
-                          The most recent response from any replaced model slot will be preserved in the session transcript, but will no longer be available for copying, clipping, or forwarding.
-                          <br /><br />
-                          If you want to capture those responses first, pause now and return when ready.
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => { setModelConfirmOpen(false); setModelConfirmWarning(false); }}
-                            style={{
-                              padding: '7px 16px', background: 'transparent',
-                              border: '1px solid var(--border-hover)', borderRadius: '4px',
-                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                              color: 'var(--text-secondary)',
-                            }}
-                          >⏸ Pause</button>
-                          <button
-                            onClick={applyModelChanges}
-                            style={{
-                              padding: '7px 16px', background: 'var(--claude-border)',
-                              border: '1px solid var(--claude-accent)', borderRadius: '4px',
-                              cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
-                              color: 'var(--claude-accent)',
-                            }}
-                          >Apply changes</button>
-                        </div>
-                      </>
-                    )}
+                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.6' }}>
+                      {(conductorOrder).filter(m => pendingModels[m] !== selectedModels[m]).map(m => {
+                        const meta = PROVIDER_META[m] || {};
+                        return (
+                          <div key={m} style={{ marginBottom: '6px' }}>
+                            <span style={{ color: meta.accent }}>{meta.icon} {meta.label}</span>
+                            {' '}→ {pendingModels[m]}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{
+                      fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)',
+                      marginBottom: '16px', lineHeight: '1.7',
+                      background: 'var(--bg-input)', borderRadius: '4px', padding: '10px 12px',
+                      border: '1px solid var(--border-subtle)'
+                    }}>
+                      The most recent response from any replaced model slot will be preserved in the session transcript, but will no longer be available for copying, clipping, or forwarding.
+                      <br /><br />
+                      If you want to capture those responses first, pause now and return when ready.
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => { setModelConfirmOpen(false); setModelConfirmWarning(false); }}
+                        style={{
+                          padding: '7px 16px', background: 'transparent',
+                          border: '1px solid var(--border-hover)', borderRadius: '4px',
+                          cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >⏸ Pause</button>
+                      <button
+                        onClick={applyModelChanges}
+                        style={{
+                          padding: '7px 16px', background: 'var(--claude-border)',
+                          border: '1px solid var(--claude-accent)', borderRadius: '4px',
+                          cursor: 'pointer', fontFamily: 'JetBrains Mono', fontSize: '11px',
+                          color: 'var(--claude-accent)',
+                        }}
+                      >Apply changes</button>
+                    </div>
                   </div>
                 </div>
               )}
