@@ -2675,7 +2675,36 @@
 
               {/* CT-097 — Models section */}
               <div style={{ marginBottom: '16px' }}>
-                <div className="sidebar-section-label">Models</div>
+                <div className="sidebar-section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Models</span>
+                  <span style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      title="Cancel model changes"
+                      disabled={!pendingHasChanges}
+                      onClick={() => setPendingModels({ ...selectedModels })}
+                      style={{
+                        background: 'none', border: 'none', cursor: pendingHasChanges ? 'pointer' : 'default',
+                        padding: '0 2px', fontSize: '12px', lineHeight: 1,
+                        color: pendingHasChanges ? '#f47068' : 'var(--text-muted)',
+                        opacity: pendingHasChanges ? 1 : 0.35,
+                        transition: 'color 0.15s, opacity 0.15s',
+                      }}
+                    >✕</button>
+                    <button
+                      title={pendingHasDupe ? 'Each slot must use a distinct model' : 'Apply model changes'}
+                      disabled={!pendingHasChanges || pendingHasDupe}
+                      onClick={openModelConfirm}
+                      style={{
+                        background: 'none', border: 'none',
+                        cursor: (pendingHasChanges && !pendingHasDupe) ? 'pointer' : 'default',
+                        padding: '0 2px', fontSize: '12px', lineHeight: 1,
+                        color: (pendingHasChanges && !pendingHasDupe) ? '#6bcf8e' : 'var(--text-muted)',
+                        opacity: (pendingHasChanges && !pendingHasDupe) ? 1 : 0.35,
+                        transition: 'color 0.15s, opacity 0.15s',
+                      }}
+                    >✓</button>
+                  </span>
+                </div>
                 <div style={{
                   background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius)', padding: '10px 12px',
@@ -2728,21 +2757,7 @@
                     </div>
                   )}
 
-                  {pendingHasChanges && !pendingHasDupe && (
-                    <button
-                      onClick={openModelConfirm}
-                      style={{
-                        width: '100%', marginTop: '8px', padding: '5px',
-                        background: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-hover)',
-                        borderRadius: '4px', cursor: 'pointer',
-                        fontFamily: 'JetBrains Mono', fontSize: '11px',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      Confirm changes
-                    </button>
-                  )}
+
                 </div>
               </div>
 
