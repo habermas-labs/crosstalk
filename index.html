@@ -483,177 +483,6 @@
     @media (max-width: 900px) {
       .ct-model-grid { grid-template-columns: 1fr !important; }
     }
-
-    /* ── Tandem Column (CT-123 Phase 2) ── */
-    .ct-sidebar-tandem {
-      width: 280px;
-      min-width: 280px;
-      background: var(--bg-secondary);
-      border-left: 1px solid var(--border-subtle);
-      display: flex;
-      flex-direction: column;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .tandem-controls {
-      flex-shrink: 0;
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 14px 14px 12px;
-    }
-    .tandem-partner-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      padding: 12px 14px;
-    }
-    .tandem-section-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    .tandem-status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .tandem-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--text-muted);
-      flex-shrink: 0;
-      transition: background 0.3s;
-    }
-    .tandem-dot.connected { background: var(--chatgpt-accent); box-shadow: 0 0 5px var(--chatgpt-accent); }
-    .tandem-dot.waiting   { background: var(--claude-accent); }
-    .tandem-dot.partner   { background: var(--gemini-accent); box-shadow: 0 0 5px var(--gemini-accent); }
-    .tandem-room-chip {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      letter-spacing: 0.18em;
-      color: var(--text-primary);
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      padding: 5px 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.15s;
-      user-select: all;
-    }
-    .tandem-room-chip:hover { border-color: var(--border-hover); }
-    .tandem-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 5px 10px;
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-      width: 100%;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-    }
-    .tandem-btn:hover { background: var(--bg-card); border-color: var(--border-hover); color: var(--text-primary); }
-    .tandem-agency-row {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-    .tandem-agency-btn {
-      flex: 1;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      padding: 4px 6px;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      color: var(--text-muted);
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.12s;
-    }
-    .tandem-agency-btn.active {
-      background: var(--bg-card);
-      border-color: var(--border-hover);
-      color: var(--text-primary);
-    }
-    .sideband-thread {
-      flex: 1;
-      overflow-y: auto;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      margin-bottom: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .sideband-msg {
-      padding: 6px 8px;
-      border-radius: 4px;
-      line-height: 1.5;
-    }
-    .sideband-msg.from-me   { background: var(--bg-card); border: 1px solid var(--border-subtle); color: var(--text-primary); align-self: flex-end; max-width: 90%; }
-    .sideband-msg.from-them { background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-secondary); align-self: flex-start; max-width: 90%; }
-    .sideband-msg .sb-from  { font-size: 9px; color: var(--text-muted); margin-bottom: 2px; }
-    .sideband-input {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .sideband-input textarea {
-      flex: 1;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      color: var(--text-primary);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 6px 8px;
-      resize: none;
-      outline: none;
-      min-height: 52px;
-      transition: border-color 0.15s;
-    }
-    .sideband-input textarea:focus { border-color: var(--border-hover); }
-    .sideband-send-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 6px 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-hover);
-      border-radius: 4px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      align-self: flex-end;
-      transition: color 0.12s;
-    }
-    .sideband-send-btn:hover { color: var(--text-primary); }
-    .tandem-badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 3px;
-      border: 1px solid var(--border-subtle);
-      color: var(--text-muted);
-      background: var(--bg-input);
-      letter-spacing: 0.06em;
-    }
-    .tandem-badge.host    { color: var(--claude-accent); border-color: var(--claude-border); }
-    .tandem-badge.partner { color: var(--gemini-accent); border-color: var(--gemini-border); }
   </style>
 </head>
 <body>
@@ -810,12 +639,6 @@
       deepseek: { label: 'DeepSeek', icon: '▿', accent: 'var(--deepseek-accent)', bg: 'var(--deepseek-bg)', border: 'var(--deepseek-border)' },
     };
     const ALL_PROVIDERS = Object.keys(PROVIDER_META);
-
-    // ─────────────────────────────────────────────
-    // Tandem constants (CT-123 Phase 2)
-    // ─────────────────────────────────────────────
-    const TANDEM_WORKER_URL = 'https://tandem-crosstalk.skooterca.workers.dev';
-    const TANDEM_MIN_WIDTH  = 1600; // px — minimum viewport width to show Tandem column
 
     // Fetch available models from each provider using the user's API key.
     // Returns array of { id, label } objects, or [{id:'default',label:'Default'}] on failure.
@@ -1820,21 +1643,7 @@
       // Right sidebar open/collapsed state
       const [sidebarRightOpen, setSidebarRightOpen] = useState(() => window.innerWidth >= 1200);
       const rightSidebarRef = useRef(null);
-// ── Tandem state (CT-123 Phase 2) ──
-      const [tandemActive,        setTandemActive]        = useState(false);
-      const [tandemRole,          setTandemRole]          = useState(null);   // 'host' | 'partner' | null
-      const [tandemRoomId,        setTandemRoomId]        = useState(null);
-      const [tandemConnected,     setTandemConnected]     = useState(false);
-      const [tandemPartnerPresent,setTandemPartnerPresent]= useState(false);
-      const [tandemAgency,        setTandemAgency]        = useState('full'); // 'observe'|'suggest'|'full'
-      const [tandemPartnerLastSend,setTandemPartnerLastSend] = useState(null); // { text, ts }
-      const [sidebandThread,      setSidebandThread]      = useState([]);     // [{ from, text, ts }]
-      const [sidebandDraft,       setSidebandDraft]       = useState('');
-      const [tandemCopied,        setTandemCopied]        = useState(false);
-      const [viewportWidth,       setViewportWidth]       = useState(window.innerWidth);
-      const tandemWs = useRef(null);
-      const tandemRoleRef = useRef(null); // mirror of tandemRole for use inside WS callbacks
-      
+
       // ── CT-110 Code Panel state ──
       const [codePanels, setCodePanels] = useState([]);
       const [panelZCounter, setPanelZCounter] = useState(100);
@@ -1845,142 +1654,6 @@
       const lastPanelPos = useRef(null);
       const panelIdCounter = useRef(0);
 
-// Viewport width tracker (for Tandem column width gate)
-      useEffect(() => {
-        const handler = () => setViewportWidth(window.innerWidth);
-        window.addEventListener('resize', handler);
-        return () => window.removeEventListener('resize', handler);
-      }, []);
-
-      // Detect ?room= URL parameter on mount — Partner join path
-      useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const room = params.get('room');
-        if (room && /^[a-z0-9]{8}$/.test(room)) {
-          setTandemActive(true);
-          setTandemRole('partner');
-          tandemRoleRef.current = 'partner';
-          setTandemRoomId(room);
-        }
-      }, []);
-
-      // WebSocket lifecycle — runs when tandemActive + tandemRoomId are set
-      useEffect(() => {
-        if (!tandemActive || !tandemRoomId) return;
-        const wsUrl = `${TANDEM_WORKER_URL.replace('https://', 'wss://')}/session/${tandemRoomId}`;
-        const ws = new WebSocket(wsUrl);
-        tandemWs.current = ws;
-
-        ws.onopen = () => {
-          setTandemConnected(true);
-        };
-
-        ws.onmessage = (event) => {
-          let msg;
-          try { msg = JSON.parse(event.data); } catch { return; }
-
-          if (msg.type === 'system') {
-            const { event: ev, count } = msg.payload || {};
-            if (ev === 'join') {
-              setTandemPartnerPresent(count >= 2);
-            } else if (ev === 'leave') {
-              setTandemPartnerPresent(count >= 2);
-            }
-          }
-
-          if (msg.type === 'session') {
-            const p = msg.payload || {};
-            if (p.event === 'prompt_sent') {
-              // Partner receives Host's prompt — record for display
-              if (tandemRoleRef.current === 'partner') {
-                setTandemPartnerLastSend({ text: p.userText, ts: p.timestamp });
-              } else {
-                // Host receives Partner's prompt — record it
-                setTandemPartnerLastSend({ text: p.userText, ts: p.timestamp });
-              }
-            }
-            if (p.event === 'response_received' && tandemRoleRef.current === 'partner') {
-              // Partner receives model response — update their display
-              if (p.response) {
-                setResponses(prev => ({ ...prev, [p.model]: p.response }));
-              } else if (p.error) {
-                setErrors(prev => ({ ...prev, [p.model]: p.error }));
-              }
-              setLoading(prev => ({ ...prev, [p.model]: false }));
-            }
-            if (p.event === 'loading_start' && tandemRoleRef.current === 'partner') {
-              setLoading(prev => ({ ...prev, [p.model]: true }));
-              setResponses(prev => ({ ...prev, [p.model]: null }));
-              setErrors(prev => ({ ...prev, [p.model]: null }));
-            }
-          }
-
-          if (msg.type === 'sideband') {
-            const p = msg.payload || {};
-            setSidebandThread(prev => [...prev, {
-              from: p.from || 'Partner',
-              text: p.text || '',
-              ts: new Date().toISOString(),
-              mine: false,
-            }]);
-          }
-        };
-
-        ws.onclose = () => {
-          setTandemConnected(false);
-          setTandemPartnerPresent(false);
-          tandemWs.current = null;
-        };
-
-        ws.onerror = () => {
-          setTandemConnected(false);
-        };
-
-        return () => {
-          ws.close();
-          tandemWs.current = null;
-        };
-      }, [tandemActive, tandemRoomId]);
-
-// Host: create a new Tandem session via POST /session
-      const createTandemSession = async () => {
-        try {
-          const res = await fetch(`${TANDEM_WORKER_URL}/session`, { method: 'POST' });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          const room = data.roomId;
-          setTandemRoomId(room);
-          setTandemActive(true);
-          setTandemRole('host');
-          tandemRoleRef.current = 'host';
-        } catch (err) {
-          console.error('Tandem session create failed:', err);
-        }
-      };
-
-      // Send a sideband message
-      const sendSideband = () => {
-        const text = sidebandDraft.trim();
-        console.log('sendSideband fired, ws:', tandemWs.current, 'text:', text);
-if (!text || !tandemWs.current) return;
-        const from = tandemRole === 'host' ? 'Host' : 'Partner';
-        const msg = { type: 'sideband', payload: { from, text } };
-        tandemWs.current.send(JSON.stringify(msg));
-        setSidebandThread(prev => [...prev, { from, text, ts: new Date().toISOString(), mine: true }]);
-        setSidebandDraft('');
-      };
-
-      // Broadcast a session event to the Partner
-      const broadcastSession = (payload) => {
-        if (!tandemWs.current || tandemWs.current.readyState !== WebSocket.OPEN) return;
-        tandemWs.current.send(JSON.stringify({ type: 'session', payload }));
-      };
-
-      const tandemColumnVisible = tandemActive && viewportWidth >= TANDEM_MIN_WIDTH;
-      const tandemInviteUrl = tandemRoomId
-        ? `${window.location.origin}${window.location.pathname}?room=${tandemRoomId}`
-        : null;
-      
       const getInitialPanelPos = (model) => {
         const isFirst = codePanels.length === 0 && lastPanelPos.current === null;
         if (isFirst) {
@@ -2064,15 +1737,26 @@ if (!text || !tandemWs.current) return;
           setModelsFetching(prev => ({ ...prev, [provider]: true }));
           const models = await fetchProviderModels(provider, key);
           setAvailableModels(prev => ({ ...prev, [provider]: models }));
-          setSelectedModels(prev => {
+          // Only auto-correct when the fetch actually returned real models (not the 'default' sentinel)
+          const fetchSucceeded = models.length > 0 && models[0]?.id !== 'default';
+          if (fetchSucceeded) {
             const ids = models.map(m => m.id);
-            if (!ids.includes(prev[provider]) && models[0]?.id !== 'default') {
-              const next = { ...prev, [provider]: models[0].id };
-              setPendingModels(p => ({ ...p, [provider]: models[0].id }));
-              return next;
-            }
-            return prev;
-          });
+            const firstId = models[0].id;
+            // selectedModels and pendingModels must be updated together and independently
+            // (not nested) to avoid React batching making them diverge
+            setSelectedModels(prev => {
+              if (!ids.includes(prev[provider])) {
+                return { ...prev, [provider]: firstId };
+              }
+              return prev;
+            });
+            setPendingModels(prev => {
+              if (!ids.includes(prev[provider])) {
+                return { ...prev, [provider]: firstId };
+              }
+              return prev;
+            });
+          }
           setModelsFetching(prev => ({ ...prev, [provider]: false }));
         });
       }, [keys]);
@@ -2300,11 +1984,13 @@ if (!text || !tandemWs.current) return;
         }
         return `${base}\n\n---\nFor context, here is ${modelLabels[includeModel]}'s response to our previous discussion:\n\n${included}\n---`;
       };
-// Send to all enabled models in parallel
+
+      // Send to all enabled models in parallel
       const sendParallel = useCallback(async () => {
         const userText = prompt.trim();
         const included = includeResponse !== 'none' ? includeResponse : null;
         if (!userText && !included) return;
+
         const turnTimestamp = new Date().toISOString();
         const includeSnapshot = included ? { model: included, snapshot: responses[included] } : null;
         const vaultFiles = vaultForward.length > 0 ? sessionVault.filter(f => vaultForward.includes(f.id)) : [];
@@ -2317,12 +2003,15 @@ if (!text || !tandemWs.current) return;
         setVaultForward([]);
         setClipInclude(Object.fromEntries(ALL_PROVIDERS.map(p => [p, false])));
         setModeArmed(false);
+
         const models = conductorOrder.filter(m => enabled[m] && keys[m]?.trim() && m !== excludeModel);
+
         // Record active models on first send
         setSessionMeta(prev => prev.modelsActive.length === 0
           ? { ...prev, modelsActive: models }
           : prev
         );
+
         const resetResponses = {};
         const resetErrors = {};
         const loadingState = Object.fromEntries(ALL_PROVIDERS.map(p => [p, false]));
@@ -2330,17 +2019,14 @@ if (!text || !tandemWs.current) return;
         setResponses(prev => ({ ...prev, ...resetResponses }));
         setErrors(prev => ({ ...prev, ...resetErrors }));
         setLoading(loadingState);
+
         const newHistories = { ...conversationHistory };
         models.forEach(m => {
           newHistories[m] = [...newHistories[m], { role: 'user', content }];
         });
         setConversationHistory(newHistories);
+
         const results = {};
-        // Tandem: broadcast prompt and loading state to Partner
-        if (tandemActive && tandemRole === 'host') {
-          broadcastSession({ event: 'prompt_sent', userText, timestamp: turnTimestamp });
-          models.forEach(model => broadcastSession({ event: 'loading_start', model }));
-        }
         await Promise.allSettled(models.map(async (model) => {
           try {
             const response = await apiAdapters[model](
@@ -2352,21 +2038,14 @@ if (!text || !tandemWs.current) return;
               ...prev,
               [model]: [...prev[model], { role: 'assistant', content: response }]
             }));
-            // Tandem: broadcast response to Partner
-            if (tandemActive && tandemRole === 'host') {
-              broadcastSession({ event: 'response_received', model, response, error: null, timestamp: new Date().toISOString() });
-            }
           } catch (err) {
             results[model] = { response: null, error: err.message, responseTimestamp: new Date().toISOString() };
             setErrors(prev => ({ ...prev, [model]: err.message }));
-            // Tandem: broadcast error to Partner
-            if (tandemActive && tandemRole === 'host') {
-              broadcastSession({ event: 'response_received', model, response: null, error: err.message, timestamp: new Date().toISOString() });
-            }
           } finally {
             setLoading(prev => ({ ...prev, [model]: false }));
           }
         }));
+
         setTurnHistory(prev => [...prev, {
           turnIndex: prev.length,
           timestamp: turnTimestamp,
@@ -2937,26 +2616,6 @@ if (!text || !tandemWs.current) return;
                 >
                   <span>⊹</span> Brief Models
                 </button>
-                <div className="sidebar-divider" style={{ margin: '10px 0' }} />
-                <div className="sidebar-section-label">Tandem</div>
-                {!tandemActive ? (
-                  <button
-                    className="sidebar-btn"
-                    onClick={createTandemSession}
-                    title="Start a Tandem co-conduct session"
-                  >
-                    <span>⬡</span> Start Tandem
-                  </button>
-                ) : (
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)', padding: '4px 2px' }}>
-                    ⬡ Tandem active — {tandemRole}
-                  </div>
-                )}
-                {!tandemColumnVisible && tandemActive && viewportWidth < TANDEM_MIN_WIDTH && (
-                  <div style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)', opacity: 0.6, padding: '4px 2px', lineHeight: 1.5 }}>
-                    Widen viewport to show Tandem column
-                  </div>
-                )}
               </div>
 
               {/* Conducting — Conductor Order */}
@@ -3419,17 +3078,7 @@ if (!text || !tandemWs.current) return;
             border: '1px solid var(--border-subtle)', padding: '16px', marginBottom: '24px'
           }}>
             {/* Hidden file input moved to right sidebar */}
-{/* Tandem badge — visible when Tandem is active */}
-            {tandemActive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span className={`tandem-badge ${tandemRole}`}>
-                  {tandemRole === 'host' ? 'Host' : 'Partner'}
-                </span>
-                <span style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: tandemPartnerPresent ? 'var(--chatgpt-accent)' : 'var(--text-muted)' }}>
-                  {tandemPartnerPresent ? '⬡ Partner present' : '○ Waiting for Partner…'}
-                </span>
-              </div>
-            )}
+
             <textarea
               ref={textareaRef}
               value={prompt}
@@ -3614,7 +3263,7 @@ if (!text || !tandemWs.current) return;
                   </select>
                   <div style={{ position: 'relative' }}>
                     <button
-                      disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) || conductorActive || (tandemActive && tandemRole === 'partner' && tandemAgency === 'observe')}
+                      disabled={!sendArmed || (!prompt.trim() && includeResponse === 'none' && vaultForward.length === 0) || conductorActive}
                       onClick={() => {
                         if (activeModels.length === 0) {
                           setNoKeyWarning(true);
@@ -3813,149 +3462,7 @@ if (!text || !tandemWs.current) return;
 
           </div>{/* /inner max-width wrapper */}
           </div>{/* /ct-main */}
-{/* ── Tandem Column (CT-123 Phase 2) ── */}
-          {tandemColumnVisible && (
-            <div className="ct-sidebar-tandem">
 
-              {/* Upper: Tandem Controls */}
-              <div className="tandem-controls">
-                <div className="tandem-section-label">Tandem</div>
-
-                {/* Status row */}
-                <div className="tandem-status-row">
-                  <div className={`tandem-dot ${tandemConnected ? (tandemPartnerPresent ? 'partner' : 'waiting') : ''}`} />
-                  <span style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                    {!tandemConnected ? 'Connecting…'
-                      : !tandemPartnerPresent ? 'Waiting for Partner'
-                      : 'Partner present'}
-                  </span>
-                  <span className={`tandem-badge ${tandemRole}`} style={{ marginLeft: 'auto' }}>
-                    {tandemRole === 'host' ? 'Host' : 'Partner'}
-                  </span>
-                </div>
-
-                {/* Room ID + invite */}
-                {tandemRoomId && (
-                  <>
-                    <div className="tandem-section-label" style={{ marginTop: '8px' }}>Room</div>
-                    <div
-                      className="tandem-room-chip"
-                      style={{ marginBottom: '6px' }}
-                      title="Click to copy invite link"
-                      onClick={() => {
-                        if (tandemInviteUrl) {
-                          navigator.clipboard.writeText(tandemInviteUrl).then(() => {
-                            setTandemCopied(true);
-                            setTimeout(() => setTandemCopied(false), 2000);
-                          });
-                        }
-                      }}
-                    >
-                      {tandemRoomId}
-                    </div>
-                    <button className="tandem-btn" onClick={() => {
-                      if (tandemInviteUrl) navigator.clipboard.writeText(tandemInviteUrl).then(() => {
-                        setTandemCopied(true);
-                        setTimeout(() => setTandemCopied(false), 2000);
-                      });
-                    }}>
-                      <span>{tandemCopied ? '✓' : '⎘'}</span>
-                      {tandemCopied ? 'Copied!' : 'Copy invite link'}
-                    </button>
-                  </>
-                )}
-
-                {/* Host: agency controls */}
-                {tandemRole === 'host' && tandemPartnerPresent && (
-                  <>
-                    <div className="tandem-section-label" style={{ marginTop: '10px' }}>Partner Agency</div>
-                    <div className="tandem-agency-row">
-                      {['observe', 'suggest', 'full'].map(level => (
-                        <button
-                          key={level}
-                          className={`tandem-agency-btn${tandemAgency === level ? ' active' : ''}`}
-                          onClick={() => setTandemAgency(level)}
-                        >
-                          {level === 'observe' ? 'Obs' : level === 'suggest' ? 'Sug' : 'Full'}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {/* Partner: agency level display */}
-                {tandemRole === 'partner' && (
-                  <>
-                    <div className="tandem-section-label" style={{ marginTop: '10px' }}>Your Agency</div>
-                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      {tandemAgency === 'observe' ? '⊘ Observe only'
-                        : tandemAgency === 'suggest' ? '◎ Suggest (Host approves)'
-                        : '◈ Full send'}
-                    </div>
-                  </>
-                )}
-
-                {/* Voice — Phase 4 stub */}
-                <div className="tandem-section-label" style={{ marginTop: '10px' }}>Voice</div>
-                <div style={{ fontFamily: 'JetBrains Mono', fontSize: '10px', color: 'var(--text-muted)', opacity: 0.5 }}>
-                  ⊘ Phase 4 · not yet built
-                </div>
-              </div>
-
-              {/* Lower: Partner panel */}
-              <div className="tandem-partner-panel">
-
-                {/* Partner's last send */}
-                <div className="tandem-section-label">
-                  {tandemRole === 'host' ? "Partner's last send" : "Host's last send"}
-                </div>
-                <div style={{
-                  fontFamily: 'JetBrains Mono', fontSize: '11px',
-                  color: tandemPartnerLastSend ? 'var(--text-secondary)' : 'var(--text-muted)',
-                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)',
-                  borderRadius: '4px', padding: '8px 10px', marginBottom: '12px',
-                  minHeight: '48px', lineHeight: 1.5,
-                  overflow: 'hidden', maxHeight: '80px', overflowY: 'auto',
-                }}>
-                  {tandemPartnerLastSend
-                    ? tandemPartnerLastSend.text
-                    : <span style={{ opacity: 0.4 }}>Nothing sent yet</span>}
-                </div>
-
-                {/* Sideband thread */}
-                <div className="tandem-section-label">Sideband</div>
-                <div className="sideband-thread">
-                  {sidebandThread.length === 0 ? (
-                    <div style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: '10px' }}>
-                      Private channel — not sent to models
-                    </div>
-                  ) : (
-                    sidebandThread.map((msg, i) => (
-                      <div key={i} className={`sideband-msg ${msg.mine ? 'from-me' : 'from-them'}`}>
-                        <div className="sb-from">{msg.from}</div>
-                        {msg.text}
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Sideband input */}
-                <div className="sideband-input">
-                  <textarea
-                    value={sidebandDraft}
-                    onChange={e => setSidebandDraft(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSideband(); }
-                    }}
-                    placeholder="Sideband — private, not logged…"
-                    rows={2}
-                  />
-                  <button className="sideband-send-btn" onClick={sendSideband}>↵</button>
-                </div>
-
-              </div>
-            </div>
-          )}
           {/* ── Right Sidebar (accumulative zone) CT-107 ── */}
           <aside
             ref={rightSidebarRef}
