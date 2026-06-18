@@ -620,7 +620,7 @@
     // ─────────────────────────────────────────────
 
     // Default model strings — used on first load before dynamic fetch
-    const CT_VERSION = '1.1.0001';
+    const CT_VERSION = '1.1.0002';
 
     const DEFAULT_MODELS = {
       claude:   'claude-sonnet-4-20250514',
@@ -657,6 +657,31 @@
 
     // Fetch available models from each provider using the user's API key.
     // Returns array of { id, label } objects, or [{id:'default',label:'Default'}] on failure.
+    // Results are filtered to chat-capable models only and deduplicated to one entry per
+    // model family (newest wins), so the selector stays concise as providers expand their lineups.
+
+    // Extract a stable family key from a model ID for deduplication.
+    // Strips date suffixes, patch tags, and preview/experimental markers.
+    const modelFamilyKey = (id) => id
+      .toLowerCase()
+      // Remove date suffixes like -20250514
+      .replace(/-\d{8}$/, '')
+      // Remove :free or similar suffixes
+      .replace(/:[a-z]+$/, '')
+      // Normalize -preview, -exp, -experimental, -latest to allow grouping
+      .replace(/-(preview|exp|experimental|latest|stable|beta)$/, '');
+
+    // Keep only the newest model per family from a sorted (newest-first) list.
+    const dedupeByFamily = (models) => {
+      const seen = new Set();
+      return models.filter(m => {
+        const key = modelFamilyKey(m.id);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
+
     const fetchProviderModels = async (provider, apiKey) => {
       try {
         if (provider === 'claude') {
@@ -669,37 +694,56 @@
           });
           const data = await res.json();
           if (!data.data) return [{ id: 'default', label: 'Default' }];
-          // Filter to text models only, sort newest first
-          return data.data
+          const sorted = data.data
             .filter(m => m.type === 'model')
-            .sort((a, b) => b.created_at - a.created_at)
+            .sort((a, b) => b.created_at - a.created_at);
+          return dedupeByFamily(sorted)
             .map(m => ({ id: m.id, label: m.display_name || m.id }));
         }
+
         if (provider === 'chatgpt') {
           const res = await fetch('https://api.openai.com/v1/models', {
             headers: { 'Authorization': `Bearer ${apiKey}` }
           });
           const data = await res.json();
           if (!data.data) return [{ id: 'default', label: 'Default' }];
-          // Filter to GPT chat models only, sort newest first
-          return data.data
-            .filter(m => m.id.startsWith('gpt-') && !m.id.includes('instruct'))
-            .sort((a, b) => b.created - a.created)
+          // Allowlist chat-capable families only; exclude audio, tts, image, realtime,
+          // search, embedding, fine-tune, whisper, dall-e, and instruct variants
+          const CHATGPT_FAMILIES = /^(gpt-4o|gpt-4\.1|gpt-4-turbo|gpt-5|o1|o3|o4)(-|$)/i;
+          const CHATGPT_EXCLUDE  = /audio|realtime|tts|vision|search|embed|instruct|finetune|fine.tune|whisper|dall/i;
+          const sorted = data.data
+            .filter(m => CHATGPT_FAMILIES.test(m.id) && !CHATGPT_EXCLUDE.test(m.id))
+            .sort((a, b) => b.created - a.created);
+          return dedupeByFamily(sorted)
             .map(m => ({ id: m.id, label: m.id }));
         }
+
         if (provider === 'gemini') {
           const res = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
           );
           const data = await res.json();
           if (!data.models) return [{ id: 'default', label: 'Default' }];
-          return data.models
-            .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+          // Keep only core gemini chat models; exclude embedding, aqa, tts, and
+          // image-generation variants
+          const GEMINI_EXCLUDE = /embed|aqa|tts|imagen|vision|learnlm/i;
+          const filtered = data.models
+            .filter(m =>
+              m.supportedGenerationMethods?.includes('generateContent') &&
+              m.name.includes('gemini') &&
+              !GEMINI_EXCLUDE.test(m.name)
+            )
             .map(m => ({
               id: m.name.replace('models/', ''),
-              label: m.displayName || m.name.replace('models/', '')
-            }));
+              label: m.displayName || m.name.replace('models/', ''),
+              // Gemini API doesn't return created timestamps; sort by version string
+              _sortKey: m.name,
+            }))
+            .sort((a, b) => b._sortKey.localeCompare(a._sortKey));
+          return dedupeByFamily(filtered)
+            .map(({ id, label }) => ({ id, label }));
         }
+
         // OpenAI-compatible providers: grok, mistral, deepseek
         const OAI_ENDPOINTS = {
           grok:     'https://api.x.ai/v1/models',
@@ -707,9 +751,10 @@
           deepseek: 'https://api.deepseek.com/v1/models',
         };
         const OAI_FILTERS = {
-          grok:     m => !m.id.includes('image') && !m.id.includes('embed'),
-          mistral:  m => !m.id.includes('embed') && !m.id.includes('voxtral') && !m.id.includes('moderation'),
-          deepseek: m => true,
+          grok:     m => !m.id.includes('image') && !m.id.includes('embed') && !m.id.includes('vision'),
+          mistral:  m => !m.id.includes('embed') && !m.id.includes('voxtral') &&
+                         !m.id.includes('moderation') && !m.id.includes('ocr'),
+          deepseek: m => !m.id.includes('embed'),
         };
         if (OAI_ENDPOINTS[provider]) {
           const res = await fetch(OAI_ENDPOINTS[provider], {
@@ -717,9 +762,10 @@
           });
           const data = await res.json();
           if (!data.data) return [{ id: 'default', label: 'Default' }];
-          return data.data
+          const sorted = data.data
             .filter(OAI_FILTERS[provider])
-            .sort((a, b) => (b.created || 0) - (a.created || 0))
+            .sort((a, b) => (b.created || 0) - (a.created || 0));
+          return dedupeByFamily(sorted)
             .map(m => ({ id: m.id, label: m.id }));
         }
       } catch (_) {
