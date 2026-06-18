@@ -620,6 +620,8 @@
     // ─────────────────────────────────────────────
 
     // Default model strings — used on first load before dynamic fetch
+    const CT_VERSION = '1.1.0001';
+
     const DEFAULT_MODELS = {
       claude:   'claude-sonnet-4-20250514',
       chatgpt:  'gpt-4o',
@@ -2992,6 +2994,15 @@
               <button className="sidebar-btn" onClick={() => setShowAbout(true)}>
                 <span style={{ color: 'var(--text-muted)' }}>◎</span> About CT
               </button>
+
+              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}>
+                <span style={{
+                  fontFamily: 'JetBrains Mono', fontSize: '9px', letterSpacing: '0.08em',
+                  color: 'var(--text-muted)', background: 'var(--bg-input)',
+                  border: '1px solid var(--border-subtle)', borderRadius: '999px',
+                  padding: '2px 8px', userSelect: 'none',
+                }}>v{CT_VERSION}</span>
+              </div>
 
             </div>
           </aside>
