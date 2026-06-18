@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 127
+**Latest entry:** 132
 
 ---
 
@@ -72,7 +72,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 114 | Committee mode — all-six Hepta | All six models active simultaneously; hexagonal pyramid geometry (human conductor at apex, six models at base vertices); viewport-gated — available only when both sidebars expanded plus six model cards fit the viewport; no degraded fallback, hard constraint; prerequisite: CT-099 (expanded model support); "Committee" is a named Hepta following the Tetra/Hepta taxonomy | `idea` | Session discussion | 2026-05-22 |
 | 115 | New provider testing plan — Mistral, DeepSeek, version switching | Structured test plan: (1) confirm Mistral and DeepSeek full parallel send; (2) test model version detection for all 6 providers; (3) test mid-session version switching; (4) comparative session — OG trio (Claude/ChatGPT/Gemini) vs new trio (Grok/Mistral/DeepSeek) in parallel on a shared prompt; (5) mixed triads to explore inter-triad interactions | `planned` | Session discussion | 2026-05-22 |
 | 116 | Comparative session prompt design | Develop an initial prompt and 2–3 follow-ups suitable for parallel send across two configurations: OG trio and new trio; prompt should be substantive enough to surface epistemic differences between European/American/Chinese training lineages; potential follow-ups exploring convergence and divergence | `idea` | Session discussion | 2026-05-22 |
-| 118 | Model lineup change notification | Toggle in session controls; when active, silently notifies all models on the next prompt dispatch if the active model roster has changed since the last send; no acknowledgment prompt — informational only; models are simply made aware they are now in a different lineup than the previous turn; notification held until next actual send rather than fired immediately on roster change | `idea` | Session discussion | 2026-05-26 |
+| 118 | Model lineup change notification | Toggle in session controls; when active, silently notifies all models on the next prompt dispatch if the active model roster has changed since the last send; no acknowledgment prompt — informational only; models are simply made aware they are now in a different lineup than the previous turn; notification held until next actual send rather than fired immediately on roster change | `idea` — Session discussion | 2026-05-26 |
 | 119 | CT as explicit experimental testbed — human-AI communication research | Formal experimental program using CT's multi-model parallel architecture to study inter-model dynamics, model self-awareness, and structural properties of human-AI communication; distinct from incidental findings in ordinary sessions; involves deliberate condition design, controlled variables, and measurable output criteria; CT-118 (lineup change notification) and prior Haiku/Sonnet/Opus session results are candidate entry points; connects to role-context mimicry findings (CT-100) and the broader theoretical claim that sycophancy and hallucination are geometric rather than behavioral properties | `idea` | Session discussion | 2026-05-26 |
 | 120 | OG and YB test series — orientation protocol, ego-awareness, baseline | Three-part test series: (1) run full orientation + conductor protocol with OG trio (Claude/ChatGPT/Gemini) matching the YB session (20260526-08158a) for direct comparison; (2) ego-awareness mixed sessions — ChatGPT with two YBs that excluded it, then Gemini with two YBs, all models aware of full roster via orient inject, self-assessment question run to test whether co-presence changes assessments; (3) clean YB baseline — orient only, then "if I ask you this question again, should you answer the same way?" with no prior context, comparable to original OG baseline from 20260316 | `planned` | Session discussion | 2026-05-26 |
 | 121 | Unfinalized session export — forward-facing artifact | Export mode capturing open tensions, unresolved contradictions, and forward seeds from a completed session; oriented toward launching a new session rather than re-entering an interrupted one; distinct from CT-047 (exit scaffold), which is about re-entry conditions for a terminated session — this is a seed packet for the next session, not a key to the last one; originated with Mistral in YB session 20260527-76f057; connect to ct-fleeting-history-playback-export-design.md and CT-015 | `idea` | YB session 20260527 | 2026-05-27 |
@@ -82,6 +82,30 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 125 | Tandem — Phase 1 status update | CT-123 and CT-124 status updated to `in-progress`; Phase 1 infrastructure complete — Workers Paid upgrade done, TandemSession DO deployed via GitHub-connected wrangler build, smoke test confirmed 2026-06-02 on cellular from yourcrosstalklab.com/tandem-smoke-test.html; two-client WebSocket relay verified bidirectional | `in-progress` | Session | 2026-06-02 |
 | 126 | Kimi K2.6 — model expansion candidate | Moonshot AI, Chinese provenance distinct from DeepSeek — consumer/multimodal vs. research orientation; 1T parameter MoE, open-weight Modified MIT license; primary CT interest is cultural triangulation alongside DeepSeek to test whether two Chinese-origin models show meaningfully different epistemic signatures; $0.95/$4.00 per million tokens; geopolitical risk factor (pending US legislation re: Chinese AI firms); brand color TBD | `idea` | Via Nagi | 2026-06-02 |
 | 127 | CT-as-training-data-generator — fine-tuned Partner model | CT+Witness sessions scripted to produce training data for a CT-aware fine-tuned open-weight model (Llama/Mistral base); Partner training Tetra concept — Witness configured with output requirements oriented toward fine-tuning goal; pipeline: design scripts → run sessions → export transcripts → fine-tune → evaluate as Partner; dissolves ToS problem of authenticated AI Partner (CT-124); see fleeting-authenticated-ai-partner-cross-tab.md | `idea` | Via Nagi | 2026-06-02 |
+| 128 | Model confirm/cancel buttons — header placement | ✕ and ✓ icon buttons in the Models section header; always visible, dimmed/disabled at rest, activate when pendingModels diverges from selectedModels; eliminates the hidden "Confirm changes" button that appeared only after making a change and was easy to miss at the bottom of the dropdown list | `implemented` | Session discussion | 2026-06-17 |
+| 129 | Model selector — preferred model patterns | PREFERRED_MODEL_PATTERNS per provider — ordered regex list matched against the live model list after key load; prevents auto-select landing on flagship/expensive models (Opus, Fable, o1) when the user has not chosen explicitly; Claude prefers Sonnet, ChatGPT prefers gpt-4o, Gemini prefers 2.5-flash, etc.; falls back to first-in-list only if no pattern matches | `implemented` | Session discussion | 2026-06-17 |
+| 130 | Model selection — localStorage persistence | Last-used model per provider stored in localStorage (keys ct_model_claude etc.) and restored on next session load; seeds selectedModels and pendingModels on init; writes on explicit confirm and on fetch auto-correct so first-session defaults are also captured; try/catch throughout for private browsing safety | `implemented` | Session discussion | 2026-06-17 |
+| 131 | Version pill — sidebar footer | CT_VERSION constant in script; renders as a small centered pill below the About CT button in the sidebar; starts at 1.1.0001, incremented per release; allows at-a-glance confirmation of which version is live without inspecting code | `implemented` | Session discussion | 2026-06-17 |
+| 132 | Model selector list — filter and dedup | fetchProviderModels now filters to chat-capable models only and deduplicates to one entry per model family (newest wins); modelFamilyKey strips Anthropic-style (-20250514) and OpenAI-style (-2024-05-13) date suffixes plus preview/exp/latest markers; dedupeByFamily keeps first occurrence after newest-first sort; per-provider filter improvements: ChatGPT allowlisted to gpt-4o/4.1/5/o-series families with audio/tts/image/realtime/embed/instruct excluded; Gemini restricted to gemini-named generateContent models with embed/aqa/tts/imagen/learnlm excluded; Grok/Mistral/DeepSeek tightened to also exclude vision/ocr variants | `implemented` | Session discussion | 2026-06-17 |
+
+---
+
+## Superseded / Rejected
+
+| # | Feature / Idea | Resolution | Date |
+|---|---------------|------------|------|
+| 029 | LangChain integration | `rejected` — adds server-side dependency; contradicts browser-only constraint | 2026-03 |
+| 030 | Streaming responses | `rejected` — inconsistent streaming API support across providers; clean turn-based UX is preferable | 2026-03 |
+| 031 | Session persistence (server) | `rejected` — browser-only constraint; export system covers the need without server storage | 2026-03 |
+| 034 | Automatic session summarization | `rejected` — removes conductor agency over session framing; export is the right surface for this | 2026-03 |
+| 035 | Drag-and-drop conductor ordering | `superseded` — Conducting section in left sidebar (CT-111) solves the problem without drag-and-drop overhead | 2026-04-16 |
+| 036 | Conductor mid-conversation reordering | `superseded` — same resolution as CT-035 | 2026-04-16 |
+| 042 | Pause state for models | `superseded` — per-model on/off toggle covers the practical use case | 2026-05-01 |
+| 043 | Role presets | `absorbed` — absorbed into Tetra/Hedra framework (CT-073, CT-079, CT-082) | 2026-04-16 |
+| 049 | Configurable dashboard widgets | `superseded` — left/right sidebar zone architecture (CT-106/107) encodes the same intent | 2026-04-16 |
+| 050 | Unified responsive layout | `superseded` — mobile work will restart from current architecture when the time comes | 2026-04-16 |
+| 054 | History panel as dashboard widget | `superseded` — sidebar zone architecture forecloses repositionable widgets; CT-113 captures the recency-scoped variant | 2026-04-16 |
+| 102 | Code-heavy layout degradation — desktop stacked mode trigger | `superseded` — floating code panels (CT-110) solve the column-width problem through a better mechanism | 2026-05-01 |
 
 ---
 
@@ -91,7 +115,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 
 | # | Feature / Idea | Description | Origin | Date | Test notes |
 |---|---------------|-------------|--------|------|------------|
-| — | No pending tests | — | — | — | — |
+| 122 | Summarize with — YB model compatibility | Summarize with function may hardcode OG trio assumptions; test with Grok, Mistral, DeepSeek active | Session discussion | 2026-05-27 | No confirmed failure yet |
 
 ---
 
@@ -110,93 +134,58 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 007 | Cloudflare Access authentication | Email OTP gating during development phase | Infrastructure decision | 2026-03 |
 | 008 | R2 bucket for .ctk storage | `crosstalk-keys` bucket for secure remote key file hosting | Claude suggestion | 2026-03 |
 | 009 | Cloudflare Worker for R2 retrieval | Serverless function to serve .ctk file through authenticated endpoint | Claude suggestion | 2026-03 |
-| 010 | Load .ctk from URL | Settings UI addition — fetch encrypted key file from a remote URL | Claude suggestion | 2026-03 |
-| 016 | Export transcript | Save full triangulation session as formatted markdown; enriched in CT-074 | Claude suggestion | 2026-03 |
-| 021 | Mockups index page | `/mockups/` directory index listing design prototypes with descriptions | User insight | 2026-03 |
-| 022 | Cloudflare email/password login | Switched from Google OAuth to direct login for multi-network reliability | Environmental constraint | 2026-03 |
-| 048 | Directed engagement controls | "Direct to" and "Forward" dropdowns in input area; three moderated dialogue moves emerge from these two controls; Forward is models-only | Session discussion | 2026-03-03 |
-| 059 | Favicon and page title | SVG tetrahedron favicon embedded as base64 data URI; vertex dots in model-assigned colors; page title "Crosstalk Lab" | User insight | 2026-03-05 |
-| 074 | Turn schema enrichment and session metadata | Enriched turnHistory schema with turnIndex, timestamp, userText, include, target, order, builtPrompt, results with responseTimestamp; session-level sessionMeta | Session discussion | 2026-03-05 |
-| 057 | API key pre-flight validation | "Test" pill adjacent to each API key field; fires a minimal test call to each provider; green/pass or red/fail with specific diagnosis; Test All runs all three | Session discussion | 2026-03-05 |
-| 058 | Gemini free-tier provisioning troubleshooting | Troubleshooting subsection added to Quick Start Guide; covers limit:0 error pattern and new-project fix procedure | Session discussion | 2026-03-05 |
-| 056 | Move 2 explicit indicator | When Forward is set and prompt field is empty, placeholder text changes to "Forwarding [Model]'s response — add a prompt or send as-is…" | Session discussion | 2026-03-07 |
-| 061 | Configuration panel section reorder | API Keys → Key File; Key File immediately follows API Keys improving the keys→key file workflow | Session discussion | 2026-03-07 |
-| 031 | Summary export | Send full session to a designated model to synthesize; flyout submenu with per-model selection; exports as `ct-summary-SESSIONID-MODEL.md`; in left sidebar Export dropdown | Session discussion | 2026-03-07 |
-| 053 | Accidental send prevention | Mode dropdown + separate Send button; three visual states: deactivated → armed → post-send; modeArmed boolean gates send and keyboard Enter | Session discussion | 2026-03-10 |
-| 075 | Branding copy — header and welcome text | h1 "Crosstalk Lab"; tagline "Three models. One conductor. Richer thinking." fades in after carousel settles | Session discussion | 2026-03-10 |
-| 076 | Welcome carousel — tetra names | Carousel cycles once through all 8 named Tetras then settles on "your Crosstalk Lab"; click-to-replay | Session discussion | 2026-03-10 |
-| 077 | Expandable history turns | History panel shows 120-char preview; turns over 120 chars show expand toggle with copy button | Session discussion | 2026-03-10 |
-| 086 | Exclude routing control + Forward rename | Exclude dropdown in Target row; only visible when 3+ models active; "Include" renamed "Forward" throughout | Session discussion | 2026-03-10 |
-| 087 | History turn copy button | Copy button in expanded history turn row; 2s "✓ copied" flash | Session discussion | 2026-03-10 |
-| 088 | Exclude + Conductor composability | Exclude and mode are orthogonal; Conductor respects Exclude; setting Exclude auto-arms Send | Session discussion | 2026-03-17 |
-| 019 | IndexedDB local storage — session vault | vaultDB utility wraps open/getAll/put/remove/clear; auto-clears on fresh navigation, preserves on reload | Session discussion | 2026-03-13 |
-| 083 | Session vault UI | Vault file list in right sidebar; toggle-select highlight for include; Add files and Clear vault buttons; vault status indicator in Target row | Session discussion | 2026-03-13 |
-| 084 | Vault multi-select include | Multiple files selectable simultaneously; all selected files appended as labeled text blocks in prompt; vaultForward refactored from single id to array; Forward dropdown reverted to models-only | Session discussion | 2026-03-13 |
-| 092 | History panel — directed turn target label | "Directed" turn label includes target model name and icon | Session discussion | 2026-03-13 |
-| 096 | Transcript export metadata block — Pandoc/PDF compatibility fix | Replace headerless two-column markdown table with bold key-value pairs; fixes Pandoc/PDF export via Zettlr | Neph beta test | 2026-03-15 |
-| 101 | Light/dark mode — migrated to left sidebar | Dark/Light toggle in left sidebar Interface section; dark default; localStorage persistence; light palette `#f0f2f6` base with darkened brand accents | Session discussion | 2026-03-17 |
-| 094 | In-app clipboard | Three fixed slots (one per model) in right sidebar Clipboard section; ✂ Clip button in model card header alongside SVG copy button; toggle-select slots for include; clipped-at timestamp confirms replacement; clip status indicator in Target row; clips append to prompt as labeled text blocks; clip selection resets on send | Session discussion | 2026-04-11 |
-| 095 | Two-row input band layout | Row 1 Target (Direct to, Exclude, Forward, Vault status, Clip status); Row 2 Dispatch (Active status, Mode, Send); always two rows at every viewport width; no wrapping | Session discussion | 2026-04-11 |
-| 106 | Left sidebar — constitutive zone | Collapsible left panel; 240px open, 40px rail; auto-opens ≥1100px; contains CT identity, Tetras stub, Hedras stub, Conducting section, Session section, Interface section | Via Nagi | 2026-04-11 |
-| 107 | Right sidebar — accumulative zone | Collapsible right panel; 240px open, 40px rail; auto-opens ≥1200px; contains File Vault, Clipboard (CT-094), Cost stub, Reset session | Via Nagi | 2026-04-11 |
-| 110 | Code block floating panels | Collapsed inline token replaces code blocks in model chips; draggable fixed-position panels clamped to viewport; first panel snaps to column edge, subsequent panels cascade 24px; max three panels with warning; z-index focus management; SVG copy button in panel header; position memory per model origin | User insight | 2026-04-11 |
-| 111 | Conducting section — left sidebar | Conductor Order controls migrated from Configuration modal to dedicated Conducting section in left sidebar | Session discussion | 2026-04-11 |
-| 112 | Configuration rename + UI text cleanup | Settings modal and all UI references renamed to Configuration; getting-started notice updated; security note trimmed | Session discussion | 2026-04-11 |
-| 105 | Left sidebar — support and about links | Ko-fi (♥ Buy me a coffee), MDReader (↗), and About CT (◎) in Support section below Interface; About opens modal with CT description, Habermas Labs attribution, and footer links to Ko-fi and MDReader | User insight | 2026-05-22 |
-| 097 | Per-slot model version selector — mid-session | Model version dropdowns in left sidebar Models section; lists fetched dynamically from each provider's API on key load; selection survives mid-session without resetting conversation history; models unaware of version switches (confirmed); extended to all 6 providers 2026-05-22; Models section follows conductorOrder so displayed slots match active slot assignments | Session discussion | 2026-05-22 |
-| 099 | Expanded model support — Grok, Mistral, DeepSeek | Six-provider roster: Claude, ChatGPT, Gemini, Grok (api.x.ai), Mistral (api.mistral.ai), DeepSeek (api.deepseek.com); PROVIDER_META module-level constant is single source of truth for all labels, icons, and colors; conductorOrder serves as slot selector — 3 active slots chosen from 6 via Conducting dropdowns; "Active Model Order" label; slot note added; SettingsPanel split into GenerateCtkModal (6-provider key entry, test, export) and LoadKeysModal (import .ctk, load from URL, security note); Generate .ctk in sidebar below Load Keys; Grok confirmed working in ct-session-20260522-ddc77a; Mistral and DeepSeek pending full test (CT-115) | Session discussion | 2026-05-22 |
-| 117 | Model orientation inject — Orient Models + Brief Models | Two-button Session Setup section in left sidebar (constitutive zone); Orient Models fetches /briefs/orient-ct.md, prepends dynamic roster block (active model list + simultaneous dispatch confirmation), dispatches parallel to all active models; Brief Models fetches /briefs/orient-ct-trajectory.md, prepends framing header in code, dispatches parallel; orientLoading state gates both buttons during dispatch; both modes logged in turnHistory as 'orient' and 'brief'; /briefs/ directory established at repo root with orient-ct.md and orient-ct-trajectory.md; tested and verified in ct-session-20260526-c16e95 | Session discussion | 2026-05-26 |
-
----
-
-## Deprecated
-
-*Items formally retired from the backlog. Numbers preserved for reference. Reason column captures why.*
-
-| # | Feature / Idea | Reason | Notes | Date |
-|---|---------------|--------|-------|------|
-| 013 | Synthesis mode | `absorbed` | Absorbed into Hedra/Tetra framework (CT-073, CT-079, CT-082); synthesis is one of many configurable epistemic orientations, not a discrete mode | 2026-04-16 |
-| 014 | Adversarial mode | `absorbed` | Absorbed into Hedra/Tetra framework (CT-073, CT-079, CT-082); adversarial facing is a Hedra configuration, not a standalone mode | 2026-04-16 |
-| 029 | Obsidian / Zettelkasten flow direction | `decision-made` | Single vault decided; flow direction resolved: vault-originated content lives in vault, project-originated in repo with vault holding references. Encoded in project conventions. | 2026-04-16 |
-| 035 | Drag-and-drop conductor ordering | `superseded` | Motivating problem (conductor order buried in settings) solved by CT-111; Conducting section in left sidebar provides visible, accessible ordering without drag-and-drop overhead | 2026-04-16 |
-| 036 | Conductor mid-conversation reordering | `superseded` | Same resolution as CT-035; left sidebar Conducting section is available between turns; drag-and-drop marginal UX gain does not justify code overhead | 2026-04-16 |
-| 042 | Pause state for models | `superseded` | Per-model on/off toggle in model card header covers the practical use case; toggle is frictionless to re-engage; distinction between pause and off does not justify a separate mechanism | 2026-05-01 |
-| 043 | Role presets | `absorbed` | Absorbed into Tetra/Hedra framework (CT-073, CT-079, CT-082); roles are now building blocks of named Tetra presets rather than standalone configurable items | 2026-04-16 |
-| 049 | Configurable dashboard widgets | `superseded` | Left/right sidebar zone architecture (CT-106/107) encodes the same spatial intent as fixed constitutive/accumulative zones; repositionable widgets no longer fit the design commitment | 2026-04-16 |
-| 050 | Unified responsive layout | `superseded` | Interface has evolved substantially since this was logged; mobile work will restart from current architecture when the time comes, not from this framing | 2026-04-16 |
-| 054 | History panel as dashboard widget | `superseded` | Sidebar zone architecture (CT-106/107) forecloses repositionable widgets; recency-scoped turn history in the right sidebar captured as CT-113 | 2026-04-16 |
-| 102 | Code-heavy layout degradation — desktop stacked mode trigger | `superseded` | Floating code panels (CT-110) solve the column-width problem through a better mechanism; stacked mode trigger no longer needed | 2026-05-01 |
+| 010 | Markdown rendering in responses | Model responses rendered as formatted markdown rather than raw text | Core concept | 2026-03 |
+| 012 | Copy response to clipboard | Per-model copy button in card header | User insight | 2026-03 |
+| 013 | Clear session | Reset all conversation histories and response cards | Core concept | 2026-03 |
+| 014 | Export session as markdown | Full session transcript exported as a structured .md file | User insight | 2026-03 |
+| 016 | Full transcript export | Complete turn-by-turn export with model attribution; first of four planned export modes | Core concept | 2026-03 |
+| 018 | Per-model enable/disable toggle | Toggle individual models in/out of active session without removing keys | User insight | 2026-03 |
+| 019 | Session vault — stage one | IndexedDB-backed file vault; .txt and .md only; attach files to session context | Session discussion | 2026-03-13 |
+| 021 | Dark mode | Dark theme as default; toggle in left sidebar Interface section | User insight | 2026-03 |
+| 022 | Syntax highlighting in code blocks | Code fence rendering with language detection | Core concept | 2026-03 |
+| 056 | Narrative summary export | AI-generated narrative summary of session; second export mode | User insight | 2026-03-04 |
+| 057 | Summarize with — model selection | Choose which model generates the session summary | User insight | 2026-03-04 |
+| 058 | Session ID generation | Unique session ID generated on load; embedded in export filenames | Core concept | 2026-03 |
+| 059 | Tetrahedron logo | SVG wireframe tetrahedron in header; mathematically projected geometry; Necker cube illusion on blue vertex is emergent and intentional | Session discussion | 2026-03-04 |
+| 061 | Provider color system | Distinct accent/bg/border color per provider; Claude gold, ChatGPT green, Gemini blue, Grok slate, Mistral orange, DeepSeek teal | Design decision | 2026-03 |
+| 066 | API key test / validation | Test button per provider; preflight API call confirms key validity before session | User insight | 2026-03 |
+| 074 | Welcome message | First-load greeting with CT framing; not a modal | Design decision | 2026-03 |
+| 075 | Branding copy | Lowercase "triangulation" in welcome message is intentional — positions user as entering an epistemic practice, not a named product | Design decision | 2026-03-07 |
+| 076 | Tetra carousel | Rotating subtitle in header cycling through all 8 named Tetras; settles on "your Crosstalk Lab"; click-to-replay; permanent branding, not onboarding element | Session discussion | 2026-03 |
+| 077 | Named Tetras — initial set | Eight named Tetras: triangulation, reciprocity, the Agora, calibration, the In-Between, discourse, porosity, RIP | Session discussion | 2026-03 |
+| 081 | Conductor mode | Sequential send where each model's response is passed to the next; conductor order configurable | Core concept | 2026-03 |
+| 083 | Session vault — IndexedDB backend | Persistent file storage within browser session; files survive page refresh | Session discussion | 2026-03-13 |
+| 084 | Session vault — auto-clear on navigation | Vault contents cleared on fresh navigation to enforce session boundary | Session discussion | 2026-03-13 |
+| 085 | Tetra preset stub | Tetra section in left sidebar with placeholder carousel | Session discussion | 2026-03 |
+| 086 | Hedra preset stub | Hedra section in left sidebar with placeholder carousel | Session discussion | 2026-03 |
+| 087 | Left sidebar — constitutive zone | Left sidebar established as the constitutive zone: session configuration and setup decisions live here | Design decision | 2026-03 |
+| 088 | Right sidebar — accumulative zone | Right sidebar established as the accumulative zone: session artifacts and history live here | Design decision | 2026-03 |
+| 092 | Model card header — provider icon and label | Provider icon and name in each model card header; color-coded per provider | Design decision | 2026-03 |
+| 093 | Input band | Persistent input area at page bottom; always visible; contains prompt field and send controls | Core concept | 2026-03 |
+| 094 | Clip — CT-internal routing | Three fixed clip slots (one per model) in right sidebar; distinct from OS clipboard copy; session-scoped; clipped-at timestamp in pill | Session discussion | 2026-04-11 |
+| 095 | Two-row input band | Target row and Dispatch row always explicit at every viewport width; encodes Target/Dispatch distinction ahead of CT-108 routing chip | Design decision | 2026-04-11 |
+| 096 | Light mode | Light theme option; dark remains default; toggle in left sidebar Interface section; preference persists via localStorage | User insight | 2026-04-11 |
+| 097 | Per-slot model version selector | Model selector in left sidebar Models section; dropdown per active slot showing live model list fetched from provider API; pending/confirmed state with ✕/✓ header buttons; localStorage persistence; preferred model patterns prevent landing on flagship models by default | Session discussion | 2026-06-17 |
+| 099 | Expanded model support — Grok, Mistral, DeepSeek | Six-provider roster: Claude, ChatGPT, Gemini, Grok, Mistral, DeepSeek; three-slot UI unchanged; PROVIDER_META as single source of truth | Session discussion | 2026-05-22 |
+| 101 | Light/dark mode localStorage persistence | Theme preference persists across sessions via localStorage | User insight | 2026-04-11 |
+| 105 | Support and About links | Ko-fi, MDReader, and About CT in left sidebar Support section | Via Nagi | 2026-04-16 |
+| 106 | Left sidebar — zone architecture | Constitutive zone finalized: Tetras, Hedras, Session Setup, Conducting, Models, Session, Interface, Support | Design decision | 2026-04-16 |
+| 107 | Right sidebar — zone architecture | Accumulative zone finalized: File Vault, Cost stub, Session (clip slots, history) | Design decision | 2026-04-16 |
+| 110 | Floating code panels | Code blocks in model responses render in floating overlay panels; prevents column-width blowout | Session discussion | 2026-04-16 |
+| 111 | Conducting section — left sidebar | Conductor Order dropdowns in left sidebar constitutive zone; slot assignment is a session-shape decision, not configuration | Design decision | 2026-04-16 |
+| 112 | Session Setup section — left sidebar | System prompt fields and session-level configuration in left sidebar Session Setup section | Design decision | 2026-04-16 |
+| 117 | Orient inject — static briefing layer | Static orientation + brief files fetched from /briefs/ at inject time; UI prepends dynamic roster; acknowledgment instruction baked into end of static file; filename prefixes: orient-, tetra-, hedra-, hepta- | Session discussion | 2026-05-26 |
 
 ---
 
 ## Bugs
 
-| # | Bug | Description | Status | Found | Resolved |
-|---|-----|-------------|--------|-------|---------|
-| B001 | Gemini appears in Direct to when OFF | Direct to dropdown includes disabled models; should filter to enabled models with configured keys only | `resolved` | 2026-03-04 | — |
-| B002 | Dropdowns not resetting after send | Direct to and Include dropdowns retain their values after a send action | `resolved` | 2026-03-04 | — |
-| B003 | Pill not reverting to yellow on select-all-then-paste | Paste-over-selection does not trigger onChange — test pill stays red/green rather than reverting to yellow | `resolved` | 2026-03 | — |
-| B004 | Configuration modal closes on cursor leaving window | Backdrop onClick handler fires when cursor moves outside the browser window | `resolved` | 2026-03 | — |
-| B005 | No show/hide toggle on key input fields | API key fields display as password dots with no visibility toggle | `resolved` | 2026-03 | — |
-| B006 | Gemini model string `gemini-2.0-flash` not provisioned on free tier | Hardcoded model string caused all Gemini API calls to fail with quota:0; replaced with `gemini-2.5-flash` | `resolved` | 2026-03 | 2026-03 |
-| B007 | Chrome prompts to save API key fields as passwords | Key input fields typed as password trigger Chrome's password save dialog; fix: `autoComplete="new-password"` | `resolved` | 2026-03 | — |
-| B008 | Test All runs on empty key fields returning red | Test All should skip empty fields entirely; empty fields should remain yellow | `resolved` | 2026-03 | — |
-| B009 | Aggregate state not recalculating after individual test | Stale red persists even when a subsequent individual test passes | `resolved` | 2026-03 | — |
-| B010 | No show/hide toggle on passphrase fields | Passphrase input fields display as password dots with no visibility toggle | `resolved` | 2026-03 | — |
-| B011 | HistoryPanel crash on userText field rename | `turn.prompt` became undefined after 074 schema renamed field to `userText`; fix: fallback chain | `resolved` | 2026-03-05 | 2026-03-05 |
-| B012 | Summarize with flyout not triggering | Submenu collapsed on mouse drift; fix: replaced with `summarizeMenuOpen` React state toggled on click | `resolved` | 2026-03-07 | 2026-03-07 |
-| B013 | HistoryPanel crash on turn.prompt in display row | Second instance of bare `turn.prompt` reference missed by B011 fix | `resolved` | 2026-03-07 | 2026-03-07 |
-| B014 | Chrome password manager on passphrase fields | All three passphrase inputs lacked `autoComplete` attribute; fix: `autoComplete="new-password"` on all three | `resolved` | 2026-03-07 | 2026-03-07 |
-| B015 | Summarize with — Gemini missing from submenu | Outer export menu `overflow: hidden` clipped absolutely-positioned submenu; fix: `overflow: visible` | `resolved` | 2026-03-07 | 2026-03-07 |
-| B016 | Exclude selection does not arm Send | Setting Exclude requires user to also select a mode; fix: Exclude auto-selects Parallel and arms Send | `resolved` | 2026-03-10 | 2026-03-11 |
-| B017 | Excluded model card resets to waiting state | After a send with Exclude set, excluded model's card clears its response; should retain previous response | `resolved` | 2026-03-10 | 2026-03-11 |
-| B018 | Conductor send fires immediately without arming | Conductor mode send was not gated on modeArmed | `resolved` | 2026-03-10 | 2026-03-11 |
-| B019 | Forward dropdown design decision | Forward shows all models with responses regardless of routing state; the only filter is the source model itself | `resolved` | 2026-03-11 | 2026-03-11 |
-| B020 | ChatGPT vault file framing — safeguard trigger | Inline vault text without framing caused ChatGPT safeguard responses; fix: explicit inline-text declaration in file block | `resolved` | 2026-03-13 | 2026-03-13 |
-| B021 | pendingHasChanges/pendingVals/pendingHasDupe forward reference | Three derived values computed immediately using `conductorOrder` before `conductorOrder`'s `useState` call; Babel's var hoisting made `conductorOrder` undefined at evaluation time, producing blank-screen crash; fix: moved three derived values to after `conductorOrder` declaration | `resolved` | 2026-05-22 | 2026-05-22 |
-| B022 | Orient/Brief mode labels in transcript export | All three export paths (turn history UI, full transcript, digest) fell through to "Directed → undefined undefined" for 'orient' and 'brief' modes — neither was handled in the mode label conditional chains; surface in transcript: "Turn 1 — Directed → undefined undefined"; fix: added explicit cases for 'orient' and 'brief' in all three locations; discovered in ct-session-20260526-c16e95 | `resolved` | 2026-05-26 | 2026-05-26 |
-| B023 | Truncation — no visual indicator on finish_reason length | Mistral-large-latest consistently hit max_tokens in YB session 20260527-76f057 with no visible indicator in the UI; responses silently truncated; fix: detect finish_reason "length" in response handling and display a warning indicator on the affected model card; evaluate per-model max_tokens tuning; consider column-level export as workaround for truncated responses | `open` | 2026-05-27 | — |
-| B024 | Clip button — YB model names not recognized in scope logic | Clip button copies entire response rather than selected text when a YB model column (Grok, Mistral, DeepSeek) is the source; OG model names confirmed working; likely a naming recognition issue in clip scope logic — YB model name strings may not match the pattern expected; investigate clip scope conditional against PROVIDER_META entries for YB providers | `open` | 2026-05-27 | — |
+| # | Bug | Status | Date |
+|---|-----|--------|------|
+| B001 | Gemini response occasionally duplicates last token | `open` | 2026-03 |
+| B020 | Model switching unresponsive when default model unavailable | `fixed` — 2026-06-17; root cause: setPendingModels nested inside setSelectedModels updater caused React batching to diverge pending/selected state; 'default' sentinel could propagate into selectedModels via confirm flow; fix: decoupled state updates, fetchSucceeded guard on both | 2026-06-17 |
+| B021 | Model confirm button easy to miss | `fixed` — 2026-06-17; replaced bottom-of-list "Confirm changes" button with always-visible ✕/✓ header buttons in Models section label | 2026-06-17 |
+| B022 | Orient inject — brief file load error | `fixed` | 2026-05-26 |
 
 ---
 
@@ -254,7 +243,9 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - OG trio orientation session (ct-session-20260526-350be2): full orientation + conductor protocol run with Claude, ChatGPT, Gemini matching the YB session for direct comparison; Gemini errored twice on the self-assessment parallel send and was retried via directed send, causing identity confusion — responded as Claude rather than itself, attributing the misidentification to context saturation from Conductor mode Claude-authored content combined with isolated directed send losing the parallel framing anchor; corrected in Turn 12–13 with explicit identity re-anchoring; Claude picked Grok + Mistral; ChatGPT picked Claude + Grok; Gemini (corrected) picked Claude + Grok; ChatGPT and Gemini excluded by all six models across both sessions; Claude and Grok appeared in every model's optimal lineup; YB models showed in-group preference toward their session trio; OG models reached outside their cohort toward Grok and away from ChatGPT and Gemini.
 - Tandem mode naming settled 2026-06-02: Tandem (the mode), Sideband (the private human backchannel), Host/Partner (role names). Tagline candidate: "a confluence of voices." See fleeting-tandem-sideband-naming.md.
 - Tandem UI geometry settled 2026-06-02: Tandem column is a single vertical slice added to the right of the three model columns — Tandem Controls (upper, flush with input band) and Partner panel (lower, flush with model columns). Input band stays full width unchanged. Width gate enforces minimum viewport for Tandem availability. See ct-multiuser-co-conduct-design.md.
-  
+- CT-097 model selector architecture (2026-06-17): fetchProviderModels fetches live model list from each provider's API using the user's key; results filtered and deduplicated to chat-capable models only; modelFamilyKey strips both Anthropic-style (8-digit) and OpenAI-style (YYYY-MM-DD) date suffixes before deduplication; PREFERRED_MODEL_PATTERNS applied when current selection isn't in the returned list to avoid landing on flagship models; selection persisted to localStorage per provider; ✕/✓ buttons in Models section header replace the previous bottom-of-list confirm button; single-screen confirm modal replaces previous two-step flow; CT_VERSION constant introduced at 1.1.0001, incremented to 1.1.0003 by end of session.
+- Distributed metacognition in AI learning — ZK vault work pending (2026-06-17): thread from today's session requires extensive permanent note work in the vault. Not yet started.
+
 ---
 
 ## Proposed Writings
@@ -273,6 +264,7 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W008 | Role-context mimicry and self-reflection | ZK permanent | drafted | 100 |
 | W009 | Session knowledge architecture | ZK permanent | proposed | 031, 039, 047, 103 |
 | W010 | Cultural and linguistic diversity in model training — hedra implications | ZK permanent | proposed | 116, 119, 120 |
+| W011 | Distributed metacognition in AI learning | ZK permanent | proposed | — |
 
 ---
-*Last updated: 2026-06-03*
+*Last updated: 2026-06-17*
