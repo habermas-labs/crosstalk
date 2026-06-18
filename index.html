@@ -620,7 +620,7 @@
     // ─────────────────────────────────────────────
 
     // Default model strings — used on first load before dynamic fetch
-    const CT_VERSION = '1.1.0002';
+    const CT_VERSION = '1.1.0003';
 
     const DEFAULT_MODELS = {
       claude:   'claude-sonnet-4-20250514',
@@ -664,8 +664,10 @@
     // Strips date suffixes, patch tags, and preview/experimental markers.
     const modelFamilyKey = (id) => id
       .toLowerCase()
-      // Remove date suffixes like -20250514
+      // Remove Anthropic-style date suffixes like -20250514
       .replace(/-\d{8}$/, '')
+      // Remove OpenAI-style date suffixes like -2024-05-13
+      .replace(/-\d{4}-\d{2}-\d{2}$/, '')
       // Remove :free or similar suffixes
       .replace(/:[a-z]+$/, '')
       // Normalize -preview, -exp, -experimental, -latest to allow grouping
