@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CT Witness</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23a78bfa'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5' fill='none' stroke='%23a78bfa' stroke-width='1.2' opacity='0.7'/%3E%3Ccircle cx='16' cy='3.5' r='2.2' fill='%23c4b5fd'/%3E%3Ccircle cx='4.1' cy='22.25' r='2.2' fill='%23c4b5fd'/%3E%3Ccircle cx='27.9' cy='22.25' r='2.2' fill='%23c4b5fd'/%3E%3C/svg%3E" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+    :root {
+      --bg-primary:#08070f;--bg-secondary:#0f0d1a;--bg-card:#141022;--bg-input:#1a1630;
+      --border-subtle:#1e1a30;--border-hover:#2e2850;
+      --text-primary:#e2ddf0;--text-secondary:#8880aa;--text-muted:#44406a;
+      --witness-accent:#a78bfa;--witness-dim:#6d4fc9;--witness-glow:rgba(167,139,250,0.12);
+      --gallery-bg:#0a0a14;--gallery-border:#1a1628;
+      --prompt-label:#9b8cc8;--response-label:#6aaa8a;
+      --bookmark-color:#f59e0b;--radius:7px;--shadow:0 4px 24px rgba(0,0,0,0.5);
+      --claude-accent:#d4a574;--claude-bg:#1a1610;--claude-border:#3d2e1a;
+      --chatgpt-accent:#6bcf8e;--chatgpt-bg:#101a14;--chatgpt-border:#1a3d24;
+      --gemini-accent:#7ba4f4;--gemini-bg:#10141f;--gemini-border:#1a2a4d;
+      --grok-accent:#9ab0c4;--grok-bg:#0f1418;--grok-border:#1c2830;
+      --mistral-accent:#e8944a;--mistral-bg:#1a1008;--mistral-border:#3d2010;
+      --deepseek-accent:#4ec4b0;--deepseek-bg:#081818;--deepseek-border:#103030;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Crimson Pro',Georgia,serif;background:var(--bg-primary);color:var(--text-primary);height:100vh;overflow:hidden;line-height:1.65;}
+    #root{height:100vh;display:flex;flex-direction:column;}
+    ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border-subtle);border-radius:3px;}
+    .header{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border-subtle);flex-shrink:0;}
+    .header-title{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--witness-accent);letter-spacing:.1em;}
+    .header-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);margin-left:2px;}
+    .hbtn{background:none;border:1px solid var(--border-subtle);color:var(--text-secondary);cursor:pointer;font-size:11px;padding:4px 10px;border-radius:4px;font-family:'JetBrains Mono',monospace;transition:all .15s;}
+    .hbtn:hover{border-color:var(--witness-accent);color:var(--witness-accent);}
+    .session-id{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);padding:3px 8px;border:1px solid var(--border-subtle);border-radius:4px;}
+    .main-layout{display:grid;grid-template-columns:210px 1fr 1fr 1fr;flex:1;overflow:hidden;}
+    .sidebar{background:var(--bg-secondary);border-right:1px solid var(--border-subtle);overflow-y:auto;padding:12px 9px;display:flex;flex-direction:column;gap:13px;}
+    .slabel{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);padding-bottom:4px;border-bottom:1px solid var(--border-subtle);margin-bottom:3px;}
+    .sbtn{width:100%;padding:7px 9px;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;text-align:left;transition:all .15s;}
+    .sbtn:hover{border-color:var(--witness-accent);color:var(--witness-accent);}
+    .sbtn.primary{background:var(--witness-glow);border-color:var(--witness-dim);color:var(--witness-accent);}
+    .sbtn.primary:hover{background:rgba(167,139,250,.22);}
+    .sbtn:disabled{opacity:.38;cursor:not-allowed;}
+    .sbtn.danger:hover{border-color:#ef4444;color:#f87171;}
+    .sel{width:100%;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;}
+    .sel:focus{outline:none;border-color:var(--witness-accent);}
+    .inp{width:100%;padding:6px 8px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;}
+    .inp:focus{outline:none;border-color:var(--witness-accent);}
+    .stat{font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 9px;border-radius:4px;margin-top:4px;}
+    .stat.ok{background:rgba(107,207,142,.1);color:#6bcf8e;border:1px solid rgba(107,207,142,.25);}
+    .stat.err{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);}
+    .gallery-pane{border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;background:var(--gallery-bg);}
+    .gallery-header{padding:9px 13px;border-bottom:1px solid var(--gallery-border);display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .gallery-title{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:.12em;text-transform:uppercase;}
+    .gallery-count{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);background:var(--bg-card);padding:2px 6px;border-radius:10px;border:1px solid var(--border-subtle);}
+    .gallery-scroll{flex:1;overflow-y:auto;padding:9px;}
+    .gallery-entry{margin-bottom:9px;padding:8px 9px;border:1px solid var(--gallery-border);border-radius:var(--radius);background:var(--bg-secondary);}
+    .gallery-entry.bkd{border-color:var(--bookmark-color);box-shadow:0 0 8px rgba(245,158,11,.1);}
+    .geh{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+    .tlabel{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;}
+    .tlabel.prompt{background:rgba(155,140,200,.18);color:var(--prompt-label);border:1px solid rgba(155,140,200,.28);}
+    .tlabel.response{background:rgba(106,170,138,.15);color:var(--response-label);border:1px solid rgba(106,170,138,.25);}
+    .gline{display:flex;gap:7px;line-height:1.5;font-size:13px;padding:1px 0;}
+    .gline.fl{font-weight:600;}
+    .lnum{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);flex-shrink:0;width:76px;padding-top:2px;user-select:none;}
+    .ltext{flex:1;color:var(--text-secondary);}
+    .gline.fl .ltext{color:var(--text-primary);}
+    .gallery-input-area{border-top:1px solid var(--gallery-border);padding:9px;flex-shrink:0;display:flex;flex-direction:column;gap:5px;}
+    .gi-row{display:flex;gap:5px;}
+    .tn-inp{width:58px;padding:6px 7px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;}
+    .tn-inp:focus{outline:none;border-color:var(--witness-accent);}
+    .tt-toggle{display:flex;border:1px solid var(--border-subtle);border-radius:var(--radius);overflow:hidden;}
+    .tt-btn{padding:6px 10px;background:var(--bg-card);border:none;font-family:'JetBrains Mono',monospace;font-size:9px;cursor:pointer;color:var(--text-muted);transition:all .13s;}
+    .tt-btn.active.prompt{background:rgba(155,140,200,.22);color:var(--prompt-label);}
+    .tt-btn.active.response{background:rgba(106,170,138,.18);color:var(--response-label);}
+    .gta{flex:1;padding:7px 9px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'Crimson Pro',serif;font-size:13px;resize:none;min-height:56px;transition:border-color .18s;}
+    .gta:focus{outline:none;border-color:var(--witness-dim);}
+    .gadd{padding:6px 11px;background:rgba(106,170,138,.18);border:1px solid rgba(106,170,138,.35);color:var(--response-label);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all .13s;white-space:nowrap;}
+    .gadd:hover{background:rgba(106,170,138,.32);}
+    .witness-col{border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;}
+    .witness-col:last-child{border-right:none;}
+    .wch{padding:9px 11px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .wcname{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex:1;}
+    .ldot{width:6px;height:6px;border-radius:50%;animation:pulse 1s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+    .wscroll{flex:1;overflow-y:auto;padding:9px;}
+    .wturn{margin-bottom:11px;padding:9px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-subtle);}
+    .wtmeta{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+    .tbadge{padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700;}
+    .bp{background:rgba(167,139,250,.14);color:var(--witness-accent);}
+    .bc{background:rgba(245,158,11,.12);color:#f59e0b;}
+    .bd{background:rgba(248,113,113,.12);color:#f87171;}
+    .bg{background:rgba(106,170,138,.18);color:var(--response-label);}
+    .bo{background:rgba(96,165,250,.13);color:#60a5fa;}
+    .wresp{font-size:14px;color:var(--text-primary);line-height:1.7;}
+    .wresp .prose p{margin-bottom:7px;}
+    .wresp .prose h1,.wresp .prose h2,.wresp .prose h3{color:var(--text-primary);margin:8px 0 4px;font-family:'Crimson Pro',serif;}
+    .wresp .prose ul,.wresp .prose ol{padding-left:18px;margin-bottom:7px;}
+    .wresp .prose code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg-input);padding:1px 4px;border-radius:3px;}
+    .racts{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+    .rbtn{padding:3px 8px;background:var(--bg-secondary);border:1px solid var(--border-subtle);color:var(--text-muted);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:9px;cursor:pointer;transition:all .13s;}
+    .rbtn:hover{border-color:var(--witness-accent);color:var(--witness-accent);}
+    .fwd-wrap{position:relative;}
+    .fwd-menu{position:absolute;bottom:110%;right:0;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius);overflow:hidden;min-width:140px;z-index:100;box-shadow:var(--shadow);}
+    .fwd-item{padding:7px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);cursor:pointer;transition:background .1s;}
+    .fwd-item:hover{background:var(--witness-glow);color:var(--witness-accent);}
+    .bottom-area{border-top:1px solid var(--border-subtle);background:var(--bg-secondary);padding:9px 13px;display:flex;gap:9px;align-items:flex-start;flex-shrink:0;}
+    .blabel{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;display:block;}
+    .bta{width:100%;padding:7px 9px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'Crimson Pro',serif;font-size:13px;resize:none;height:66px;transition:border-color .18s;}
+    .bta:focus{outline:none;border-color:var(--witness-dim);}
+    .rtbtn{padding:6px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all .13s;white-space:nowrap;}
+    .rtbtn:hover{border-color:var(--witness-accent);color:var(--witness-accent);}
+    .rtbtn.send{background:var(--witness-glow);border-color:var(--witness-dim);color:var(--witness-accent);}
+    .rtbtn.send:hover{background:rgba(167,139,250,.22);}
+    .rtbtn:disabled{opacity:.35;cursor:not-allowed;}
+    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:200;}
+    .modal{background:var(--bg-secondary);border:1px solid var(--border-hover);border-radius:10px;padding:22px;max-width:500px;width:90%;box-shadow:var(--shadow);max-height:85vh;overflow-y:auto;}
+    .mtitle{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--witness-accent);margin-bottom:14px;letter-spacing:.06em;}
+    .mlabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:4px;display:block;letter-spacing:.08em;text-transform:uppercase;}
+    .minp{width:100%;padding:7px 9px;background:var(--bg-input);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:4px;}
+    .minp:focus{outline:none;border-color:var(--witness-accent);}
+    .mprow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle);}
+    .mprow:last-child{border-bottom:none;}
+    .mbtns{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;}
+    .mbtn{padding:7px 14px;border-radius:var(--radius);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;border:1px solid;transition:all .13s;}
+    .mbtn.cancel{background:transparent;border-color:var(--border-subtle);color:var(--text-secondary);}
+    .mbtn.cancel:hover{border-color:var(--text-secondary);}
+    .mbtn.ok{background:var(--witness-glow);border-color:var(--witness-dim);color:var(--witness-accent);}
+    .mbtn.ok:hover{background:rgba(167,139,250,.22);}
+    .empty{text-align:center;padding:28px 14px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.9;}
+    .empty .big{font-size:22px;margin-bottom:7px;}
+    .gfwdpanel{background:rgba(167,139,250,.06);border:1px solid var(--witness-dim);border-radius:var(--radius);padding:8px 9px;margin-bottom:4px;}
+    .gfwdlabel{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--witness-accent);margin-bottom:4px;letter-spacing:.08em;}
+    .scptoggle{display:flex;gap:3px;margin-bottom:5px;}
+    .scpbtn{padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;cursor:pointer;border-radius:3px;border:1px solid var(--border-subtle);background:var(--bg-card);color:var(--text-muted);transition:all .11s;}
+    .scpbtn.active{border-color:var(--witness-dim);color:var(--witness-accent);background:var(--witness-glow);}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useCallback,useRef,useEffect} = React;
+ 
+const PROVIDER_META = {
+  claude:  {label:'Claude',  icon:'◈',accent:'var(--claude-accent)',  bg:'var(--claude-bg)',  border:'var(--claude-border)'  },
+  chatgpt: {label:'ChatGPT', icon:'◇',accent:'var(--chatgpt-accent)', bg:'var(--chatgpt-bg)', border:'var(--chatgpt-border)' },
+  gemini:  {label:'Gemini',  icon:'△',accent:'var(--gemini-accent)',  bg:'var(--gemini-bg)',  border:'var(--gemini-border)'  },
+  grok:    {label:'Grok',    icon:'◉',accent:'var(--grok-accent)',    bg:'var(--grok-bg)',    border:'var(--grok-border)'    },
+  mistral: {label:'Mistral', icon:'⬡',accent:'var(--mistral-accent)', bg:'var(--mistral-bg)', border:'var(--mistral-border)' },
+  deepseek:{label:'DeepSeek',icon:'▿',accent:'var(--deepseek-accent)',bg:'var(--deepseek-bg)',border:'var(--deepseek-border)'},
+};
+const ALL_PROVIDERS = Object.keys(PROVIDER_META);
+const DEFAULT_MODELS = {claude:'claude-sonnet-4-20250514',chatgpt:'gpt-4o',gemini:'gemini-1.5-pro',grok:'grok-3',mistral:'mistral-large-latest',deepseek:'deepseek-chat'};
+ 
+const apiAdapters = {
+  claude: async (msgs,sys,key,mdl) => {
+    const r = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:mdl||DEFAULT_MODELS.claude,max_tokens:4096,system:sys||'You are a witness observer.',messages:msgs.map(m=>({role:m.role,content:m.content}))})});
+    const d=await r.json(); if(d.error) throw new Error(d.error.message); return d.content.map(b=>b.text).join('\n');
+  },
+  chatgpt: async (msgs,sys,key,mdl) => {
+    const m=[];if(sys)m.push({role:'system',content:sys});m.push(...msgs.map(x=>({role:x.role,content:x.content})));
+    const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:mdl||DEFAULT_MODELS.chatgpt,max_tokens:4096,messages:m})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);return d.choices[0].message.content;
+  },
+  gemini: async (msgs,sys,key,mdl) => {
+    const model=mdl||DEFAULT_MODELS.gemini;
+    const contents=msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+    const body={contents};if(sys)body.systemInstruction={parts:[{text:sys}]};
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);return d.candidates[0].content.parts.map(p=>p.text).join('\n');
+  },
+  grok: async (msgs,sys,key,mdl) => {
+    const m=[];if(sys)m.push({role:'system',content:sys});m.push(...msgs.map(x=>({role:x.role,content:x.content})));
+    const r=await fetch('https://api.x.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:mdl||DEFAULT_MODELS.grok,max_tokens:4096,messages:m})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));return d.choices[0].message.content;
+  },
+  mistral: async (msgs,sys,key,mdl) => {
+    const m=[];if(sys)m.push({role:'system',content:sys});m.push(...msgs.map(x=>({role:x.role,content:x.content})));
+    const r=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:mdl||DEFAULT_MODELS.mistral,max_tokens:4096,messages:m})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));return d.choices[0].message.content;
+  },
+  deepseek: async (msgs,sys,key,mdl) => {
+    const m=[];if(sys)m.push({role:'system',content:sys});m.push(...msgs.map(x=>({role:x.role,content:x.content})));
+    const r=await fetch('https://api.deepseek.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},body:JSON.stringify({model:mdl||DEFAULT_MODELS.deepseek,max_tokens:4096,messages:m})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));return d.choices[0].message.content;
+  },
+};
+ 
+const genId=()=>{const d=new Date().toLocaleDateString('en-CA').replace(/-/g,'');const r=Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');return `${d}-${r}`;};
+const fmtTime=iso=>{const d=new Date(iso);return d.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});};
+const parseLines=text=>text.split('\n').filter(l=>l.trim()!=='');
+ 
+function RenderedMD({text}){
+  const html=marked.parse(text||'',{breaks:true,gfm:true});
+  return <div dangerouslySetInnerHTML={{__html:html}} className="prose"/>;
+}
+ 
+function Logo({size=26}){
+  const s=size,cx=s/2,cy=s/2,r=s*.41,nr=s*.074;
+  const tv=[[cx,cy-s*.09],[cx-s*.08,cy+s*.05],[cx+s*.08,cy+s*.05]];
+  const on=[[cx,cy-r],[cx-r*.866,cy+r*.5],[cx+r*.866,cy+r*.5]];
+  const tc=['#d4a574','#6bcf8e','#7ba4f4'];
+  return(
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx={cx} cy={cy} rx={r} ry={r*.37} fill="none" stroke="#a78bfa" strokeWidth=".85" opacity=".55"/>
+      <ellipse cx={cx} cy={cy} rx={r} ry={r*.37} fill="none" stroke="#8b5cf6" strokeWidth=".85" opacity=".45" transform={`rotate(60,${cx},${cy})`}/>
+      <ellipse cx={cx} cy={cy} rx={r} ry={r*.37} fill="none" stroke="#7c3aed" strokeWidth=".85" opacity=".38" transform={`rotate(120,${cx},${cy})`}/>
+      <line x1={tv[0][0]} y1={tv[0][1]} x2={tv[1][0]} y2={tv[1][1]} stroke="#d4a574" strokeWidth=".7" opacity=".85"/>
+      <line x1={tv[0][0]} y1={tv[0][1]} x2={tv[2][0]} y2={tv[2][1]} stroke="#7ba4f4" strokeWidth=".7" opacity=".85"/>
+      <line x1={tv[1][0]} y1={tv[1][1]} x2={tv[2][0]} y2={tv[2][1]} stroke="#6bcf8e" strokeWidth=".7" opacity=".85"/>
+      {tv.map((v,i)=><circle key={i} cx={v[0]} cy={v[1]} r={s*.036} fill={tc[i]} opacity=".9"/>)}
+      {on.map((n,i)=><circle key={i} cx={n[0]} cy={n[1]} r={nr} fill="#c4b5fd" opacity=".82"/>)}
+    </svg>
+  );
+}
+ 
+function KeyModal({initialKeys,onSave,onClose}){
+  const [keys,setKeys]=useState(initialKeys||{});
+  const [msg,setMsg]=useState(null);
+  return(
+    <div className="modal-ov" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="mtitle">◈ API Keys</div>
+        <div style={{fontSize:11,color:'var(--text-muted)',fontFamily:'JetBrains Mono',marginBottom:12,lineHeight:1.7}}>
+          Session memory only — never stored. Same security model as CT.
+        </div>
+        {ALL_PROVIDERS.map(p=>{
+          const m=PROVIDER_META[p];
+          return(
+            <div key={p} className="mprow">
+              <span style={{color:m.accent,fontSize:14,width:20,textAlign:'center'}}>{m.icon}</span>
+              <span style={{fontFamily:'JetBrains Mono',fontSize:11,color:'var(--text-secondary)',width:68}}>{m.label}</span>
+              <input className="minp" style={{flex:1,margin:0}} type="password"
+                placeholder={`${m.label} API key`} value={keys[p]||''}
+                onChange={e=>setKeys(prev=>({...prev,[p]:e.target.value}))}/>
+            </div>
+          );
+        })}
+        {msg&&<div className={`stat ${msg.type==='ok'?'ok':'err'}`}>{msg.txt}</div>}
+        <div className="mbtns">
+          <button className="mbtn cancel" onClick={onClose}>Cancel</button>
+          <button className="mbtn ok" onClick={()=>{onSave(keys);setMsg({type:'ok',txt:'Keys saved.'});setTimeout(onClose,700);}}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
+function SlotModal({slots,keys,onSave,onClose}){
+  const [s,setS]=useState([...slots]);
+  const avail=ALL_PROVIDERS.filter(p=>keys[p]?.trim());
+  return(
+    <div className="modal-ov" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="mtitle">Witness Slots</div>
+        <div style={{fontSize:11,color:'var(--text-muted)',fontFamily:'JetBrains Mono',marginBottom:12}}>Up to 3 active observers. Only models with API keys available.</div>
+        {[0,1,2].map(i=>(
+          <div key={i} style={{marginBottom:8}}>
+            <label className="mlabel">Slot {i+1}</label>
+            <select className="sel" value={s[i]||''} onChange={e=>{const ns=[...s];ns[i]=e.target.value;setS(ns);}}>
+              <option value="">— empty —</option>
+              {avail.map(p=><option key={p} value={p}>{PROVIDER_META[p].icon} {PROVIDER_META[p].label}</option>)}
+            </select>
+          </div>
+        ))}
+        <div className="mbtns">
+          <button className="mbtn cancel" onClick={onClose}>Cancel</button>
+          <button className="mbtn ok" onClick={()=>{onSave(s);onClose();}}>Apply</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
+function ExportModal({onClose,galleryEntries,turnHistory,witnessSlots,sessionId,keys}){
+  const [busy,setBusy]=useState(false);
+  const [msg,setMsg]=useState(null);
+  const activeW=witnessSlots.filter(Boolean);
+ 
+  const dl=(content,filename)=>{
+    const b=new Blob([content],{type:'text/markdown'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=filename;a.click();
+  };
+ 
+  const exportTranscript=()=>{
+    let o=`# CT Witness — Full Session Transcript\nSession: ${sessionId}\nDate: ${new Date().toLocaleString()}\nWitnesses: ${activeW.map(p=>PROVIDER_META[p].label).join(', ')}\n\n---\n\n## Gallery (CT Session Feed)\n\n`;
+    galleryEntries.forEach(e=>{
+      o+=`### ${e.turnLabel} — ${e.type.toUpperCase()} — ${fmtTime(e.timestamp)}\n`;
+      if(e.bookmarked)o+=`🔖 *Witness attention directed at this turn*\n`;
+      const lines=parseLines(e.text);
+      lines.forEach((l,i)=>o+=`${e.turnLabel}-L${String(i+1).padStart(2,'0')}: ${l}\n`);
+      o+='\n';
+    });
+    o+=`---\n\n## Witness Session\n\n`;
+    turnHistory.forEach((t,i)=>{
+      o+=`### Turn ${i+1} — ${t.mode.toUpperCase()} — ${fmtTime(t.timestamp)}\n`;
+      if(t.ctRef)o+=`*CT reference: ${t.ctRef}*\n`;
+      if(t.userText)o+=`**Prompt:** ${t.userText}\n\n`;
+      activeW.forEach(p=>{
+        const r=t.results?.[p];
+        if(r?.response)o+=`**${PROVIDER_META[p].label}:**\n${r.response}\n\n`;
+      });
+    });
+    dl(o,`ct-witness-transcript-${sessionId}.md`);
+    setMsg({type:'ok',txt:'Transcript exported.'});
+  };
+ 
+  const exportConvDiv=async()=>{
+    if(activeW.length<2){setMsg({type:'err',txt:'Need ≥2 Witness models.'});return;}
+    setBusy(true);
+    const digest=turnHistory.map((t,i)=>{
+      let s=`Turn ${i+1}:\n`;
+      activeW.forEach(p=>{const r=t.results?.[p];if(r?.response)s+=`${PROVIDER_META[p].label}: ${r.response.slice(0,700)}\n`;});
+      return s;
+    }).join('\n---\n');
+    const prompt=`You are analyzing a CT Witness session. Multiple AI observers watched a Crosstalk session from the W-axis (outside observer) position.\n\nSession content:\n\n${digest}\n\nGenerate a Convergence/Divergence report with these sections:\n\n## Points of Convergence\nWhere did Witnesses agree? Synthesize as single voice with attribution.\n\n## Points of Divergence\nWhere did they differ? Parallel presentation, noting CT turn references and what each observer saw.\n\n## Analytical Significance\nWhat do divergences reveal about single-observer limits?`;
+    try{
+      const r=await apiAdapters[activeW[0]]([{role:'user',content:prompt}],null,keys[activeW[0]],null);
+      dl(`# CT Witness — Convergence/Divergence Report\nSession: ${sessionId}\nDate: ${new Date().toLocaleString()}\n\n${r}`,`ct-witness-convergence-${sessionId}.md`);
+      setMsg({type:'ok',txt:'Convergence/Divergence exported.'});
+    }catch(e){setMsg({type:'err',txt:e.message});}
+    setBusy(false);
+  };
+ 
+  const exportQuestions=async()=>{
+    if(activeW.length===0){setMsg({type:'err',txt:'No active Witnesses.'});return;}
+    setBusy(true);
+    const digest=turnHistory.slice(-10).map((t,i)=>{
+      let s=`Turn ${i+1}: ${t.userText||''}\n`;
+      activeW.forEach(p=>{const r=t.results?.[p];if(r?.response)s+=`${PROVIDER_META[p].label}: ${r.response.slice(0,500)}\n`;});
+      return s;
+    }).join('\n---\n');
+    let o=`# CT Witness — Next/Unanswered Questions\nSession: ${sessionId}\nDate: ${new Date().toLocaleString()}\n\n`;
+    for(const p of activeW){
+      const prompt=`You observed a CT (Crosstalk) session as a W-axis witness — outside observer, full visibility, no participation.\n\nSession content:\n\n${digest}\n\nAs ${PROVIDER_META[p].label}: list questions this session raised but did not resolve. Be specific to what you observed. Focus on what an insider might have normalized or missed. These are observations from your external position.`;
+      try{
+        const r=await apiAdapters[p]([{role:'user',content:prompt}],null,keys[p],null);
+        o+=`## ${PROVIDER_META[p].icon} ${PROVIDER_META[p].label}\n\n${r}\n\n---\n\n`;
+      }catch(e){o+=`## ${PROVIDER_META[p].label}\n\n*Error: ${e.message}*\n\n---\n\n`;}
+    }
+    dl(o,`ct-witness-questions-${sessionId}.md`);
+    setMsg({type:'ok',txt:'Questions export complete.'});
+    setBusy(false);
+  };
+ 
+  const exportHandoff=async()=>{
+    if(activeW.length===0){setMsg({type:'err',txt:'No active Witnesses.'});return;}
+    setBusy(true);
+    const digest=turnHistory.slice(-8).map((t,i)=>{
+      let s=`Turn ${i+1}:\n`;if(t.userText)s+=`Prompt: ${t.userText}\n`;
+      activeW.forEach(p=>{const r=t.results?.[p];if(r?.response)s+=`${PROVIDER_META[p].label}: ${r.response.slice(0,500)}\n`;});
+      return s;
+    }).join('\n---\n');
+    const galSummary=galleryEntries.map(e=>`[${e.turnLabel}${e.bookmarked?' 🔖':''}]: ${parseLines(e.text)[0]||''}`).join('\n');
+    const prompt=`You are generating a handoff summary for a CT Witness session.\n\nGallery (CT session observed):\n${galSummary}\n\nWitness observations:\n${digest}\n\nWrite a structured handoff covering:\n1. What CT session was observed and its key characteristics\n2. Key observations from Witnesses\n3. Bookmarked turns and why they were significant\n4. Open threads worth continuing\n5. Conditions for re-entering this observation context`;
+    try{
+      const r=await apiAdapters[activeW[0]]([{role:'user',content:prompt}],null,keys[activeW[0]],null);
+      dl(`# CT Witness — Handoff Summary\nSession: ${sessionId}\nDate: ${new Date().toLocaleString()}\n\n${r}`,`ct-witness-handoff-${sessionId}.md`);
+      setMsg({type:'ok',txt:'Handoff summary exported.'});
+    }catch(e){setMsg({type:'err',txt:e.message});}
+    setBusy(false);
+  };
+ 
+  return(
+    <div className="modal-ov" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="mtitle">Export</div>
+        <div style={{display:'flex',flexDirection:'column',gap:7}}>
+          <button className="sbtn" onClick={exportTranscript}>Full Witness Transcript (.md)</button>
+          <button className="sbtn" onClick={exportConvDiv} disabled={busy}>{busy?'Generating…':'Convergence / Divergence Report (.md)'}</button>
+          <button className="sbtn" onClick={exportQuestions} disabled={busy}>{busy?'Generating…':'Next / Unanswered Questions (.md)'}</button>
+          <button className="sbtn" onClick={exportHandoff} disabled={busy}>{busy?'Generating…':'Handoff Summary (.md)'}</button>
+        </div>
+        {msg&&<div className={`stat ${msg.type}`}>{msg.txt}</div>}
+        <div className="mbtns"><button className="mbtn cancel" onClick={onClose}>Close</button></div>
+      </div>
+    </div>
+  );
+}
+ 
+function App(){
+  const [sessionId]=useState(genId);
+  const [keys,setKeys]=useState({});
+  const [witnessSlots,setWitnessSlots]=useState(['claude','mistral','']);
+  const [convHistory,setConvHistory]=useState(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,[]])));
+  const [responses,setResponses]=useState(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,null])));
+  const [loading,setLoading]=useState(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,false])));
+  const [errors,setErrors]=useState(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,null])));
+  const [turnHistory,setTurnHistory]=useState([]);
+ 
+  const [galleryEntries,setGalleryEntries]=useState([]);
+  const [galleryText,setGalleryText]=useState('');
+  const [galleryTurnNum,setGalleryTurnNum]=useState('');
+  const [galleryTurnType,setGalleryTurnType]=useState('response');
+  const [lastBkmkIdx,setLastBkmkIdx]=useState(-1);
+  const galleryRef=useRef(null);
+ 
+  const [sendMode,setSendMode]=useState('parallel');
+  const [directTo,setDirectTo]=useState('all');
+  const [fwdMenu,setFwdMenu]=useState(null);
+  const [galFwdScope,setGalFwdScope]=useState('delta');
+  const [galFwdRouting,setGalFwdRouting]=useState('all');
+  const [galFwdPrompt,setGalFwdPrompt]=useState('');
+ 
+  const [prompt,setPrompt]=useState('');
+  const [notepad,setNotepad]=useState('');
+ 
+  const [showKeys,setShowKeys]=useState(false);
+  const [showSlots,setShowSlots]=useState(false);
+  const [showExport,setShowExport]=useState(false);
+  const [orientLoading,setOrientLoading]=useState(false);
+  const [orientStatus,setOrientStatus]=useState(null);
+  const [briefPaths,setBriefPaths]=useState([
+    '/briefs/witness-orient.md',
+    '/briefs/witness-rules.md',
+    '/briefs/witness-session.md',
+  ]);
+ 
+  const activeW=witnessSlots.filter(p=>p&&keys[p]?.trim());
+ 
+  const addGalleryEntry=()=>{
+    if(!galleryText.trim())return;
+    const pCnt=galleryEntries.filter(e=>e.type==='prompt').length;
+    const rCnt=galleryEntries.filter(e=>e.type==='response').length;
+    const seq=galleryTurnType==='prompt'?pCnt+1:rCnt+1;
+    const prefix=galleryTurnType==='prompt'?'P':'R';
+    const turnLabel=galleryTurnNum.trim()
+      ?`CT-${prefix}${String(parseInt(galleryTurnNum)||seq).padStart(2,'0')}`
+      :`CT-${prefix}${String(seq).padStart(2,'0')}`;
+    const entry={id:Date.now(),text:galleryText,type:galleryTurnType,turnLabel,timestamp:new Date().toISOString(),bookmarked:false};
+    setGalleryEntries(prev=>[...prev,entry]);
+    setGalleryText('');setGalleryTurnNum('');
+    setTimeout(()=>{if(galleryRef.current)galleryRef.current.scrollTop=galleryRef.current.scrollHeight;},50);
+  };
+ 
+  const dispatchToWitnesses=useCallback(async(content,mode,targets,ctRef='')=>{
+    if(targets.length===0||!content.trim())return;
+    const ts=new Date().toISOString();
+    const rR={},eR={},lS=Object.fromEntries(ALL_PROVIDERS.map(p=>[p,false]));
+    targets.forEach(m=>{rR[m]=null;eR[m]=null;lS[m]=true;});
+    setResponses(prev=>({...prev,...rR}));setErrors(prev=>({...prev,...eR}));setLoading(lS);
+    const newH={...convHistory};
+    targets.forEach(m=>{newH[m]=[...newH[m],{role:'user',content}];});
+    setConvHistory(newH);
+    const results={};
+    await Promise.allSettled(targets.map(async m=>{
+      try{
+        const resp=await apiAdapters[m](newH[m],null,keys[m],null);
+        results[m]={response:resp,error:null,responseTimestamp:new Date().toISOString()};
+        setResponses(prev=>({...prev,[m]:resp}));
+        setConvHistory(prev=>({...prev,[m]:[...prev[m],{role:'assistant',content:resp}]}));
+      }catch(err){
+        results[m]={response:null,error:err.message};
+        setErrors(prev=>({...prev,[m]:err.message}));
+      }finally{setLoading(prev=>({...prev,[m]:false}));}
+    }));
+    setTurnHistory(prev=>[...prev,{turnIndex:prev.length,timestamp:ts,mode,userText:content.slice(0,200)+(content.length>200?'…':''),results,ctRef}]);
+  },[convHistory,keys]);
+ 
+  const galleryForward=()=>{
+    if(galleryEntries.length===0||activeW.length===0)return;
+    const scope=galFwdScope==='delta'?galleryEntries.slice(lastBkmkIdx+1):galleryEntries;
+    if(scope.length===0)return;
+    const transcriptBlock=scope.map(e=>{
+      const lines=parseLines(e.text);
+      return `[${e.turnLabel}]\n`+lines.map((l,i)=>`${e.turnLabel}-L${String(i+1).padStart(2,'0')}: ${l}`).join('\n');
+    }).join('\n\n');
+    const fwdP=galFwdPrompt.trim()?`${galFwdPrompt}\n\n---\n\n${transcriptBlock}`:`The following is the CT session transcript. Observe and record your analysis.\n\n---\n\n${transcriptBlock}`;
+    const lastIdx=galleryEntries.length-1;
+    setGalleryEntries(prev=>prev.map((e,i)=>i===lastIdx?{...e,bookmarked:true}:e));
+    setLastBkmkIdx(lastIdx);
+    setGalFwdPrompt('');
+    const targets=galFwdRouting==='all'?activeW:[galFwdRouting].filter(p=>activeW.includes(p));
+    const ref=`gallery-forward:${scope[0]?.turnLabel}→${scope[scope.length-1]?.turnLabel}`;
+    dispatchToWitnesses(fwdP,'gallery-forward',targets,ref);
+  };
+ 
+  const sendPrompt=()=>{
+    if(!prompt.trim())return;
+    const targets=directTo==='all'?activeW:activeW.filter(p=>p===directTo);
+    dispatchToWitnesses(prompt,sendMode,targets);
+    setPrompt('');
+  };
+ 
+  const forwardResp=(fromModel,toTarget)=>{
+    const resp=responses[fromModel];if(!resp)return;
+    const meta=PROVIDER_META[fromModel];
+    const content=`Forwarded response from ${meta.label}:\n\n${resp}`;
+    const targets=toTarget==='all'?activeW.filter(p=>p!==fromModel):[toTarget].filter(p=>p!==fromModel&&activeW.includes(p));
+    dispatchToWitnesses(content,'parallel',targets,`forward-from:${fromModel}`);
+    setFwdMenu(null);
+  };
+ 
+  const pushToNotepad=(model)=>{
+    const resp=responses[model];if(!resp)return;
+    setNotepad(prev=>(prev?prev+'\n\n---\n\n':'')+`[${PROVIDER_META[model].label}]:\n${resp}`);
+  };
+ 
+  const runOrient=async(idx)=>{
+    if(activeW.length===0)return;
+    setOrientLoading(true);setOrientStatus(null);
+    const labels=['Witness Tool Orient','Session Rules','Session Brief / Handoffs'];
+    const label=labels[idx]||'Orient';
+    try{
+      const res=await fetch(briefPaths[idx]);
+      if(!res.ok)throw new Error(`Could not load ${label} brief (${res.status})`);
+      const txt=await res.text();
+      const roster=`Active Witness models: ${activeW.map(p=>PROVIDER_META[p].label).join(', ')}. All Witnesses are identified to each other — no ghosting.`;
+      const content=`[${label}]\n${roster}\n\n---\n\n${txt}`;
+      await dispatchToWitnesses(content,'parallel',activeW,`orient:${label}`);
+      setOrientStatus({type:'ok',txt:`${label} dispatched.`});
+    }catch(e){setOrientStatus({type:'err',txt:e.message});}
+    setOrientLoading(false);
+  };
+ 
+  function GalleryEntry({entry}){
+    const lines=parseLines(entry.text);
+    return(
+      <div className={`gallery-entry ${entry.bookmarked?'bkd':''}`}>
+        <div className="geh">
+          <span className={`tlabel ${entry.type}`}>{entry.turnLabel}</span>
+          <span style={{fontSize:9,color:'var(--text-muted)',fontFamily:'JetBrains Mono'}}>{fmtTime(entry.timestamp)}</span>
+          {entry.bookmarked&&<span style={{marginLeft:'auto',color:'var(--bookmark-color)',fontSize:10}} title="Witness attention directed here">🔖</span>}
+        </div>
+        {lines.map((line,i)=>(
+          <div key={i} className={`gline ${i===0?'fl':''}`}>
+            <span className="lnum">{entry.turnLabel}-L{String(i+1).padStart(2,'0')}</span>
+            <span className="ltext">{line}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+ 
+  function WitnessCol({model}){
+    if(!model)return(
+      <div className="witness-col">
+        <div className="wch"><span style={{color:'var(--text-muted)',fontFamily:'JetBrains Mono',fontSize:10}}>— empty slot —</span></div>
+        <div className="wscroll"><div className="empty"><div className="big">◌</div>No model in this slot.<br/>Set in Slots menu.</div></div>
+      </div>
+    );
+    const meta=PROVIDER_META[model];
+    const isLoading=loading[model];
+    const hasKey=keys[model]?.trim();
+    const modelTurns=turnHistory.filter(t=>t.results?.[model]);
+    const others=activeW.filter(p=>p!==model);
+    return(
+      <div className="witness-col">
+        <div className="wch" style={{borderBottom:`2px solid ${meta.accent}22`}}>
+          <span style={{color:meta.accent,fontSize:14}}>{meta.icon}</span>
+          <span className="wcname" style={{color:meta.accent}}>{meta.label}</span>
+          {isLoading&&<div className="ldot" style={{background:meta.accent}}/>}
+          {!hasKey&&<span style={{fontSize:9,color:'var(--text-muted)',fontFamily:'JetBrains Mono'}}>no key</span>}
+        </div>
+        <div className="wscroll">
+          {modelTurns.length===0&&!isLoading&&(
+            <div className="empty"><div className="big">{meta.icon}</div>Awaiting first observation prompt</div>
+          )}
+          {modelTurns.map((t,i)=>{
+            const r=t.results[model];
+            const badgeCls={parallel:'bp','gallery-forward':'bg',conductor:'bc',directed:'bd',orient:'bo'}[t.mode]||'bp';
+            return(
+              <div key={i} className="wturn">
+                <div className="wtmeta">
+                  <span className={`tbadge ${badgeCls}`}>{t.mode.toUpperCase().replace('-',' ')}</span>
+                  <span>{fmtTime(t.timestamp)}</span>
+                  {t.ctRef&&<span style={{color:'var(--witness-accent)',fontSize:9}}>{t.ctRef}</span>}
+                </div>
+                {r?.response&&(
+                  <>
+                    <div className="wresp"><RenderedMD text={r.response}/></div>
+                    <div className="racts">
+                      <button className="rbtn" onClick={()=>navigator.clipboard.writeText(r.response)}>Copy</button>
+                      <button className="rbtn" onClick={()=>pushToNotepad(model)}>→ Notepad</button>
+                      {others.length>0&&(
+                        <div className="fwd-wrap">
+                          <button className="rbtn" onClick={()=>setFwdMenu(fwdMenu===`${model}-${i}`?null:`${model}-${i}`)}>Forward ▾</button>
+                          {fwdMenu===`${model}-${i}`&&(
+                            <div className="fwd-menu">
+                              {others.map(p=>(
+                                <div key={p} className="fwd-item" onClick={()=>forwardResp(model,p)}>
+                                  → {PROVIDER_META[p].icon} {PROVIDER_META[p].label}
+                                </div>
+                              ))}
+                              <div className="fwd-item" onClick={()=>forwardResp(model,'all')}>→ All Witnesses</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+                {r?.error&&<div style={{fontSize:11,color:'#f87171',fontFamily:'JetBrains Mono',paddingTop:4}}>{r.error}</div>}
+              </div>
+            );
+          })}
+          {isLoading&&(
+            <div className="wturn" style={{background:meta.bg,borderColor:meta.border}}>
+              <div style={{display:'flex',gap:5,alignItems:'center',padding:'6px 0'}}>
+                {[0,1,2].map(i=><div key={i} className="ldot" style={{background:meta.accent,animationDelay:`${i*.2}s`}}/>)}
+                <span style={{fontSize:11,color:meta.accent,fontFamily:'JetBrains Mono'}}>Observing…</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+ 
+  return(
+    <>
+      <div className="header">
+        <Logo size={26}/>
+        <span className="header-title">CT WITNESS</span>
+        <span className="header-sub">W-axis observer</span>
+        <div style={{flex:1}}/>
+        <span className="session-id">{sessionId}</span>
+        <button className="hbtn" onClick={()=>setShowKeys(true)}>Keys</button>
+        <button className="hbtn" onClick={()=>setShowSlots(true)}>Slots</button>
+        <button className="hbtn" onClick={()=>setShowExport(true)}>Export</button>
+      </div>
+ 
+      <div className="main-layout">
+        {/* SIDEBAR */}
+        <div className="sidebar">
+          <div>
+            <div className="slabel">Orientation</div>
+            <div style={{display:'flex',flexDirection:'column',gap:5}}>
+              <button className="sbtn primary" onClick={()=>runOrient(0)} disabled={orientLoading||activeW.length===0}>① Witness Tool Orient</button>
+              <button className="sbtn" onClick={()=>runOrient(1)} disabled={orientLoading||activeW.length===0}>② Session Rules</button>
+              <button className="sbtn" onClick={()=>runOrient(2)} disabled={orientLoading||activeW.length===0}>③ Session Brief / Handoffs</button>
+              {orientStatus&&<div className={`stat ${orientStatus.type}`}>{orientStatus.txt}</div>}
+              <div style={{marginTop:6,borderTop:'1px solid var(--border-subtle)',paddingTop:7}}>
+                <div className="slabel" style={{marginBottom:5}}>Brief paths</div>
+                {[0,1,2].map(i=>(
+                  <input key={i} className="inp" style={{marginBottom:4,fontSize:9}} value={briefPaths[i]}
+                    onChange={e=>{const np=[...briefPaths];np[i]=e.target.value;setBriefPaths(np);}}/>
+                ))}
+              </div>
+            </div>
+          </div>
+ 
+          <div>
+            <div className="slabel">Send Mode</div>
+            <div style={{display:'flex',gap:4}}>
+              {['parallel','conductor'].map(m=>(
+                <button key={m} className={`sbtn ${sendMode===m?'primary':''}`} style={{flex:1,textAlign:'center'}}
+                  onClick={()=>setSendMode(m)}>
+                  {m==='parallel'?'∥ Para':'→ Cond'}
+                </button>
+              ))}
+            </div>
+          </div>
+ 
+          <div>
+            <div className="slabel">Direct To</div>
+            <select className="sel" value={directTo} onChange={e=>setDirectTo(e.target.value)}>
+              <option value="all">All Witnesses</option>
+              {activeW.map(p=><option key={p} value={p}>{PROVIDER_META[p].icon} {PROVIDER_META[p].label}</option>)}
+            </select>
+          </div>
+ 
+          <div>
+            <div className="slabel">Gallery Forward</div>
+            <div className="gfwdpanel">
+              <div className="gfwdlabel">Scope</div>
+              <div className="scptoggle">
+                {['delta','full'].map(s=>(
+                  <button key={s} className={`scpbtn ${galFwdScope===s?'active':''}`} onClick={()=>setGalFwdScope(s)}>
+                    {s==='delta'?'Since bookmark':'Full gallery'}
+                  </button>
+                ))}
+              </div>
+              <div className="gfwdlabel" style={{marginBottom:4}}>Routing</div>
+              <select className="sel" style={{marginBottom:6}} value={galFwdRouting} onChange={e=>setGalFwdRouting(e.target.value)}>
+                <option value="all">All Witnesses</option>
+                {activeW.map(p=><option key={p} value={p}>{PROVIDER_META[p].icon} {PROVIDER_META[p].label}</option>)}
+              </select>
+              <textarea className="gta" style={{minHeight:44,fontSize:12,marginBottom:5}}
+                placeholder="Directing prompt (optional)…"
+                value={galFwdPrompt} onChange={e=>setGalFwdPrompt(e.target.value)}/>
+              <button className="sbtn primary" style={{width:'100%'}}
+                onClick={galleryForward} disabled={galleryEntries.length===0||activeW.length===0}>
+                🔖 Forward Gallery →
+              </button>
+            </div>
+          </div>
+ 
+          <div>
+            <div className="slabel">Notepad Controls</div>
+            <button className="sbtn" onClick={()=>navigator.clipboard.writeText(notepad)} disabled={!notepad.trim()}>Copy Notepad → Clipboard</button>
+            <button className="sbtn danger" style={{marginTop:4}} onClick={()=>setNotepad('')}>Clear Notepad</button>
+          </div>
+ 
+          <div>
+            <div className="slabel">Session</div>
+            <button className="sbtn danger" onClick={()=>{
+              if(confirm('Clear all Witness session data?')){
+                setTurnHistory([]);setGalleryEntries([]);setLastBkmkIdx(-1);
+                setResponses(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,null])));
+                setErrors(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,null])));
+                setConvHistory(Object.fromEntries(ALL_PROVIDERS.map(p=>[p,[]])));
+              }
+            }}>Clear Session</button>
+          </div>
+ 
+          <div style={{marginTop:'auto',paddingTop:10,borderTop:'1px solid var(--border-subtle)'}}>
+            <div style={{fontSize:9,color:'var(--text-muted)',fontFamily:'JetBrains Mono',lineHeight:2}}>
+              Active: {activeW.length>0?activeW.map(p=>PROVIDER_META[p].label).join(', '):'none'}<br/>
+              Gallery: {galleryEntries.length} entries<br/>
+              Witness turns: {turnHistory.length}<br/>
+              Bookmarks: {galleryEntries.filter(e=>e.bookmarked).length}
+            </div>
+          </div>
+        </div>
+ 
+        {/* GALLERY */}
+        <div className="gallery-pane">
+          <div className="gallery-header">
+            <span className="gallery-title">The Gallery</span>
+            <span className="gallery-count">{galleryEntries.length} entries</span>
+            {lastBkmkIdx>=0&&<span style={{fontFamily:'JetBrains Mono',fontSize:9,color:'var(--bookmark-color)'}}>{galleryEntries.filter(e=>e.bookmarked).length} bookmarks</span>}
+          </div>
+          <div className="gallery-scroll" ref={galleryRef}>
+            {galleryEntries.length===0&&(
+              <div className="empty">
+                <div className="big">◎</div>
+                The CT session feed appears here.<br/>
+                Paste turns below as they complete.
+              </div>
+            )}
+            {galleryEntries.map(e=><GalleryEntry key={e.id} entry={e}/>)}
+          </div>
+          <div className="gallery-input-area">
+            <div className="gi-row">
+              <input className="tn-inp" placeholder="Turn #" type="text" value={galleryTurnNum}
+                onChange={e=>setGalleryTurnNum(e.target.value)}/>
+              <div className="tt-toggle">
+                <button className={`tt-btn ${galleryTurnType==='prompt'?'active prompt':''}`} onClick={()=>setGalleryTurnType('prompt')}>Prompt</button>
+                <button className={`tt-btn ${galleryTurnType==='response'?'active response':''}`} onClick={()=>setGalleryTurnType('response')}>Response</button>
+              </div>
+            </div>
+            <div className="gi-row">
+              <textarea className="gta" placeholder="Paste CT turn here… (Shift+Enter to add)"
+                value={galleryText} onChange={e=>setGalleryText(e.target.value)}
+                onKeyDown={e=>{if(e.key==='Enter'&&e.shiftKey){e.preventDefault();addGalleryEntry();}}}/>
+              <button className="gadd" onClick={addGalleryEntry}>Add →</button>
+            </div>
+            <div style={{fontSize:9,color:'var(--text-muted)',fontFamily:'JetBrains Mono'}}>
+              Labeled CT-{galleryTurnType==='prompt'?'P':'R'}nn-Lnn · L01 is first line (visually prominent) · Shift+Enter to add
+            </div>
+          </div>
+        </div>
+ 
+        {/* WITNESS COLUMNS */}
+        {witnessSlots.map((m,i)=><WitnessCol key={i} model={m}/>)}
+      </div>
+ 
+      {/* BOTTOM */}
+      <div className="bottom-area">
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+          <span className="blabel">⬡ Prompt Notepad — anteroom</span>
+          <textarea className="bta" placeholder="Draft CT prompts with Witness input. Use sidebar to copy to clipboard — pull, not push."
+            value={notepad} onChange={e=>setNotepad(e.target.value)}/>
+        </div>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <span className="blabel" style={{marginBottom:0}}>◈ Witness Prompt</span>
+            {directTo!=='all'&&(
+              <span style={{fontSize:9,fontFamily:'JetBrains Mono',color:'var(--witness-accent)',background:'var(--witness-glow)',padding:'1px 6px',borderRadius:3}}>
+                → {PROVIDER_META[directTo]?.label||directTo}
+              </span>
+            )}
+          </div>
+          <textarea className="bta" placeholder="Send to Witness models… (Shift+Enter to send)"
+            value={prompt} onChange={e=>setPrompt(e.target.value)}
+            onKeyDown={e=>{if(e.key==='Enter'&&e.shiftKey){e.preventDefault();sendPrompt();}}}/>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:5,minWidth:140}}>
+          <span className="blabel">Routing</span>
+          <button className="rtbtn send" onClick={sendPrompt} disabled={activeW.length===0||!prompt.trim()}>Send</button>
+          <button className="rtbtn" onClick={()=>setPrompt('')}>Clear</button>
+          <button className="rtbtn" style={{fontSize:9}} onClick={()=>setSendMode(m=>m==='parallel'?'conductor':'parallel')}>
+            {sendMode==='parallel'?'∥ Parallel →':'→ Conductor'}
+          </button>
+        </div>
+      </div>
+ 
+      {showKeys&&<KeyModal initialKeys={keys} onSave={k=>setKeys(k)} onClose={()=>setShowKeys(false)}/>}
+      {showSlots&&<SlotModal slots={witnessSlots} keys={keys} onSave={s=>setWitnessSlots(s)} onClose={()=>setShowSlots(false)}/>}
+      {showExport&&<ExportModal onClose={()=>setShowExport(false)} galleryEntries={galleryEntries} turnHistory={turnHistory} witnessSlots={witnessSlots} sessionId={sessionId} keys={keys}/>}
+    </>
+  );
+}
+ 
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
