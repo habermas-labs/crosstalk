@@ -286,6 +286,7 @@ ZK notes and whitepaper sections proposed but not yet drafted.
 | W009 | Session knowledge architecture | ZK permanent | proposed | 031, 039, 047, 103 |
 | W010 | Cultural and linguistic diversity in model training — hedra implications | ZK permanent | proposed | 116, 119, 120 |
 | W011 | Distributed metacognition in AI learning | ZK permanent | proposed | — |
+| W012 | The Irony of Agency | ZK permanent | proposed | fleeting-irony-of-agency.md, kirsh-maglio-epistemic-actions.md |
 
 ---
 *Last updated: 2026-06-29*
