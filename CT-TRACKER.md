@@ -12,7 +12,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 - `deferred` — real, but not now
 - `rejected` — considered and decided against (reason noted)
 
-**Latest entry:** 132
+**Latest entry:** 133
 
 ---
 
@@ -86,6 +86,7 @@ Low barrier to entry — if it crossed our minds, it belongs here.
 | 130 | Model selection — localStorage persistence | Last-used model per provider stored in localStorage (keys ct_model_claude etc.) and restored on next session load; seeds selectedModels and pendingModels on init; writes on explicit confirm and on fetch auto-correct so first-session defaults are also captured; try/catch throughout for private browsing safety | `implemented` | Session discussion | 2026-06-17 |
 | 131 | Version pill — sidebar footer | CT_VERSION constant in script; renders as a small centered pill below the About CT button in the sidebar; starts at 1.1.0001, incremented per release; allows at-a-glance confirmation of which version is live without inspecting code | `implemented` | Session discussion | 2026-06-17 |
 | 132 | Model selector list — filter and dedup | fetchProviderModels now filters to chat-capable models only and deduplicates to one entry per model family (newest wins); modelFamilyKey strips Anthropic-style (-20250514) and OpenAI-style (-2024-05-13) date suffixes plus preview/exp/latest markers; dedupeByFamily keeps first occurrence after newest-first sort; per-provider filter improvements: ChatGPT allowlisted to gpt-4o/4.1/5/o-series families with audio/tts/image/realtime/embed/instruct excluded; Gemini restricted to gemini-named generateContent models with embed/aqa/tts/imagen/learnlm excluded; Grok/Mistral/DeepSeek tightened to also exclude vision/ocr variants | `implemented` | Session discussion | 2026-06-17 |
+| 133 | CT-119 replication against Fable — architectural legibility test | Rerun CT-119's proposed Candidate Experiment 1 (architectural legibility test, ct-experimental-testbed.md) on Claude Fable as a new subject: show index.html cold with no framing, ask what problem it seems designed to solve; then orient-ct.md alone (functional-only brief); then orient-ct-trajectory.md (philosophical framing); compare drift across the three stages against the original OG-trio finding (unprompted anti-sycophancy identification). Distinct from the ZK-vault consistency audit — this is a legibility/replication test using the app and briefs directly. | idea | Session discussion | 2026-07-03 |
 
 ---
 
